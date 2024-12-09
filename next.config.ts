@@ -1,24 +1,18 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
-
-const isGithubActions = process.env.GITHUB_ACTIONS || false;
+const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
 
 let assetPrefix = '';
 let basePath = '';
 
 if (isGithubActions) {
-  const repo = process.env.GITHUB_REPOSITORY.replace(/.*?\//, '');
+  const repo = process.env.GITHUB_REPOSITORY?.replace(/.*?\//, '') || ''; // Fallback to empty string
   assetPrefix = `/${repo}/`;
   basePath = `/${repo}`;
 }
 
-module.exports = {
+const nextConfig = {
   reactStrictMode: true,
   assetPrefix,
   basePath,
 };
+
+export default nextConfig;
