@@ -1,8 +1,11 @@
-import { getAirportWeather } from "@/lib/weather"; // Make sure this path matches your file structure
+// src/app/page.tsx
+
+import { getAirportWeather } from "@/lib/weather";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import Footer from "@/components/Footer";
+import { WeatherResponse } from "@/lib/types/weather";
 
 export default async function AirportStatus() {
     const weather = await getAirportWeather();
@@ -13,22 +16,22 @@ export default async function AirportStatus() {
             <div className="bg-[#1a1f36]">
                 {/* Alert banner */}
                 <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
- <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
-   <p className="text-sm">
-     This is not an official Kraków Airport page. For official information, visit{" "}
-     <a href="https://krakowairport.pl" className="underline">krakowairport.pl</a>
-   </p>
-   {weather?.current && (
-     <p className="text-sm text-white/60">
-       Last update: {new Date(weather.current.observed).toLocaleTimeString('en-GB', { 
-         hour: '2-digit',
-         minute: '2-digit',
-         timeZone: 'Europe/Warsaw'
-       })}
-     </p>
-   )}
- </div>
-</Alert>
+                    <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
+                        <p className="text-sm">
+                            This is not an official Kraków Airport page. For official information, visit{" "}
+                            <a href="https://krakowairport.pl" className="underline">krakowairport.pl</a>
+                        </p>
+                        {weather?.current && (
+                            <p className="text-sm text-white/60">
+                                Last update: {new Date(weather.current.observed).toLocaleTimeString('en-GB', { 
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    timeZone: 'Europe/Warsaw'
+                                })}
+                            </p>
+                        )}
+                    </div>
+                </Alert>
 
                 {/* Main content */}
                 <div className="max-w-4xl mx-auto px-6 pb-32">
@@ -85,7 +88,7 @@ export default async function AirportStatus() {
                                         </div>
                                         {weather.current.conditions.phenomena?.length > 0 && (
                                             <div className="flex gap-2 flex-wrap mt-3">
-                                                {weather.current.conditions.phenomena.map((phenomenon, index) => (
+                                                {weather.current.conditions.phenomena.map((phenomenon: string, index: number) => (
                                                     <span key={index} className="bg-white/10 px-3 py-1 rounded-full text-sm text-white">
                                                         {phenomenon}
                                                     </span>
@@ -135,7 +138,7 @@ export default async function AirportStatus() {
                                 <div className="space-y-3 text-sm text-slate-600">
                                     {period.conditions.phenomena?.length > 0 && (
                                         <div className="flex gap-2 flex-wrap">
-                                            {period.conditions.phenomena.map((phenomenon, idx) => (
+                                            {period.conditions.phenomena.map((phenomenon: string, idx: number) => (
                                                 <span key={idx} className="bg-slate-100 px-3 py-1 rounded-full">
                                                     {phenomenon}
                                                 </span>
@@ -160,30 +163,31 @@ export default async function AirportStatus() {
                     ))}
                 </div>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
- <Card className="bg-white">
-   <CardContent className="p-6">
-     <h3 className="font-semibold mb-2">How we get our data?</h3>
-     <p className="text-slate-600 mb-4">We combine data from three reliable sources:</p>
-     <ul className="text-slate-600 space-y-2">
-       <li>Official METAR reports (the stuff pilots actually use)</li>
-       <li>TAF forecasts (fancy airport weather predictions)</li>
-     </ul>
-   </CardContent>
- </Card>
+                <Card className="bg-white">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold mb-2">How we get our data?</h3>
+                        <p className="text-slate-600 mb-4">We combine data from three reliable sources:</p>
+                        <ul className="text-slate-600 space-y-2">
+                            <li>Official METAR reports (the stuff pilots actually use)</li>
+                            <li>TAF forecasts (fancy airport weather predictions)</li>
+                        </ul>
+                    </CardContent>
+                </Card>
 
- <Card className="bg-white">
-   <CardContent className="p-6">
-     <h3 className="font-semibold mb-2">Important notice</h3>
-     <p className="text-slate-600 mb-4">
-       While we try our best to provide accurate information, we're not meteorologists, air traffic controllers, or fortune tellers.
-     </p>
-     <p className="text-slate-600">
-       Always check with your airline for the final word on your flight status. They're the ones with the actual planes, after all!
-     </p>
-   </CardContent>
- </Card>
-</div>
+                <Card className="bg-white">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold mb-2">Important notice</h3>
+                        <p className="text-slate-600 mb-4">
+                            While we try our best to provide accurate information, we're not meteorologists, air traffic controllers, or fortune tellers.
+                        </p>
+                        <p className="text-slate-600">
+                            Always check with your airline for the final word on your flight status. They're the ones with the actual planes, after all!
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
             <Footer />
         </div>
     );
