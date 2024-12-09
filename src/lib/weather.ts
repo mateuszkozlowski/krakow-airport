@@ -1,6 +1,6 @@
 // src/lib/weather.js
 
-const CHECKWX_API_KEY = 'e5d6f4f36bfb40bfa3a7e50c58';
+const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
 // Weather phenomena with emojis
