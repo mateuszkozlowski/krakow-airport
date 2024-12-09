@@ -1,11 +1,10 @@
 // src/app/page.tsx
 
 import { getAirportWeather } from "@/lib/weather";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import Footer from "@/components/Footer";
-import { WeatherResponse } from "@/lib/types/weather";
 
 export default async function AirportStatus() {
     const weather = await getAirportWeather();
@@ -34,8 +33,8 @@ export default async function AirportStatus() {
                 </Alert>
 
                 {/* Main content */}
-                <div className="max-w-4xl mx-auto px-6 pb-32">
-                    <h1 className="text-4xl font-bold mt-32 mb-4 text-white">
+                <div className="max-w-3xl mx-auto px-6 pb-32">
+                    <h1 className="text-5xl font-bold mt-32 mb-4 text-white">
                         Will I fly today from Krakow?
                     </h1>
                     
@@ -43,7 +42,7 @@ export default async function AirportStatus() {
                         <>
                             <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
-                                    ? "I don't think so. Have you heard about Katowice or Rzeszów?"
+                                    ? "I don&apos;t think so. Have you heard about Katowice or Rzeszów?"
                                     : weather.current.riskLevel.level === 2
                                     ? "Maybe yes, maybe not. Be prepared for some delays."
                                     : "I would say so."}
@@ -180,10 +179,10 @@ export default async function AirportStatus() {
                     <CardContent className="p-6">
                         <h3 className="font-semibold mb-2">Important notice</h3>
                         <p className="text-slate-600 mb-4">
-                            While we try our best to provide accurate information, we're not meteorologists, air traffic controllers, or fortune tellers.
+                            While we try our best to provide accurate information, we&apos;re not meteorologists, air traffic controllers, or fortune tellers.
                         </p>
                         <p className="text-slate-600">
-                            Always check with your airline for the final word on your flight status. They're the ones with the actual planes, after all!
+                            Always check with your airline for the final word on your flight status. They&apos;re the ones with the actual planes, after all!
                         </p>
                     </CardContent>
                 </Card>
