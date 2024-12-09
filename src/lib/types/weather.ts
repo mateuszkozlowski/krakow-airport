@@ -58,6 +58,7 @@ export interface RiskAssessment {
 }
 
 export interface ProcessedConditions {
+  temperature?: string;
   wind: string;
   visibility: string;
   clouds: string;

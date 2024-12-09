@@ -35,13 +35,13 @@ export default async function AirportStatus() {
 
                 {/* Main content */}
                 <div className="max-w-4xl mx-auto px-6 pb-32">
-                    <h1 className="text-5xl font-bold mt-32 mb-4 text-white">
+                    <h1 className="text-4xl font-bold mt-32 mb-4 text-white">
                         Will I fly today from Krakow?
                     </h1>
                     
                     {weather?.current && (
                         <>
-                            <p className="text-3xl mb-8 text-white/80">
+                            <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
                                     ? "I don't think so. Have you heard about Katowice or Rzeszów?"
                                     : weather.current.riskLevel.level === 2
@@ -86,7 +86,7 @@ export default async function AirportStatus() {
                                                 ? 'Weather conditions are looking good'
                                                 : weather.current.riskLevel.message}
                                         </div>
-                                        {weather.current.conditions.phenomena?.length > 0 && (
+                                        {weather.current.conditions.phenomena && weather.current.conditions.phenomena.length > 0 && (
                                             <div className="flex gap-2 flex-wrap mt-3">
                                                 {weather.current.conditions.phenomena.map((phenomenon: string, index: number) => (
                                                     <span key={index} className="bg-white/10 px-3 py-1 rounded-full text-sm text-white">
@@ -136,7 +136,7 @@ export default async function AirportStatus() {
                                 </div>
 
                                 <div className="space-y-3 text-sm text-slate-600">
-                                    {period.conditions.phenomena?.length > 0 && (
+                                    {period.conditions.phenomena && period.conditions.phenomena.length > 0 && (
                                         <div className="flex gap-2 flex-wrap">
                                             {period.conditions.phenomena.map((phenomenon: string, idx: number) => (
                                                 <span key={idx} className="bg-slate-100 px-3 py-1 rounded-full">
