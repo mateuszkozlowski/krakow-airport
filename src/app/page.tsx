@@ -2,7 +2,7 @@ import { getAirportWeather } from "@/lib/weather"; // Make sure this path matche
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import Footer from "@/components/footer";
+import Footer from "@/components/Footer";
 
 export default async function AirportStatus() {
     const weather = await getAirportWeather();
