@@ -18,7 +18,7 @@ const AIRPORT = 'EPKK';
 const CLOUD_DESCRIPTIONS = {
   SCT: '⛅️ Scattered clouds',
   BKN: '☁️ Broken clouds',
-  OVC: '☁️ Overcast',
+  OVC: '☁️☁️ Overcast',
   FEW: '🌤️ Few clouds',
   CLR: 'Clear skies'
 } as const;
