@@ -1,11 +1,20 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
+let assetPrefix = '';
+let basePath = '';
+
+if (isGithubActions) {
+  // Automatically set the basePath and assetPrefix for GitHub Pages deployment
+  const repo = process.env.GITHUB_REPOSITORY?.replace(/.*?\//, '') || '';
+  assetPrefix = `/${repo}/`;  // for example, '/krakow-airport/'
+  basePath = `/${repo}`;       // for example, '/krakow-airport'
+}
+
+module.exports = {
   reactStrictMode: true,
-  output: 'export', // This ensures static export
-  trailingSlash: true, // Important for GitHub Pages, to include trailing slashes
+  assetPrefix,    // Ensures assets like images, CSS, and JS are correctly referenced
+  basePath,       // Ensures the app is served correctly from a subdirectory on GitHub Pages
+  output: 'export',  // Required to use static export
   images: {
-    unoptimized: true, // Disable Next.js image optimization (not supported on GitHub Pages)
+    unoptimized: true,  // If you're using images and not optimizing them
   },
 };
-
-export default nextConfig;
