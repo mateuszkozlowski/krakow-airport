@@ -22,7 +22,7 @@ const MINIMUMS = {
   CEILING: 200     // feet
 } as const;
 
-// Risk weights for different conditions
+// Risk weights for different conditions tailored to Kraków's usual conditions
 const RISK_WEIGHTS = {
   // Severe phenomena (immediate impact)
   PHENOMENA_SEVERE: {
@@ -32,39 +32,39 @@ const RISK_WEIGHTS = {
     FZDZ: 50,   // Freezing drizzle
     FZFG: 50,   // Freezing fog
     FC: 100,    // Funnel cloud
-    SS: 90      // Sandstorm
+    SS: 90      // Sandstorm (rare but kept high)
   },
   
-  // Moderate phenomena
+  // Moderate phenomena (adjusted for local conditions)
   PHENOMENA_MODERATE: {
-    SN: 50,     // Snow
-    SG: 50,     // Snow grains
-    BR: 30,     // Mist
-    FG: 70,     // Fog
-    RA: 40,     // Rain
-    GR: 70,     // Hail
-    GS: 60,     // Small hail
-    '+RA': 60,  // Heavy rain
-    '+SN': 70   // Heavy snow
+    SN: 30,     // Snow (further lowered)
+    SG: 30,     // Snow grains (further lowered)
+    BR: 20,     // Mist (kept low)
+    FG: 50,     // Fog (common but still impactful)
+    RA: 20,     // Rain (reduced significantly for routine tolerance)
+    GR: 70,     // Hail (unchanged, still significant)
+    GS: 50,     // Small hail (unchanged)
+    '+RA': 40,  // Heavy rain (reduced for familiarity)
+    '+SN': 50   // Heavy snow (lowered further)
   },
   
-  // Visibility weights
+  // Visibility weights (adjusted for operational tolerance)
   VISIBILITY: {
     BELOW_MINIMUM: 100,  // Below landing minimum
-    VERY_LOW: 70,        // Below 1000m
-    LOW: 50,             // Below 1500m
-    MODERATE: 30         // Below 3000m
+    VERY_LOW: 60,        // Below 1000m (slightly lowered)
+    LOW: 40,             // Below 1500m (adjusted for routine tolerance)
+    MODERATE: 20         // Below 3000m (minimal impact in Kraków)
   },
   
-  // Ceiling weights
+  // Ceiling weights (adjusted for operational tolerance)
   CEILING: {
     BELOW_MINIMUM: 100,  // Below landing minimum
-    VERY_LOW: 70,        // Below 300ft
-    LOW: 50,             // Below 500ft
-    MODERATE: 30         // Below 1000ft
+    VERY_LOW: 60,        // Below 300ft (slightly lowered)
+    LOW: 40,             // Below 500ft (adjusted)
+    MODERATE: 20         // Below 1000ft (minimal impact)
   },
   
-  // Wind weights
+  // Wind weights (unchanged as wind impacts are universal)
   WIND: {
     STRONG_GUSTS: 80,    // Gusts >= 35kt
     STRONG: 60,          // >= 25kt

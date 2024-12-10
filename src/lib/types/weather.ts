@@ -95,49 +95,40 @@ export interface WeatherResponse {
 }
 
 export const WEATHER_PHENOMENA = {
-  // Severe & Dangerous Conditions
   TS: '⛈️ Thunderstorm',
-  TSRA: '⛈️ ⚠️ Thunderstorm with Heavy Rain',
-  FC: '🌪️ ⚠️ Tornado/Waterspout',
-  SQ: '🌪️ ⚠️ Violent Squall',
-  SS: '🌪️ 🏜️ Severe Sandstorm',
-  
-  // Freezing Conditions
-  FZRA: '🌧️ ⚠️ Freezing Rain',
-  FZDZ: '💧 ⚠️ Freezing Drizzle',
-  FZFG: '🌫️ ⚠️ Freezing Fog',
-  
-  // Moderate Precipitation
+  TSRA: '⛈️🌧️ Thunderstorm with Heavy Rain',
+  FC: '🌪️ Tornado/Waterspout',
+  SQ: '💨 Violent Squall',
+  SS: '🏜️ Severe Sandstorm',
+
+  FZRA: '🌧️❄️ Freezing Rain',
+  FZDZ: '💧❄️ Freezing Drizzle',
+  FZFG: '🌫️❄️ Freezing Fog',
+
   RA: '🌧️ Rain',
   SN: '❄️ Snow',
-  GR: '🌨️ ⚠️ Hail',
+  GR: '🌨️ Hail',
   GS: '🌨️ Small Hail/Snow Pellets',
   PL: '🧊 Ice Pellets',
   IC: '❄️ Ice Crystals',
   SG: '🌨️ Snow Grains',
-  
-  // Light Conditions
   DZ: '💧 Drizzle',
-  '-RA': '🌧️ Light Rain',
-  '-SN': '❄️ Light Snow',
-  
-  // Heavy Conditions
-  '+RA': '🌧️ ⚠️ Heavy Rain',
-  '+SN': '🌨️ ⚠️ Heavy Snow',
-  
-  // Visibility Hazards
+  '-RA': '🌦️ Light Rain',
+  '-SN': '🌨️ Light Snow',
+  '+RA': '🌧️⚠️ Heavy Rain',
+  '+SN': '❄️⚠️ Heavy Snow',
+
   FG: '🌫️ Dense Fog',
   BR: '🌫️ Mist',
   HZ: '🌫️ Haze',
-  FU: '💨 Smoke',
-  VA: '🌋 💨 Volcanic Ash - Engine Hazard',
-  DU: '💨 Widespread Dust',
+  FU: '🔥 Smoke',
+  VA: '🌋 Volcanic Ash',
+  DU: '💨 Dust',
   SA: '🏜️ Blowing Sand',
   PO: '💨 Dust/Sand Whirls',
-  DS: '🌪️ 🏜️ Duststorm',
-  
-  // Cloud Coverage
+  DS: '🏜️ Duststorm',
+
   SCT: '⛅ Scattered Clouds',
   BKN: '☁️ Broken Clouds',
-  OVC: '☁️ ☁️ Complete Overcast'
+  OVC: '☁️ Overcast'
 } as const;
