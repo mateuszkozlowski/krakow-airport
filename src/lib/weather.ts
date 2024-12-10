@@ -1,18 +1,23 @@
 // src/lib/weather.ts
 
-import { 
+import type {
   WeatherData,
   TAFData,
   RiskAssessment,
   ForecastChange,
   WeatherResponse,
   WEATHER_PHENOMENA,
-  CloudInfo,
-  WindInfo
+  WeatherCondition
 } from './types/weather';
 
 const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
+
+// CAT I approach minimums for EPKK
+const MINIMUMS = {
+  VISIBILITY: 550,  // meters
+  CEILING: 200     // feet
+} as const;
 
 // Cloud descriptions with emojis
 const CLOUD_DESCRIPTIONS = {
@@ -21,12 +26,6 @@ const CLOUD_DESCRIPTIONS = {
   OVC: '☁️ Overcast',
   FEW: '🌤️ Few clouds',
   CLR: 'Clear skies'
-} as const;
-
-// CAT I approach minimums for EPKK
-const MINIMUMS = {
-  VISIBILITY: 550,  // meters
-  CEILING: 200     // feet
 } as const;
 
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
@@ -58,13 +57,9 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
       current: {
         riskLevel: currentAssessment,
         conditions: {
-          temperature: `${currentWeather.temperature?.celsius}°C`,
-          wind: getFormattedWind(currentWeather.wind),
-          visibility: getFormattedVisibility(currentWeather.visibility?.meters),
-          clouds: getFormattedClouds(currentWeather.clouds),
           phenomena: currentWeather.conditions?.map(c => 
             WEATHER_PHENOMENA[c.code] || c.code
-          ).filter(Boolean)
+          ) || []
         },
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
@@ -87,7 +82,8 @@ function formatTimeDescription(start: Date, end: Date): string {
     });
   };
 
-  if (start < new Date()) {
+  const now = new Date();
+  if (start < now) {
     return `Until ${formatTime(end)}`;
   }
 
@@ -108,21 +104,16 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
     
     // Only include future periods and today's periods
     if (periodEnd > now && periodStart < endOfDay) {
-      // Format as a change in conditions
       const timeDescription = formatTimeDescription(periodStart, periodEnd);
       const assessment = assessWeatherRisk(period);
+      const phenomena = processWeatherPhenomena(period.conditions);
 
       changes.push({
         timeDescription,
         from: periodStart,
         to: periodEnd,
         conditions: {
-          wind: getFormattedWind(period.wind),
-          visibility: getFormattedVisibility(period.visibility?.meters),
-          clouds: getFormattedClouds(period.clouds),
-          phenomena: period.conditions?.map(c => 
-            WEATHER_PHENOMENA[c.code] || c.code
-          ).filter(Boolean)
+          phenomena
         },
         riskLevel: assessment,
         changeType: period.change_indicator || 'PERSISTENT'
@@ -131,28 +122,23 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   });
 
   // Sort changes by start time
-  changes.sort((a, b) => a.from.getTime() - b.from.getTime());
-
-  return changes;
+  return changes.sort((a, b) => a.from.getTime() - b.from.getTime());
 }
 
-function getFormattedWind(wind: WindInfo | undefined): string {
-  if (!wind) return 'No wind data';
-  return `${wind.degrees}° at ${wind.speed_kts}kt${wind.gust_kts ? ` gusting ${wind.gust_kts}kt` : ''}`;
+function processWeatherPhenomena(conditions?: WeatherCondition[]): string[] {
+  if (!conditions) return [];
+  
+  const significantPhenomena = conditions
+    .map(c => WEATHER_PHENOMENA[c.code])
+    .filter((phenomenon): phenomenon is string => !!phenomenon);
+
+  return significantPhenomena;
 }
 
-function getFormattedVisibility(meters: number | undefined): string {
-  if (!meters || isNaN(meters)) return 'No visibility data';
-  const kilometers = meters / 1000;
-  return `${kilometers.toFixed(1)}km`;
-}
-
-function getFormattedClouds(clouds: CloudInfo[] | undefined): string {
-  if (!clouds || clouds.length === 0) return 'Clear skies';
-  return clouds.map(cloud => {
-    const description = CLOUD_DESCRIPTIONS[cloud.code] || cloud.code;
-    return `${description} at ${cloud.base_feet_agl}ft`;
-  }).join(', ');
+function shouldShowPhenomenon(code: keyof typeof WEATHER_PHENOMENA): boolean {
+  // Hide certain phenomena that are less relevant for passengers
+  const hiddenPhenomena = ['SCT', 'BKN', 'OVC', 'FEW'];
+  return !hiddenPhenomena.includes(code);
 }
 
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
@@ -186,7 +172,7 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   // Check weather phenomena
   if (weather.conditions) {
     for (const condition of weather.conditions) {
-      if (condition.code in WEATHER_PHENOMENA) {
+      if (condition.code in WEATHER_PHENOMENA && shouldShowPhenomenon(condition.code)) {
         reasons.push(WEATHER_PHENOMENA[condition.code]);
         // Severe weather conditions
         if (['TS', 'TSRA', 'FZRA', 'FZFG'].includes(condition.code)) {
@@ -207,29 +193,27 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
         level,
         title: "High risk of disruptions",
         message: "Flights may be cancelled or diverted",
-        explanation: `Current conditions that may affect flights:
-          • ${reasons.join('\n• ')}
-          
-          Check with your airline before traveling to the airport.`,
+        explanation: reasons.length > 0 
+          ? `Current conditions that may affect flights:\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling to the airport.`
+          : "Severe weather conditions expected. Check with your airline before traveling to the airport.",
         color: "red"
       };
 
     case 2:
       return {
         level,
-        title: "Some delays are possible",
+        title: "Some delays possible",
         message: "Weather might affect flight schedules",
-        explanation: `Current conditions that may cause delays:
-          • ${reasons.join('\n• ')}
-          
-          Allow extra time for your journey.`,
+        explanation: reasons.length > 0
+          ? `Current conditions that may cause delays:\n• ${reasons.join('\n• ')}\n\nAllow extra time for your journey.`
+          : "Weather conditions might cause some delays. Allow extra time for your journey.",
         color: "orange"
       };
 
     default:
       return {
         level,
-        title: "No weather-related disruptions expected",
+        title: "No disruptions expected",
         message: "Weather conditions are suitable for flying",
         explanation: "Current weather conditions at the airport are good for flying. ✈️",
         color: "green"

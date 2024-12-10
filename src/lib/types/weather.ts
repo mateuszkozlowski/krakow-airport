@@ -1,5 +1,6 @@
 // src/lib/types/weather.ts
 
+// Base types for raw weather data
 export interface WindInfo {
   degrees: number;
   speed_kts: number;
@@ -49,6 +50,7 @@ export interface TAFData {
   raw_text: string;
 }
 
+// Risk assessment types
 export interface RiskAssessment {
   level: 1 | 2 | 3;
   title: string;
@@ -57,8 +59,9 @@ export interface RiskAssessment {
   color: 'red' | 'orange' | 'green';
 }
 
+// Processed and displayed weather data types
 export interface ProcessedConditions {
-  phenomena?: string[];  // Simplified to only include phenomena
+  phenomena: string[];  // No longer optional, will be empty array if no phenomena
 }
 
 export interface ForecastChange {
@@ -81,7 +84,7 @@ export interface WeatherResponse {
   raw_taf: string;
 }
 
-// Re-export weather phenomena for type safety
+// Weather phenomena mapping
 export const WEATHER_PHENOMENA = {
   // Severe & Dangerous Conditions
   TS: '⛈️ Thunderstorm',

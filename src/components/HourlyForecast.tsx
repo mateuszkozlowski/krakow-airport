@@ -23,7 +23,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
       <h2 className="text-xl font-semibold mb-4 text-white">Next 24 Hours Forecast</h2>
       <div className="space-y-3">
         {next24Hours.map((period, index) => {
-          const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
+          const hasWeatherPhenomena = period.conditions.phenomena.length > 0;
           
           // Only show card if there are weather phenomena or risk level > 1
           if (!hasWeatherPhenomena && period.riskLevel.level === 1) {
@@ -37,6 +37,11 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
                   <div className="flex items-center gap-2 text-slate-500">
                     <Clock className="h-4 w-4" />
                     <span>{period.timeDescription}</span>
+                    {period.changeType === 'TEMPO' && (
+                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                        Temporary
+                      </span>
+                    )}
                   </div>
 
                   {/* Status Tag */}
@@ -56,7 +61,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
                 {/* Weather Phenomena Tags - only shown if there are phenomena */}
                 {hasWeatherPhenomena && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {period.conditions.phenomena?.map((phenomenon: string, idx: number) => (
+                    {period.conditions.phenomena.map((phenomenon, idx) => (
                       <span
                         key={idx}
                         className="bg-slate-100 px-3 py-1 rounded-full text-sm text-slate-600"
