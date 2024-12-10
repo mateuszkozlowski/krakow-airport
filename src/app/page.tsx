@@ -162,13 +162,24 @@ export default async function AirportStatus() {
                     ))}
                 </div>
             </div>
-            
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6 max-w-4xl mx-auto px-6">
+                <Card className="bg-white">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold mb-2">Want to know more about diverts?</h3>
+                        <p className="text-slate-600 mb-4 text-sm">The best source of information about diverts from Kraków Airport is (would you have expected this?) Katowice Airport facebook or X site.</p>
+                        <ul className="text-slate-600 space-y-2 text-sm">
+                            <li><a href="https://www.facebook.com/KatowiceAirport/" className="underline">Katowice Airport Facebook</a></li>
+                            <li><a href="https://twitter.com/KatowiceAirport" className="underline">Katowice Airport X (aka Twitter)</a></li>
+                        </ul>
+                    </CardContent>
+                </Card>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <Card className="bg-white">
                     <CardContent className="p-6">
                         <h3 className="font-semibold mb-2">How we get our data?</h3>
-                        <p className="text-slate-600 mb-4">We combine data from three reliable sources:</p>
-                        <ul className="text-slate-600 space-y-2">
+                        <p className="text-slate-600 mb-4 text-sm">We combine data from two reliable sources:</p>
+                        <ul className="text-slate-600 space-y-2 text-sm">
                             <li>Official METAR reports (the stuff pilots actually use)</li>
                             <li>TAF forecasts (fancy airport weather predictions)</li>
                         </ul>
@@ -178,10 +189,10 @@ export default async function AirportStatus() {
                 <Card className="bg-white">
                     <CardContent className="p-6">
                         <h3 className="font-semibold mb-2">Important notice</h3>
-                        <p className="text-slate-600 mb-4">
+                        <p className="text-slate-600 mb-4 text-sm">
                             While we try our best to provide accurate information, we&apos;re not meteorologists, air traffic controllers, or fortune tellers.
                         </p>
-                        <p className="text-slate-600">
+                        <p className="text-slate-600 text-sm">
                             Always check with your airline for the final word on your flight status. They&apos;re the ones with the actual planes, after all!
                         </p>
                     </CardContent>
