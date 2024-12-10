@@ -1,7 +1,6 @@
 // src/components/HourlyForecast.tsx
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, AlertCircle } from 'lucide-react';
 import type { ForecastChange } from '@/lib/types/weather';
 
 interface HourlyForecastProps {

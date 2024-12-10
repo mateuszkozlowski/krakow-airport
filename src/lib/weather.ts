@@ -23,161 +23,6 @@ const MINIMUMS = {
   CEILING: 200     // feet
 } as const;
 
-export async function getAirportWeather(): Promise<WeatherResponse | null> {
-  try {
-    // Fetch both METAR and TAF
-    const [metarResponse, tafResponse] = await Promise.all([
-      fetch(`https://api.checkwx.com/metar/${AIRPORT}/decoded`, {
-        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
-      }),
-      fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
-        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
-      })
-    ]);
-
-    if (!metarResponse.ok || !tafResponse.ok) {
-      throw new Error('Weather data fetch failed');
-    }
-
-    const metarData = await metarResponse.json();
-    const tafData = await tafResponse.json();
-
-    const currentWeather: WeatherData = metarData.data[0];
-    const forecast: TAFData = tafData.data[0];
-
-    const currentAssessment = assessWeatherRisk(currentWeather);
-    const forecastPeriods = processForecast(forecast);
-
-    return {
-      current: {
-        riskLevel: currentAssessment,
-        conditions: {
-          phenomena: currentWeather.conditions?.map(c => 
-            WEATHER_PHENOMENA[c.code]
-          ).filter((p): p is WeatherPhenomenonValue => p !== undefined) || []
-        },
-        raw: currentWeather.raw_text,
-        observed: currentWeather.observed
-      },
-      forecast: forecastPeriods,
-      raw_taf: forecast.raw_text
-    };
-  } catch (error) {
-    console.error('Error fetching weather:', error);
-    return null;
-  }
-}
-
-function processForecast(taf: TAFData | null): ForecastChange[] {
-  if (!taf || !taf.forecast) {
-    console.log('No TAF data to process');
-    return [];
-  }
-
-  const changes: ForecastChange[] = [];
-  const now = new Date();
-
-  console.log('Processing TAF periods:', taf.forecast.length);
-
-  taf.forecast.forEach((period, index) => {
-    // Process the main period
-    if (period.timestamp) {
-      const periodStart = new Date(period.timestamp.from);
-      const periodEnd = new Date(period.timestamp.to);
-      
-      console.log(`Processing period ${index}:`, {
-        type: period.change?.indicator?.code || 'BASE',
-        probability: period.change?.probability,
-        timeRange: `${periodStart.toISOString()} - ${periodEnd.toISOString()}`
-      });
-
-      // Don't filter out future periods
-      const timeDescription = formatTimeDescription(periodStart, periodEnd);
-      const assessment = assessWeatherRisk(period);
-      
-      const phenomena = period.conditions?.map(c => WEATHER_PHENOMENA[c.code])
-        .filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
-
-      // Add probability information to the description if available
-      let description = timeDescription;
-      if (period.change?.probability) {
-        description = `${timeDescription} (${period.change.probability}% probability)`;
-      }
-
-      changes.push({
-        timeDescription: description,
-        from: periodStart,
-        to: periodEnd,
-        conditions: {
-          phenomena
-        },
-        riskLevel: assessment,
-        changeType: period.change?.indicator?.code || 'PERSISTENT'
-      });
-    }
-  });
-
-  // Sort changes by start time and probability (higher probability first)
-  const sortedChanges = changes.sort((a, b) => {
-    const timeCompare = a.from.getTime() - b.from.getTime();
-    if (timeCompare === 0) {
-      // Put BECMG before TEMPO
-      if (a.changeType === 'BECMG' && b.changeType === 'TEMPO') return -1;
-      if (a.changeType === 'TEMPO' && b.changeType === 'BECMG') return 1;
-    }
-    return timeCompare;
-  });
-
-  console.log('Final processed forecast periods:', sortedChanges);
-  
-  return sortedChanges;
-}
-
-function formatTimeDescription(start: Date, end: Date): string {
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Warsaw'
-    });
-  };
-
-  // Format for the current day
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const startTime = formatTime(start);
-  const endTime = formatTime(end);
-
-  if (start.getDate() === today.getDate() && end.getDate() === today.getDate()) {
-    return `Today ${startTime} - ${endTime}`;
-  } else if (start.getDate() === today.getDate()) {
-    return `Today ${startTime} - Tomorrow ${endTime}`;
-  } else if (start.getDate() === tomorrow.getDate()) {
-    return `Tomorrow ${startTime} - ${endTime}`;
-  }
-
-  return `${startTime} - ${endTime}`;
-}
-
-function processWeatherPhenomena(conditions?: WeatherCondition[]): WeatherPhenomenonValue[] {
-  if (!conditions) return [];
-  
-  return conditions
-    .map(c => WEATHER_PHENOMENA[c.code])
-    .filter((p): p is WeatherPhenomenonValue => 
-      p !== undefined && shouldShowPhenomenon(p)
-    );
-}
-
-function shouldShowPhenomenon(phenomenon: WeatherPhenomenonValue): boolean {
-  // Hide certain phenomena that are less relevant for passengers
-  const hiddenPhenomena = ['⛅ Scattered Clouds', '☁️ Broken Clouds', '☁️ ☁️ Complete Overcast'];
-  return !hiddenPhenomena.includes(phenomenon);
-}
-
-
 // Risk weights for different conditions
 const RISK_WEIGHTS = {
   // Severe phenomena (immediate impact)
@@ -227,6 +72,124 @@ const RISK_WEIGHTS = {
     MODERATE: 40         // >= 15kt
   }
 } as const;
+
+export async function getAirportWeather(): Promise<WeatherResponse | null> {
+  try {
+    const [metarResponse, tafResponse] = await Promise.all([
+      fetch(`https://api.checkwx.com/metar/${AIRPORT}/decoded`, {
+        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
+      }),
+      fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
+        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
+      })
+    ]);
+
+    if (!metarResponse.ok || !tafResponse.ok) {
+      throw new Error('Weather data fetch failed');
+    }
+
+    const metarData = await metarResponse.json();
+    const tafData = await tafResponse.json();
+
+    const currentWeather: WeatherData = metarData.data[0];
+    const forecast: TAFData = tafData.data[0];
+
+    const currentAssessment = assessWeatherRisk(currentWeather);
+    const forecastPeriods = processForecast(forecast);
+
+    return {
+      current: {
+        riskLevel: currentAssessment,
+        conditions: {
+          phenomena: currentWeather.conditions?.map(c => 
+            WEATHER_PHENOMENA[c.code]
+          ).filter((p): p is WeatherPhenomenonValue => p !== undefined) || []
+        },
+        raw: currentWeather.raw_text,
+        observed: currentWeather.observed
+      },
+      forecast: forecastPeriods,
+      raw_taf: forecast.raw_text
+    };
+  } catch (error) {
+    console.error('Error fetching weather:', error);
+    return null;
+  }
+}
+
+function processForecast(taf: TAFData | null): ForecastChange[] {
+  if (!taf || !taf.forecast) {
+    console.log('No TAF data to process');
+    return [];
+  }
+
+  const changes: ForecastChange[] = [];
+
+  taf.forecast.forEach((period, index) => {
+    if (period.timestamp) {
+      const periodStart = new Date(period.timestamp.from);
+      const periodEnd = new Date(period.timestamp.to);
+      
+      const timeDescription = formatTimeDescription(periodStart, periodEnd);
+      const assessment = assessWeatherRisk(period);
+      
+      const phenomena = period.conditions?.map(c => WEATHER_PHENOMENA[c.code])
+        .filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
+
+      let description = timeDescription;
+      if (period.change?.probability) {
+        description = `${timeDescription} (${period.change.probability}% probability)`;
+      }
+
+      changes.push({
+        timeDescription: description,
+        from: periodStart,
+        to: periodEnd,
+        conditions: {
+          phenomena
+        },
+        riskLevel: assessment,
+        changeType: period.change?.indicator?.code || 'PERSISTENT'
+      });
+    }
+  });
+
+  return changes.sort((a, b) => {
+    const timeCompare = a.from.getTime() - b.from.getTime();
+    if (timeCompare === 0) {
+      if (a.changeType === 'BECMG' && b.changeType === 'TEMPO') return -1;
+      if (a.changeType === 'TEMPO' && b.changeType === 'BECMG') return 1;
+    }
+    return timeCompare;
+  });
+}
+
+function formatTimeDescription(start: Date, end: Date): string {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+  };
+
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const startTime = formatTime(start);
+  const endTime = formatTime(end);
+
+  if (start.getDate() === today.getDate() && end.getDate() === today.getDate()) {
+    return `Today ${startTime} - ${endTime}`;
+  } else if (start.getDate() === today.getDate()) {
+    return `Today ${startTime} - Tomorrow ${endTime}`;
+  } else if (start.getDate() === tomorrow.getDate()) {
+    return `Tomorrow ${startTime} - ${endTime}`;
+  }
+
+  return `${startTime} - ${endTime}`;
+}
 
 function calculateRiskScore(weather: WeatherData): { score: number; reasons: string[] } {
   let totalScore = 0;
@@ -283,12 +246,10 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
   // Check weather phenomena
   if (weather.conditions) {
     for (const condition of weather.conditions) {
-      // Check severe phenomena
       if (condition.code in RISK_WEIGHTS.PHENOMENA_SEVERE) {
         totalScore += RISK_WEIGHTS.PHENOMENA_SEVERE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_SEVERE];
         reasons.push(WEATHER_PHENOMENA[condition.code]);
       }
-      // Check moderate phenomena
       else if (condition.code in RISK_WEIGHTS.PHENOMENA_MODERATE) {
         totalScore += RISK_WEIGHTS.PHENOMENA_MODERATE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_MODERATE];
         reasons.push(WEATHER_PHENOMENA[condition.code]);
@@ -302,8 +263,6 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   const { score, reasons } = calculateRiskScore(weather);
   
-  // Define risk levels based on total score
-  // Multiple severe conditions or one severe + multiple moderate = very high risk
   if (score >= 150) {
     return {
       level: 3,
@@ -313,7 +272,6 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
       color: "red"
     };
   }
-  // One severe condition or multiple moderate = high risk
   else if (score >= 80) {
     return {
       level: 3,
@@ -323,7 +281,6 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
       color: "red"
     };
   }
-  // Multiple minor conditions or one moderate = moderate risk
   else if (score >= 40) {
     return {
       level: 2,
@@ -333,7 +290,6 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
       color: "orange"
     };
   }
-  // Good conditions or minor issues
   else {
     return {
       level: 1,
