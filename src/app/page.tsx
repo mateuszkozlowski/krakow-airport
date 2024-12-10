@@ -197,7 +197,7 @@ export default async function AirportStatus() {
                     </CardContent>
                 </Card>
             </div>
-            <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-4">
+            <footer className="bottom-0 left-0 right-0 bg-white border-t py-4">
      <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
        <div>
          Built by Mateusz Kozłowski.
