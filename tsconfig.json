@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@next/third-parties/google": ["./node_modules/@next/third-parties/dist/google"]
+      "@next/third-parties/google": ["node_modules/@next/third-parties/dist/google"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
