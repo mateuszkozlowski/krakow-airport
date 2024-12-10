@@ -1,14 +1,16 @@
 // src/lib/weather.ts
 
-import type {
+import {
   WeatherData,
   TAFData,
   RiskAssessment,
   ForecastChange,
   WeatherResponse,
-  WEATHER_PHENOMENA,
-  WeatherCondition
+  WeatherCondition,
 } from './types/weather';
+
+// Import WEATHER_PHENOMENA as a value, not a type
+import { WEATHER_PHENOMENA } from './types/weather';
 
 const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
@@ -58,8 +60,8 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
         riskLevel: currentAssessment,
         conditions: {
           phenomena: currentWeather.conditions?.map(c => 
-            WEATHER_PHENOMENA[c.code] || c.code
-          ) || []
+            WEATHER_PHENOMENA[c.code]
+          ).filter((p): p is string => !!p) || []
         },
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
@@ -128,17 +130,15 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 function processWeatherPhenomena(conditions?: WeatherCondition[]): string[] {
   if (!conditions) return [];
   
-  const significantPhenomena = conditions
+  return conditions
     .map(c => WEATHER_PHENOMENA[c.code])
-    .filter((phenomenon): phenomenon is string => !!phenomenon);
-
-  return significantPhenomena;
+    .filter((p): p is string => !!p && shouldShowPhenomenon(p));
 }
 
-function shouldShowPhenomenon(code: keyof typeof WEATHER_PHENOMENA): boolean {
+function shouldShowPhenomenon(phenomenon: string): boolean {
   // Hide certain phenomena that are less relevant for passengers
-  const hiddenPhenomena = ['SCT', 'BKN', 'OVC', 'FEW'];
-  return !hiddenPhenomena.includes(code);
+  const hiddenPhenomena = ['⛅ Scattered Clouds', '☁️ Broken Clouds', '☁️ ☁️ Complete Overcast'];
+  return !hiddenPhenomena.includes(phenomenon);
 }
 
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
@@ -172,8 +172,9 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   // Check weather phenomena
   if (weather.conditions) {
     for (const condition of weather.conditions) {
-      if (condition.code in WEATHER_PHENOMENA && shouldShowPhenomenon(condition.code)) {
-        reasons.push(WEATHER_PHENOMENA[condition.code]);
+      const phenomenon = WEATHER_PHENOMENA[condition.code];
+      if (phenomenon && shouldShowPhenomenon(phenomenon)) {
+        reasons.push(phenomenon);
         // Severe weather conditions
         if (['TS', 'TSRA', 'FZRA', 'FZFG'].includes(condition.code)) {
           level = 3;
