@@ -14,7 +14,7 @@ export default async function Page() {
             <div className="bg-[#1a1f36]">
                 {/* Alert banner */}
                 <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
-                    <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
+                    <div className="max-w-4xl mx-auto w-full flex-wrap md:flex justify-between items-center">
                         <p className="text-sm">
                             This is not an official Kraków Airport page. For official information, visit{" "}
                             <a href="https://krakowairport.pl" className="underline">krakowairport.pl</a>
