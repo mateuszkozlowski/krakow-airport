@@ -68,6 +68,71 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
   }
 }
 
+function processForecast(taf: TAFData | null): ForecastChange[] {
+  if (!taf || !taf.forecast) {
+    console.log('No TAF data to process');
+    return [];
+  }
+
+  const changes: ForecastChange[] = [];
+  const now = new Date();
+
+  console.log('Processing TAF periods:', taf.forecast.length);
+
+  taf.forecast.forEach((period, index) => {
+    // Process the main period
+    if (period.timestamp) {
+      const periodStart = new Date(period.timestamp.from);
+      const periodEnd = new Date(period.timestamp.to);
+      
+      console.log(`Processing period ${index}:`, {
+        type: period.change?.indicator?.code || 'BASE',
+        probability: period.change?.probability,
+        timeRange: `${periodStart.toISOString()} - ${periodEnd.toISOString()}`
+      });
+
+      // Don't filter out future periods
+      const timeDescription = formatTimeDescription(periodStart, periodEnd);
+      const assessment = assessWeatherRisk(period);
+      
+      const phenomena = period.conditions?.map(c => WEATHER_PHENOMENA[c.code])
+        .filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
+
+      // Add probability information to the description if available
+      let description = timeDescription;
+      if (period.change?.probability) {
+        description = `${timeDescription} (${period.change.probability}% probability)`;
+      }
+
+      changes.push({
+        timeDescription: description,
+        from: periodStart,
+        to: periodEnd,
+        conditions: {
+          phenomena
+        },
+        riskLevel: assessment,
+        changeType: period.change?.indicator?.code || 'PERSISTENT'
+      });
+    }
+  });
+
+  // Sort changes by start time and probability (higher probability first)
+  const sortedChanges = changes.sort((a, b) => {
+    const timeCompare = a.from.getTime() - b.from.getTime();
+    if (timeCompare === 0) {
+      // Put BECMG before TEMPO
+      if (a.changeType === 'BECMG' && b.changeType === 'TEMPO') return -1;
+      if (a.changeType === 'TEMPO' && b.changeType === 'BECMG') return 1;
+    }
+    return timeCompare;
+  });
+
+  console.log('Final processed forecast periods:', sortedChanges);
+  
+  return sortedChanges;
+}
+
 function formatTimeDescription(start: Date, end: Date): string {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-GB', {
@@ -77,47 +142,23 @@ function formatTimeDescription(start: Date, end: Date): string {
     });
   };
 
-  const now = new Date();
-  if (start < now) {
-    return `Until ${formatTime(end)}`;
+  // Format for the current day
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const startTime = formatTime(start);
+  const endTime = formatTime(end);
+
+  if (start.getDate() === today.getDate() && end.getDate() === today.getDate()) {
+    return `Today ${startTime} - ${endTime}`;
+  } else if (start.getDate() === today.getDate()) {
+    return `Today ${startTime} - Tomorrow ${endTime}`;
+  } else if (start.getDate() === tomorrow.getDate()) {
+    return `Tomorrow ${startTime} - ${endTime}`;
   }
 
-  return `${formatTime(start)} - ${formatTime(end)}`;
-}
-
-function processForecast(taf: TAFData | null): ForecastChange[] {
-  if (!taf || !taf.forecast) return [];
-
-  const changes: ForecastChange[] = [];
-  const now = new Date();
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  taf.forecast.forEach(period => {
-    const periodStart = new Date(period.timestamp?.from ?? '');
-    const periodEnd = new Date(period.timestamp?.to ?? '');
-    
-    // Only include future periods and today's periods
-    if (periodEnd > now && periodStart < endOfDay) {
-      const timeDescription = formatTimeDescription(periodStart, periodEnd);
-      const assessment = assessWeatherRisk(period);
-      const phenomena = processWeatherPhenomena(period.conditions);
-
-      changes.push({
-        timeDescription,
-        from: periodStart,
-        to: periodEnd,
-        conditions: {
-          phenomena
-        },
-        riskLevel: assessment,
-        changeType: period.change_indicator || 'PERSISTENT'
-      });
-    }
-  });
-
-  // Sort changes by start time
-  return changes.sort((a, b) => a.from.getTime() - b.from.getTime());
+  return `${startTime} - ${endTime}`;
 }
 
 function processWeatherPhenomena(conditions?: WeatherCondition[]): WeatherPhenomenonValue[] {
@@ -136,83 +177,172 @@ function shouldShowPhenomenon(phenomenon: WeatherPhenomenonValue): boolean {
   return !hiddenPhenomena.includes(phenomenon);
 }
 
-function assessWeatherRisk(weather: WeatherData): RiskAssessment {
-  const reasons: string[] = [];
-  let level: 1 | 2 | 3 = 1; // default: no risk
 
+// Risk weights for different conditions
+const RISK_WEIGHTS = {
+  // Severe phenomena (immediate impact)
+  PHENOMENA_SEVERE: {
+    TS: 100,    // Thunderstorm
+    TSRA: 100,  // Thunderstorm with rain
+    FZRA: 70,   // Freezing rain
+    FZDZ: 50,   // Freezing drizzle
+    FZFG: 50,   // Freezing fog
+    FC: 100,    // Funnel cloud
+    SS: 90      // Sandstorm
+  },
+  
+  // Moderate phenomena
+  PHENOMENA_MODERATE: {
+    SN: 50,     // Snow
+    SG: 50,     // Snow grains
+    BR: 30,     // Mist
+    FG: 70,     // Fog
+    RA: 40,     // Rain
+    GR: 70,     // Hail
+    GS: 60,     // Small hail
+    '+RA': 60,  // Heavy rain
+    '+SN': 70   // Heavy snow
+  },
+  
+  // Visibility weights
+  VISIBILITY: {
+    BELOW_MINIMUM: 100,  // Below landing minimum
+    VERY_LOW: 70,        // Below 1000m
+    LOW: 50,             // Below 1500m
+    MODERATE: 30         // Below 3000m
+  },
+  
+  // Ceiling weights
+  CEILING: {
+    BELOW_MINIMUM: 100,  // Below landing minimum
+    VERY_LOW: 70,        // Below 300ft
+    LOW: 50,             // Below 500ft
+    MODERATE: 30         // Below 1000ft
+  },
+  
+  // Wind weights
+  WIND: {
+    STRONG_GUSTS: 80,    // Gusts >= 35kt
+    STRONG: 60,          // >= 25kt
+    MODERATE: 40         // >= 15kt
+  }
+} as const;
+
+function calculateRiskScore(weather: WeatherData): { score: number; reasons: string[] } {
+  let totalScore = 0;
+  const reasons: string[] = [];
+  
   // Check visibility
-  if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
-    reasons.push("Visibility is below landing minimums");
-    level = 3;
-  } else if (weather.visibility?.meters && weather.visibility.meters < 1500) {
-    reasons.push("Low visibility conditions");
-    level = Math.max(level, 2) as 1 | 2 | 3;
+  if (weather.visibility?.meters) {
+    if (weather.visibility.meters < MINIMUMS.VISIBILITY) {
+      totalScore += RISK_WEIGHTS.VISIBILITY.BELOW_MINIMUM;
+      reasons.push("Visibility below landing minimums");
+    } else if (weather.visibility.meters < 1000) {
+      totalScore += RISK_WEIGHTS.VISIBILITY.VERY_LOW;
+      reasons.push("Very low visibility");
+    } else if (weather.visibility.meters < 1500) {
+      totalScore += RISK_WEIGHTS.VISIBILITY.LOW;
+      reasons.push("Low visibility");
+    } else if (weather.visibility.meters < 3000) {
+      totalScore += RISK_WEIGHTS.VISIBILITY.MODERATE;
+      reasons.push("Reduced visibility");
+    }
   }
 
   // Check ceiling
-  if (weather.ceiling?.feet && weather.ceiling.feet < MINIMUMS.CEILING) {
-    reasons.push("Cloud ceiling is too low for landings");
-    level = 3;
-  } else if (weather.ceiling?.feet && weather.ceiling.feet < 500) {
-    reasons.push("Low cloud ceiling");
-    level = Math.max(level, 2) as 1 | 2 | 3;
+  if (weather.ceiling?.feet) {
+    if (weather.ceiling.feet < MINIMUMS.CEILING) {
+      totalScore += RISK_WEIGHTS.CEILING.BELOW_MINIMUM;
+      reasons.push("Ceiling below landing minimums");
+    } else if (weather.ceiling.feet < 300) {
+      totalScore += RISK_WEIGHTS.CEILING.VERY_LOW;
+      reasons.push("Very low ceiling");
+    } else if (weather.ceiling.feet < 500) {
+      totalScore += RISK_WEIGHTS.CEILING.LOW;
+      reasons.push("Low ceiling");
+    } else if (weather.ceiling.feet < 1000) {
+      totalScore += RISK_WEIGHTS.CEILING.MODERATE;
+      reasons.push("Moderate ceiling");
+    }
   }
 
-  // Check wind
-  if (weather.wind?.speed_kts && weather.wind.speed_kts >= 25) {
-    reasons.push(`Strong winds (${weather.wind.speed_kts}kt)`);
-    level = Math.max(level, 2) as 1 | 2 | 3;
+  // Check winds
+  if (weather.wind?.speed_kts) {
+    if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
+      totalScore += RISK_WEIGHTS.WIND.STRONG_GUSTS;
+      reasons.push(`Strong wind gusts (${weather.wind.gust_kts}kt)`);
+    } else if (weather.wind.speed_kts >= 25) {
+      totalScore += RISK_WEIGHTS.WIND.STRONG;
+      reasons.push(`Strong winds (${weather.wind.speed_kts}kt)`);
+    } else if (weather.wind.speed_kts >= 15) {
+      totalScore += RISK_WEIGHTS.WIND.MODERATE;
+      reasons.push(`Moderate winds (${weather.wind.speed_kts}kt)`);
+    }
   }
 
   // Check weather phenomena
   if (weather.conditions) {
     for (const condition of weather.conditions) {
-      const phenomenon = WEATHER_PHENOMENA[condition.code];
-      if (phenomenon && shouldShowPhenomenon(phenomenon)) {
-        reasons.push(phenomenon);
-        // Severe weather conditions
-        if (['TS', 'TSRA', 'FZRA', 'FZFG'].includes(condition.code)) {
-          level = 3;
-        }
-        // Moderate weather conditions
-        else if (['BR', 'RA', 'SN', 'FG'].includes(condition.code)) {
-          level = Math.max(level, 2) as 1 | 2 | 3;
-        }
+      // Check severe phenomena
+      if (condition.code in RISK_WEIGHTS.PHENOMENA_SEVERE) {
+        totalScore += RISK_WEIGHTS.PHENOMENA_SEVERE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_SEVERE];
+        reasons.push(WEATHER_PHENOMENA[condition.code]);
+      }
+      // Check moderate phenomena
+      else if (condition.code in RISK_WEIGHTS.PHENOMENA_MODERATE) {
+        totalScore += RISK_WEIGHTS.PHENOMENA_MODERATE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_MODERATE];
+        reasons.push(WEATHER_PHENOMENA[condition.code]);
       }
     }
   }
 
-  // Return assessment based on level
-  switch (level) {
-    case 3:
-      return {
-        level,
-        title: "High risk of disruptions",
-        message: "Flights may be cancelled or diverted",
-        explanation: reasons.length > 0 
-          ? `Current conditions that may affect flights:\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling to the airport.`
-          : "Severe weather conditions expected. Check with your airline before traveling to the airport.",
-        color: "red"
-      };
+  return { score: totalScore, reasons };
+}
 
-    case 2:
-      return {
-        level,
-        title: "Some delays possible",
-        message: "Weather might affect flight schedules",
-        explanation: reasons.length > 0
-          ? `Current conditions that may cause delays:\n• ${reasons.join('\n• ')}\n\nAllow extra time for your journey.`
-          : "Weather conditions might cause some delays. Allow extra time for your journey.",
-        color: "orange"
-      };
-
-    default:
-      return {
-        level,
-        title: "No disruptions expected",
-        message: "Weather conditions are suitable for flying",
-        explanation: "Current weather conditions at the airport are good for flying. ✈️",
-        color: "green"
-      };
+function assessWeatherRisk(weather: WeatherData): RiskAssessment {
+  const { score, reasons } = calculateRiskScore(weather);
+  
+  // Define risk levels based on total score
+  // Multiple severe conditions or one severe + multiple moderate = very high risk
+  if (score >= 150) {
+    return {
+      level: 3,
+      title: "High risk of disruptions",
+      message: "Flights may be cancelled or diverted",
+      explanation: `Multiple severe weather conditions (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling.`,
+      color: "red"
+    };
+  }
+  // One severe condition or multiple moderate = high risk
+  else if (score >= 80) {
+    return {
+      level: 3,
+      title: "High risk of disruptions",
+      message: "Flights may be cancelled or diverted",
+      explanation: `Severe weather conditions (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling.`,
+      color: "red"
+    };
+  }
+  // Multiple minor conditions or one moderate = moderate risk
+  else if (score >= 40) {
+    return {
+      level: 2,
+      title: "Some delays possible",
+      message: "Weather might affect schedules",
+      explanation: `Weather conditions that may cause delays (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck flight status before traveling.`,
+      color: "orange"
+    };
+  }
+  // Good conditions or minor issues
+  else {
+    return {
+      level: 1,
+      title: "No disruptions expected",
+      message: "Good flying conditions",
+      explanation: score > 0 
+        ? `Minor weather conditions present (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nNo significant impact expected.`
+        : "Current weather conditions are favorable for flying. ✈️",
+      color: "green"
+    };
   }
 }

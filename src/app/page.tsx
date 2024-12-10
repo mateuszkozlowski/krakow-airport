@@ -41,7 +41,7 @@ export default async function AirportStatus() {
                         <>
                             <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
-                                    ? "I don&apos;t think so. Have you heard about Katowice or Rzeszów?"
+                                    ? "Hm... Have you heard about Katowice or Rzeszów?"
                                     : weather.current.riskLevel.level === 2
                                     ? "Maybe yes, maybe not. Be prepared for some delays."
                                     : "I would say so."}
