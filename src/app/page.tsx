@@ -33,7 +33,7 @@ export default async function AirportStatus() {
 
                 {/* Main content */}
                 <div className="max-w-4xl mx-auto px-6 pb-48">
-                    <h1 className="text-5xl font-bold mt-48 mb-4 text-white">
+                    <h1 className="text-5xl font-bold mt-36 mb-4 text-white">
                         Will I fly today from Krakow?
                     </h1>
                     
