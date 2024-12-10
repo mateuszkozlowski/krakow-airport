@@ -11,7 +11,7 @@ import {
   WindInfo
 } from './types/weather';
 
-const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
+const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
 // Cloud descriptions with emojis
