@@ -1,13 +1,18 @@
-'use client';
+'use client'; // This ensures it's client-side rendering
 
 import '@/app/globals.css';
 import { Inter } from 'next/font/google';
 import { useEffect } from 'react';
-import ReactGA from 'react-ga4';
-import { useRouter } from 'next/navigation';
+import ReactGA from 'react-ga4'; // Import react-ga4
+import { useRouter } from 'next/router'; // Correct import from next/router
 
 const inter = Inter({ subsets: ['latin'] });
-const TRACKING_ID = process.env.NEXT_PUBLIC_GA4_KEY as string; // Type assertion
+
+const TRACKING_ID = process.env.NEXT_PUBLIC_GA4_KEY; // Use NEXT_PUBLIC_ prefix for environment variables
+
+if (!TRACKING_ID) {
+  throw new Error('Google Analytics 4 Tracking ID is not defined.');
+}
 
 export default function RootLayout({
   children,
@@ -17,33 +22,24 @@ export default function RootLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (TRACKING_ID) {
-      ReactGA.initialize(TRACKING_ID);
-      ReactGA.send({ hitType: 'pageview', page: window.location.pathname }); // Specify hitType and page
-    } else {
-      console.error('GA4 tracking ID is not defined');
-    }
+    // Initialize Google Analytics 4
+    ReactGA.initialize(TRACKING_ID);
+    ReactGA.send({ hitType: 'pageview', page: window.location.pathname }); // Send pageview event on initial load
   }, []);
 
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      if (TRACKING_ID) {
-        ReactGA.send({ hitType: 'pageview', page: url }); // Specify hitType and page
-      }
+      ReactGA.send({ hitType: 'pageview', page: url }); // Track page views on route change
     };
 
-    // Note: Next.js 13+ App Router doesn't use router.events
-    // Instead, we can track route changes using the pathname
-    const handlePathnameChange = () => {
-      handleRouteChange(window.location.pathname);
-    };
+    // Listen for route changes
+    router.events.on('routeChangeComplete', handleRouteChange);
 
-    window.addEventListener('popstate', handlePathnameChange);
-    
     return () => {
-      window.removeEventListener('popstate', handlePathnameChange);
+      // Clean up the listener on unmount
+      router.events.off('routeChangeComplete', handleRouteChange);
     };
-  }, []);
+  }, [router.events]);
 
   return (
     <html lang="en" suppressHydrationWarning>
