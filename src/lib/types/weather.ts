@@ -1,6 +1,5 @@
 // src/lib/types/weather.ts
 
-// Base types for raw weather data
 export interface WindInfo {
   degrees: number;
   speed_kts: number;
@@ -25,6 +24,17 @@ export interface WeatherTimestamp {
   to: string;
 }
 
+export interface ChangeIndicator {
+  code: 'TEMPO' | 'BECMG';
+  text: string;
+  desc: string;
+}
+
+export interface Change {
+  probability?: number;
+  indicator?: ChangeIndicator;
+}
+
 export interface WeatherData {
   temperature?: {
     celsius: number;
@@ -38,11 +48,13 @@ export interface WeatherData {
   conditions?: WeatherCondition[];
   raw_text: string;
   observed: string;
+  change?: Change;
 }
 
 export interface ForecastPeriod extends WeatherData {
   timestamp?: WeatherTimestamp;
   change_indicator?: 'TEMPO' | 'BECMG' | 'PERSISTENT';
+  change?: Change;
 }
 
 export interface TAFData {
@@ -50,7 +62,6 @@ export interface TAFData {
   raw_text: string;
 }
 
-// Risk assessment types
 export interface RiskAssessment {
   level: 1 | 2 | 3;
   title: string;
@@ -59,9 +70,8 @@ export interface RiskAssessment {
   color: 'red' | 'orange' | 'green';
 }
 
-// Processed and displayed weather data types
 export interface ProcessedConditions {
-  phenomena: string[];  // No longer optional, will be empty array if no phenomena
+  phenomena: string[];  // No longer optional
 }
 
 export interface ForecastChange {
@@ -84,7 +94,6 @@ export interface WeatherResponse {
   raw_taf: string;
 }
 
-// Weather phenomena mapping
 export const WEATHER_PHENOMENA = {
   // Severe & Dangerous Conditions
   TS: '⛈️ Thunderstorm',
