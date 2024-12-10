@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import '@/app/globals.css';
 import { Inter } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
@@ -9,12 +10,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const gaId = process.env.NEXT_PUBLIC_GA4_KEY;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         {children}
       </body>
-      <GoogleAnalytics gaId='G-QCPMT7059K' />
+      {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   )
 }
