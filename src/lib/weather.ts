@@ -1,12 +1,11 @@
 // src/lib/weather.ts
 
-import {
+import type {
   WeatherData,
   TAFData,
   RiskAssessment,
   ForecastChange,
   WeatherResponse,
-  WeatherCondition,
 } from './types/weather';
 
 // Import WEATHER_PHENOMENA as a value, not a type
@@ -125,7 +124,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
   const changes: ForecastChange[] = [];
 
-  taf.forecast.forEach((period, index) => {
+  taf.forecast.forEach((period) => {
     if (period.timestamp) {
       const periodStart = new Date(period.timestamp.from);
       const periodEnd = new Date(period.timestamp.to);
