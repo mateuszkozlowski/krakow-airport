@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import HourlyForecast from "@/components/HourlyForecast";
 
-export default async function AirportStatus() {
+export default async function Page() {
     const weather = await getAirportWeather();
 
     return (
@@ -133,14 +133,17 @@ export default async function AirportStatus() {
 
             {/* Footer */}
             <footer className="bottom-0 left-0 right-0 bg-white border-t py-4">
-                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
-                    <div>Built by Mateusz Kozłowski.</div>
-                    <div className="flex gap-4">
-                        <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-900">Email</a>
-                        <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-900">WWW</a>
-                    </div>
-                </div>
-            </footer>
+  <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
+    <div>
+      Built by Mateusz Kozłowski.
+    </div>
+    <div className="flex gap-4">
+      <a href="/changelog" className="hover:text-slate-900">Changelog</a>
+      <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-900">Email</a>
+      <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-900">WWW</a>
+    </div>
+  </div>
+</footer>
         </div>
     );
 }
