@@ -1,9 +1,9 @@
 // src/app/page.tsx
-
 import { getAirportWeather } from "@/lib/weather";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import HourlyForecast from "@/components/HourlyForecast";
 
 export default async function AirportStatus() {
     const weather = await getAirportWeather();
@@ -41,7 +41,7 @@ export default async function AirportStatus() {
                         <>
                             <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
-                                    ? "I don&apos;t think so. Have you heard about Katowice or Rzeszów?"
+                                    ? "I don't think so. Have you heard about Katowice or Rzeszów?"
                                     : weather.current.riskLevel.level === 2
                                     ? "Maybe yes, maybe not. Be prepared for some delays."
                                     : "I would say so."}
@@ -57,9 +57,7 @@ export default async function AirportStatus() {
                             }`}>
                                 <div className="flex gap-3">
                                     {weather.current.riskLevel.level === 1 ? (
-                                        <CheckCircle2 className={`h-5 w-5 ${
-                                            weather.current.riskLevel.level === 1 ? 'text-emerald-400' : ''
-                                        }`} />
+                                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                                     ) : (
                                         <AlertTriangle className={`h-5 w-5 ${
                                             weather.current.riskLevel.level === 3 
@@ -84,9 +82,10 @@ export default async function AirportStatus() {
                                                 ? 'Weather conditions are looking good'
                                                 : weather.current.riskLevel.message}
                                         </div>
-                                        {weather.current.conditions.phenomena && weather.current.conditions.phenomena.length > 0 && (
+                                        {weather.current.conditions.phenomena && 
+                                         weather.current.conditions.phenomena.length > 0 && (
                                             <div className="flex gap-2 flex-wrap mt-3">
-                                                {weather.current.conditions.phenomena.map((phenomenon: string, index: number) => (
+                                                {weather.current.conditions.phenomena.map((phenomenon, index) => (
                                                     <span key={index} className="bg-white/10 px-3 py-1 rounded-full text-sm text-white">
                                                         {phenomenon}
                                                     </span>
@@ -103,76 +102,10 @@ export default async function AirportStatus() {
 
             {/* Bottom section with forecast */}
             <div className="max-w-4xl mx-auto px-6 -mt-16 pb-8">
-                <h2 className="text-lg text-white mb-4">
-                    Forecast for changes expected in next 24 hours
-                </h2>
-                
-                <div className="space-y-3">
-                    {weather?.forecast?.map((period, index) => (
-                        <Card key={index} className="bg-white shadow-sm">
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-slate-500">
-                                        {period.timeDescription}
-                                    </span>
-                                    {period.changeType === "TEMPO" && (
-                                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                            Temporary Changes
-                                        </span>
-                                    )}
-                                    <span className={`px-2 py-1 rounded-full text-sm ${
-                                        period.riskLevel.level === 3 
-                                            ? 'bg-red-100 text-red-800'
-                                            : period.riskLevel.level === 2 
-                                            ? 'bg-orange-100 text-orange-800'
-                                            : 'bg-emerald-100 text-emerald-800'
-                                    }`}>
-                                        {period.riskLevel.level === 1 
-                                            ? 'No disruptions expected'
-                                            : period.riskLevel.title}
-                                    </span>
-                                </div>
+                {weather?.forecast && <HourlyForecast forecast={weather.forecast} />}
+            </div>
 
-                                <div className="space-y-3 text-sm text-slate-600">
-                                    {period.conditions.phenomena && period.conditions.phenomena.length > 0 && (
-                                        <div className="flex gap-2 flex-wrap">
-                                            {period.conditions.phenomena.map((phenomenon: string, idx: number) => (
-                                                <span key={idx} className="bg-slate-100 px-3 py-1 rounded-full">
-                                                    {phenomenon}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                    
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {period.conditions.wind && (
-                                            <div>Wind: {period.conditions.wind}</div>
-                                        )}
-                                        {period.conditions.visibility && (
-                                            <div>Visibility: {period.conditions.visibility}</div>
-                                        )}
-                                        {period.conditions.clouds && (
-                                            <div className="col-span-2">Clouds: {period.conditions.clouds}</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6 max-w-4xl mx-auto px-6">
-                <Card className="bg-white">
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold mb-2">Want to know more about diverts?</h3>
-                        <p className="text-slate-600 mb-4 text-sm">The best source of information about diverts from Kraków Airport is (would you have expected this?) Katowice Airport facebook or X site.</p>
-                        <ul className="text-slate-600 space-y-2 text-sm">
-                            <li><a href="https://www.facebook.com/KatowiceAirport/" className="underline">Katowice Airport Facebook</a></li>
-                            <li><a href="https://twitter.com/KatowiceAirport" className="underline">Katowice Airport X (aka Twitter)</a></li>
-                        </ul>
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Info cards section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <Card className="bg-white">
                     <CardContent className="p-6">
@@ -189,25 +122,25 @@ export default async function AirportStatus() {
                     <CardContent className="p-6">
                         <h3 className="font-semibold mb-2">Important notice</h3>
                         <p className="text-slate-600 mb-4 text-sm">
-                            While we try our best to provide accurate information, we&apos;re not meteorologists, air traffic controllers, or fortune tellers.
+                            While we try our best to provide accurate information, we're not meteorologists, air traffic controllers, or fortune tellers.
                         </p>
                         <p className="text-slate-600 text-sm">
-                            Always check with your airline for the final word on your flight status. They&apos;re the ones with the actual planes, after all!
+                            Always check with your airline for the final word on your flight status. They're the ones with the actual planes, after all!
                         </p>
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Footer */}
             <footer className="bottom-0 left-0 right-0 bg-white border-t py-4">
-     <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
-       <div>
-         Built by Mateusz Kozłowski.
-       </div>
-       <div className="flex gap-4">
-         <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-900">Email</a>
-         <a href="https:mateuszkozlowski.xyz/" className="hover:text-slate-900">WWW</a>
-       </div>
-     </div>
-   </footer>
+                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
+                    <div>Built by Mateusz Kozłowski.</div>
+                    <div className="flex gap-4">
+                        <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-900">Email</a>
+                        <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-900">WWW</a>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }

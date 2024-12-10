@@ -81,7 +81,6 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
 function processForecast(taf: TAFData | null): ForecastChange[] {
   if (!taf || !taf.forecast) return [];
 
-  // Create timeline of changes
   const changes: ForecastChange[] = [];
   const now = new Date();
   const endOfDay = new Date(now);
@@ -102,9 +101,6 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         from: periodStart,
         to: periodEnd,
         conditions: {
-          wind: getFormattedWind(period.wind),
-          visibility: getFormattedVisibility(period.visibility?.meters),
-          clouds: getFormattedClouds(period.clouds),
           phenomena: period.conditions?.map(c => 
             WEATHER_PHENOMENA[c.code] || c.code
           ).filter(Boolean)
@@ -122,26 +118,19 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 }
 
 function formatTimeDescription(start: Date, end: Date): string {
-  const now = new Date();
-  const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+  };
 
-  if (start < now) {
-    return `Until ${endTime}`;
+  if (start < new Date()) {
+    return `Until ${formatTime(end)}`;
   }
 
-  // If period is less than 2 hours
-  if ((end.getTime() - start.getTime()) <= 2 * 60 * 60 * 1000) {
-    return `Around ${startTime}`;
-  }
-
-  // If it's a TEMPO (temporary change)
-  if (start.getDate() === end.getDate()) {
-    return `${startTime} - ${endTime}`;
-  }
-
-  // For longer periods
-  return `From ${startTime}`;
+  return `${formatTime(start)} - ${formatTime(end)}`;
 }
 
 function getFormattedWind(wind: WindInfo | undefined): string {

@@ -133,3 +133,28 @@ export const WEATHER_PHENOMENA = {
  BKN: '☁️ Broken Clouds',
  OVC: '☁️ ☁️ Complete Overcast'
 } as const;
+
+
+export interface ProcessedConditions {
+  phenomena?: string[];  // Simplified to only include phenomena
+}
+
+export interface ForecastChange {
+  timeDescription: string;
+  from: Date;
+  to: Date;
+  conditions: ProcessedConditions;
+  riskLevel: RiskAssessment;
+  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
+}
+
+export interface WeatherResponse {
+  current: {
+    riskLevel: RiskAssessment;
+    conditions: ProcessedConditions;
+    raw: string;
+    observed: string;
+  };
+  forecast: ForecastChange[];
+  raw_taf: string;
+}
