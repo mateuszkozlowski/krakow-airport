@@ -17,6 +17,8 @@ export default function RootLayout({
     if (TRACKING_ID) {
       ReactGA.initialize(TRACKING_ID);
       ReactGA.send({ hitType: 'pageview', page: window.location.pathname });
+    } else {
+      console.error('GA4 tracking ID is not defined');
     }
   }, []);
 
@@ -31,7 +33,10 @@ export default function RootLayout({
     };
 
     window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   return (
