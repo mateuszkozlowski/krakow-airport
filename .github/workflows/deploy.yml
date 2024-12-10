@@ -3,34 +3,36 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - main  # Deploy on push to the main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # Allow action to write to the repo
+
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v3  # Checkout the repo
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          
+          node-version: '18'  # Node.js version
+
       - name: Install dependencies
-        run: npm install
-        
+        run: npm install  # Install project dependencies
+
       - name: Type check
-        run: npx tsc --noEmit
-        
-      - name: Build
-        run: npm run build
+        run: npx tsc --noEmit  # TypeScript type check
+
+      - name: Build project
+        run: npm run build  # Build the project
         env:
-          NEXT_PUBLIC_BASE_PATH: /krakow-airport
-          CHECKWX_API_KEY: ${{ secrets.CHECKWX_API_KEY }}
-          
+          NEXT_PUBLIC_BASE_PATH: /krakow-airport  # Ensure the base path is set correctly for GitHub Pages
+          CHECKWX_API_KEY: ${{ secrets.CHECKWX_API_KEY }}  # Use GitHub secrets for API key
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: out
+          folder: out  # Deploy the static build from the `out` folder
+          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication

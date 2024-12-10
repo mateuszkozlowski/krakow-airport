@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, // Enable React strict mode
-  output: 'export', // Enable static export
-  trailingSlash: true, // Ensure trailing slash for all paths
+  reactStrictMode: true,
+  output: 'export', // This ensures static export
+  trailingSlash: true, // Important for GitHub Pages, to include trailing slashes
   images: {
-    unoptimized: true, // Disable Next.js image optimization
+    unoptimized: true, // Disable Next.js image optimization (not supported on GitHub Pages)
   },
 };
 
