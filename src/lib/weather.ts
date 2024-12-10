@@ -123,13 +123,8 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
 function formatTimeDescription(start: Date, end: Date): string {
   const now = new Date();
-  
-  // Add 1 hour for CET
-  const startCET = new Date(start.getTime() + (60 * 60 * 1000));
-  const endCET = new Date(end.getTime() + (60 * 60 * 1000));
-
-  const startTime = startCET.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  const endTime = endCET.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
   if (start < now) {
     return `Until ${endTime}`;
