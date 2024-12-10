@@ -13,8 +13,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         {children}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA4_KEY} />
       </body>
-      <GoogleAnalytics gaId='G-QCPMT7059K' />
     </html>
   )
 }
