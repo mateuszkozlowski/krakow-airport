@@ -4,15 +4,11 @@ import '@/app/globals.css';
 import { Inter } from 'next/font/google';
 import { useEffect } from 'react';
 import ReactGA from 'react-ga4'; // Import react-ga4
-import { useRouter } from 'next/router'; // Correct import from next/router
+import { useRouter } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
-const TRACKING_ID = process.env.NEXT_PUBLIC_GA4_KEY; // Use NEXT_PUBLIC_ prefix for environment variables
-
-if (!TRACKING_ID) {
-  throw new Error('Google Analytics 4 Tracking ID is not defined.');
-}
+const TRACKING_ID = process.env.GA4_KEY; // Your GA4 tracking ID
 
 export default function RootLayout({
   children,
@@ -24,12 +20,12 @@ export default function RootLayout({
   useEffect(() => {
     // Initialize Google Analytics 4
     ReactGA.initialize(TRACKING_ID);
-    ReactGA.send({ hitType: 'pageview', page: window.location.pathname }); // Send pageview event on initial load
+    ReactGA.send('pageview'); // Send a pageview event on initial load
   }, []);
 
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      ReactGA.send({ hitType: 'pageview', page: url }); // Track page views on route change
+      ReactGA.send('pageview', url); // Track page views on route change
     };
 
     // Listen for route changes
