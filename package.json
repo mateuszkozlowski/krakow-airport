@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && touch out/.nojekyll",
     "start": "next start",
     "lint": "next lint",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d out"
+    "deploy": "gh-pages -d out --dotfiles"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.0",
