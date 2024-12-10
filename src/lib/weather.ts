@@ -23,15 +23,6 @@ const MINIMUMS = {
   CEILING: 200     // feet
 } as const;
 
-// Cloud descriptions with emojis
-const CLOUD_DESCRIPTIONS = {
-  SCT: '⛅️ Scattered clouds',
-  BKN: '☁️ Broken clouds',
-  OVC: '☁️ Overcast',
-  FEW: '🌤️ Few clouds',
-  CLR: 'Clear skies'
-} as const;
-
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
     // Fetch both METAR and TAF

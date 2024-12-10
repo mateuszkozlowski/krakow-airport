@@ -41,7 +41,7 @@ export default async function AirportStatus() {
                         <>
                             <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
-                                    ? "I don't think so. Have you heard about Katowice or Rzeszów?"
+                                    ? "I don&apos;t think so. Have you heard about Katowice or Rzeszów?"
                                     : weather.current.riskLevel.level === 2
                                     ? "Maybe yes, maybe not. Be prepared for some delays."
                                     : "I would say so."}
@@ -122,10 +122,10 @@ export default async function AirportStatus() {
                     <CardContent className="p-6">
                         <h3 className="font-semibold mb-2">Important notice</h3>
                         <p className="text-slate-600 mb-4 text-sm">
-                            While we try our best to provide accurate information, we're not meteorologists, air traffic controllers, or fortune tellers.
+                            While we try our best to provide accurate information, we are not meteorologists, air traffic controllers, or fortune tellers.
                         </p>
                         <p className="text-slate-600 text-sm">
-                            Always check with your airline for the final word on your flight status. They're the ones with the actual planes, after all!
+                            Always check with your airline for the final word on your flight status. They are the ones with the actual planes, after all!
                         </p>
                     </CardContent>
                 </Card>
