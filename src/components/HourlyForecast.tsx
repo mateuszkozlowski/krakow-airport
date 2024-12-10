@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
-import type { ForecastChange } from '@/types/weather';
+import type { ForecastChange } from '@/lib/types/weather';
 
 interface HourlyForecastProps {
   forecast: ForecastChange[];
@@ -56,7 +56,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
                 {/* Weather Phenomena Tags - only shown if there are phenomena */}
                 {hasWeatherPhenomena && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {period.conditions.phenomena?.map((phenomenon, idx) => (
+                    {period.conditions.phenomena?.map((phenomenon: string, idx: number) => (
                       <span
                         key={idx}
                         className="bg-slate-100 px-3 py-1 rounded-full text-sm text-slate-600"

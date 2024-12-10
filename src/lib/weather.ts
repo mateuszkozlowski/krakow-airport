@@ -78,6 +78,22 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
   }
 }
 
+function formatTimeDescription(start: Date, end: Date): string {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+  };
+
+  if (start < new Date()) {
+    return `Until ${formatTime(end)}`;
+  }
+
+  return `${formatTime(start)} - ${formatTime(end)}`;
+}
+
 function processForecast(taf: TAFData | null): ForecastChange[] {
   if (!taf || !taf.forecast) return [];
 
@@ -101,6 +117,9 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         from: periodStart,
         to: periodEnd,
         conditions: {
+          wind: getFormattedWind(period.wind),
+          visibility: getFormattedVisibility(period.visibility?.meters),
+          clouds: getFormattedClouds(period.clouds),
           phenomena: period.conditions?.map(c => 
             WEATHER_PHENOMENA[c.code] || c.code
           ).filter(Boolean)
@@ -115,22 +134,6 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   changes.sort((a, b) => a.from.getTime() - b.from.getTime());
 
   return changes;
-}
-
-function formatTimeDescription(start: Date, end: Date): string {
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Warsaw'
-    });
-  };
-
-  if (start < new Date()) {
-    return `Until ${formatTime(end)}`;
-  }
-
-  return `${formatTime(start)} - ${formatTime(end)}`;
 }
 
 function getFormattedWind(wind: WindInfo | undefined): string {

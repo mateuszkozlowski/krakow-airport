@@ -58,11 +58,7 @@ export interface RiskAssessment {
 }
 
 export interface ProcessedConditions {
-  temperature?: string;
-  wind: string;
-  visibility: string;
-  clouds: string;
-  phenomena?: string[];
+  phenomena?: string[];  // Simplified to only include phenomena
 }
 
 export interface ForecastChange {
@@ -87,74 +83,49 @@ export interface WeatherResponse {
 
 // Re-export weather phenomena for type safety
 export const WEATHER_PHENOMENA = {
- // Severe & Dangerous Conditions
- TS: '⛈️ Thunderstorm',
- TSRA: '⛈️ ⚠️ Thunderstorm with Heavy Rain',
- FC: '🌪️ ⚠️ Tornado/Waterspout',
- SQ: '🌪️ ⚠️ Violent Squall',
- SS: '🌪️ 🏜️ Severe Sandstorm',
- 
- // Freezing Conditions
- FZRA: '🌧️ ⚠️ Freezing Rain',
- FZDZ: '💧 ⚠️ Freezing Drizzle',
- FZFG: '🌫️ ⚠️ Freezing Fog',
- 
- // Moderate Precipitation
- RA: '🌧️ Rain',
- SN: '❄️ Snow',
- GR: '🌨️ ⚠️ Hail',
- GS: '🌨️ Small Hail/Snow Pellets',
- PL: '🧊 Ice Pellets',
- IC: '❄️ Ice Crystals',
- SG: '🌨️ Snow Grains',
- 
- // Light Conditions
- DZ: '💧 Drizzle',
- '-RA': '🌧️ Light Rain',
- '-SN': '❄️ Light Snow',
- 
- // Heavy Conditions
- '+RA': '🌧️ ⚠️ Heavy Rain',
- '+SN': '🌨️ ⚠️ Heavy Snowk',
- 
- // Visibility Hazards
- FG: '🌫️ Dense Fog',
- BR: '🌫️ Mist',
- HZ: '🌫️ Haze',
- FU: '💨 Smoke',
- VA: '🌋 💨 Volcanic Ash - Engine Hazard',
- DU: '💨 Widespread Dust',
- SA: '🏜️ Blowing Sand',
- PO: '💨 Dust/Sand Whirls',
- DS: '🌪️ 🏜️ Duststorm',
- 
- // Cloud Coverage
- SCT: '⛅ Scattered Clouds',
- BKN: '☁️ Broken Clouds',
- OVC: '☁️ ☁️ Complete Overcast'
+  // Severe & Dangerous Conditions
+  TS: '⛈️ Thunderstorm',
+  TSRA: '⛈️ ⚠️ Thunderstorm with Heavy Rain',
+  FC: '🌪️ ⚠️ Tornado/Waterspout',
+  SQ: '🌪️ ⚠️ Violent Squall',
+  SS: '🌪️ 🏜️ Severe Sandstorm',
+  
+  // Freezing Conditions
+  FZRA: '🌧️ ⚠️ Freezing Rain',
+  FZDZ: '💧 ⚠️ Freezing Drizzle',
+  FZFG: '🌫️ ⚠️ Freezing Fog',
+  
+  // Moderate Precipitation
+  RA: '🌧️ Rain',
+  SN: '❄️ Snow',
+  GR: '🌨️ ⚠️ Hail',
+  GS: '🌨️ Small Hail/Snow Pellets',
+  PL: '🧊 Ice Pellets',
+  IC: '❄️ Ice Crystals',
+  SG: '🌨️ Snow Grains',
+  
+  // Light Conditions
+  DZ: '💧 Drizzle',
+  '-RA': '🌧️ Light Rain',
+  '-SN': '❄️ Light Snow',
+  
+  // Heavy Conditions
+  '+RA': '🌧️ ⚠️ Heavy Rain',
+  '+SN': '🌨️ ⚠️ Heavy Snow',
+  
+  // Visibility Hazards
+  FG: '🌫️ Dense Fog',
+  BR: '🌫️ Mist',
+  HZ: '🌫️ Haze',
+  FU: '💨 Smoke',
+  VA: '🌋 💨 Volcanic Ash - Engine Hazard',
+  DU: '💨 Widespread Dust',
+  SA: '🏜️ Blowing Sand',
+  PO: '💨 Dust/Sand Whirls',
+  DS: '🌪️ 🏜️ Duststorm',
+  
+  // Cloud Coverage
+  SCT: '⛅ Scattered Clouds',
+  BKN: '☁️ Broken Clouds',
+  OVC: '☁️ ☁️ Complete Overcast'
 } as const;
-
-
-export interface ProcessedConditions {
-  phenomena?: string[];  // Simplified to only include phenomena
-}
-
-export interface ForecastChange {
-  timeDescription: string;
-  from: Date;
-  to: Date;
-  conditions: ProcessedConditions;
-  riskLevel: RiskAssessment;
-  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
-}
-
-export interface WeatherResponse {
-  current: {
-    riskLevel: RiskAssessment;
-    conditions: ProcessedConditions;
-    raw: string;
-    observed: string;
-  };
-  forecast: ForecastChange[];
-  raw_taf: string;
-}
