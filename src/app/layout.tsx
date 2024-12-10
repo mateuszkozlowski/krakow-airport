@@ -1,44 +1,19 @@
-'use client';
-
 import '@/app/globals.css';
-import { Inter } from 'next/font/google';
-import { useEffect } from 'react';
-import ReactGA from 'react-ga4';
+import { Inter } from 'next/font/google'
 
-const inter = Inter({ subsets: ['latin'] });
-const TRACKING_ID = process.env.NEXT_PUBLIC_GA4_KEY as string;
+const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  useEffect(() => {
-    if (TRACKING_ID) {
-      ReactGA.initialize(TRACKING_ID);
-      ReactGA.send({ hitType: 'pageview', page: window.location.pathname });
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      if (TRACKING_ID) {
-        ReactGA.send({ 
-          hitType: 'pageview', 
-          page: window.location.pathname 
-        });
-      }
-    };
-
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, []);
-
   return (
     <html lang="en" suppressHydrationWarning>
+      <GoogleAnalytics />
       <body className={inter.className}>
         {children}
       </body>
     </html>
-  );
+  )
 }
