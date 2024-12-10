@@ -166,8 +166,8 @@ export default async function AirportStatus() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <Card className="bg-white">
                     <CardContent className="p-6">
-                        <h3 className="font-semibold mb-2 text-m">How we get our data?</h3>
-                        <p className="text-slate-600 mb-4 text-m">We combine data from two reliable sources:</p>
+                        <h3 className="font-semibold mb-2">How we get our data?</h3>
+                        <p className="text-slate-600 mb-4">We combine data from three reliable sources:</p>
                         <ul className="text-slate-600 space-y-2">
                             <li>Official METAR reports (the stuff pilots actually use)</li>
                             <li>TAF forecasts (fancy airport weather predictions)</li>
@@ -177,11 +177,11 @@ export default async function AirportStatus() {
 
                 <Card className="bg-white">
                     <CardContent className="p-6">
-                        <h3 className="font-semibold mb-2 text-m">Important notice</h3>
-                        <p className="text-slate-600 mb-4 text-m">
+                        <h3 className="font-semibold mb-2">Important notice</h3>
+                        <p className="text-slate-600 mb-4">
                             While we try our best to provide accurate information, we&apos;re not meteorologists, air traffic controllers, or fortune tellers.
                         </p>
-                        <p className="text-slate-600 text-m">
+                        <p className="text-slate-600">
                             Always check with your airline for the final word on your flight status. They&apos;re the ones with the actual planes, after all!
                         </p>
                     </CardContent>
