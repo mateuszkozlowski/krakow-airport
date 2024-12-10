@@ -14,7 +14,7 @@ import { WEATHER_PHENOMENA } from './types/weather';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 
-const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
+const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
 // CAT I approach minimums for EPKK
