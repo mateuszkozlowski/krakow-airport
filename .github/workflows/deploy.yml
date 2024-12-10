@@ -28,7 +28,6 @@ jobs:
       - name: Build project
         run: npm run build  # Build the project
         env:
-          NEXT_PUBLIC_BASE_PATH: /krakow-airport  # Ensure the base path is set correctly for GitHub Pages
           CHECKWX_API_KEY: ${{ secrets.CHECKWX_API_KEY }}  # Use GitHub secrets for API key
 
       - name: Deploy to GitHub Pages
