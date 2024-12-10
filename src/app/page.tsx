@@ -4,7 +4,6 @@ import { getAirportWeather } from "@/lib/weather";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import Footer from "@/components/Footer";
 
 export default async function AirportStatus() {
     const weather = await getAirportWeather();
