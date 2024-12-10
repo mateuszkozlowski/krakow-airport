@@ -12,6 +12,8 @@ import {
 // Import WEATHER_PHENOMENA as a value, not a type
 import { WEATHER_PHENOMENA } from './types/weather';
 
+type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
+
 const CHECKWX_API_KEY = process.env.CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
@@ -61,7 +63,7 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
         conditions: {
           phenomena: currentWeather.conditions?.map(c => 
             WEATHER_PHENOMENA[c.code]
-          ).filter((p): p is string => !!p) || []
+          ).filter((p): p is WeatherPhenomenonValue => p !== undefined) || []
         },
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
@@ -127,15 +129,17 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   return changes.sort((a, b) => a.from.getTime() - b.from.getTime());
 }
 
-function processWeatherPhenomena(conditions?: WeatherCondition[]): string[] {
+function processWeatherPhenomena(conditions?: WeatherCondition[]): WeatherPhenomenonValue[] {
   if (!conditions) return [];
   
   return conditions
     .map(c => WEATHER_PHENOMENA[c.code])
-    .filter((p): p is string => !!p && shouldShowPhenomenon(p));
+    .filter((p): p is WeatherPhenomenonValue => 
+      p !== undefined && shouldShowPhenomenon(p)
+    );
 }
 
-function shouldShowPhenomenon(phenomenon: string): boolean {
+function shouldShowPhenomenon(phenomenon: WeatherPhenomenonValue): boolean {
   // Hide certain phenomena that are less relevant for passengers
   const hiddenPhenomena = ['⛅ Scattered Clouds', '☁️ Broken Clouds', '☁️ ☁️ Complete Overcast'];
   return !hiddenPhenomena.includes(phenomenon);
