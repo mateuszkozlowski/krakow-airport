@@ -18,7 +18,7 @@ const AIRPORT = 'EPKK';
 
 // CAT I approach minimums for EPKK
 const MINIMUMS = {
-  VISIBILITY: 550,  // meters
+  VISIBILITY: 550,   // meters
   CEILING: 200     // feet
 } as const;
 
