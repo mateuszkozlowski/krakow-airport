@@ -2,6 +2,9 @@
 import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
 import { AIRPORT_NAMES } from './airports';
 
+const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
+const AIRPORT = 'EPKK'; // Kraków Airport ICAO code
+
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
@@ -35,8 +38,12 @@ export async function getFlightStats(): Promise<FlightStats> {
       affectedFlights: []
     };
 
-    // Process arrivals with proper typing
+    // Process arrivals with proper typing and null checks
     data.arrivals.forEach((flight: FlightAwareArrival) => {
+      const originCode = flight.origin?.code;
+      const airportName = originCode ? AIRPORT_NAMES[originCode] : undefined;
+      const displayOrigin = airportName || originCode || 'Unknown';
+
       if (flight.cancelled) {
         stats.cancelled++;
         stats.affectedFlights.push({
@@ -44,7 +51,7 @@ export async function getFlightStats(): Promise<FlightStats> {
           status: 'CANCELLED',
           scheduledTime: flight.scheduled_in,
           airline: flight.operator || 'Unknown Airline',
-          origin: AIRPORT_NAMES[flight.origin?.code] || flight.origin?.code || 'Unknown'
+          origin: displayOrigin
         });
       } else if (flight.diverted) {
         stats.diverted++;
@@ -53,7 +60,7 @@ export async function getFlightStats(): Promise<FlightStats> {
           status: 'DIVERTED',
           scheduledTime: flight.scheduled_in,
           airline: flight.operator || 'Unknown Airline',
-          origin: AIRPORT_NAMES[flight.origin?.code] || flight.origin?.code || 'Unknown'
+          origin: displayOrigin
         });
       } else if (flight.scheduled_in && flight.estimated_in) {
         const delay = new Date(flight.estimated_in).getTime() - 
@@ -65,7 +72,7 @@ export async function getFlightStats(): Promise<FlightStats> {
             status: 'DELAYED',
             scheduledTime: flight.scheduled_in,
             airline: flight.operator || 'Unknown Airline',
-            origin: AIRPORT_NAMES[flight.origin?.code] || flight.origin?.code || 'Unknown',
+            origin: displayOrigin,
             delayMinutes: Math.floor(delay / (1000 * 60))
           });
         }
