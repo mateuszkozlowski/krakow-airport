@@ -1,24 +1,10 @@
 // lib/types/flight.ts
-export interface FlightStats {
-  delayed: number;
-  cancelled: number;
-  diverted: number;
-  affectedFlights: AffectedFlight[];
-}
-
-export interface AffectedFlight {
-  flightNumber: string;
-  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED';
-  scheduledTime: string;
-  airline: string;
-  origin: string;
-  delayMinutes?: number;
-}
-
-// Add these new interfaces for the API response
 export interface FlightAwareResponse {
   arrivals: FlightAwareArrival[];
-  links?: any;
+  links?: {
+    next?: string;
+    previous?: string;
+  };
   num_pages?: number;
 }
 
@@ -33,4 +19,21 @@ export interface FlightAwareArrival {
     code: string;
     name?: string;
   };
+  // Add any other fields if needed
+}
+
+export interface FlightStats {
+  delayed: number;
+  cancelled: 0;
+  diverted: number;
+  affectedFlights: AffectedFlight[];
+}
+
+export interface AffectedFlight {
+  flightNumber: string;
+  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED';
+  scheduledTime: string;
+  airline: string;
+  origin: string;
+  delayMinutes?: number;
 }
