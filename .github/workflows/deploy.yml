@@ -30,6 +30,7 @@ jobs:
         env:
           NEXT_PUBLIC_CHECKWX_API_KEY: ${{ secrets.NEXT_PUBLIC_CHECKWX_API_KEY }}  # Use GitHub secrets for API key
           NEXT_PUBLIC_GA4_KEY: ${{ secrets.NEXT_PUBLIC_GA4_KEY }}  # Use GitHub secrets for API key
+          NEXT_PUBLIC_FLIGHTAWARE_API_KEY: ${{ secrets.NEXT_PUBLIC_FLIGHTAWARE_API_KEY }}  # Use GitHub secrets for API key
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
