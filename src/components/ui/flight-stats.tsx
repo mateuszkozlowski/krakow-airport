@@ -1,6 +1,6 @@
 // components/ui/flight-stats.tsx
 import { Card, CardContent } from "@/components/ui/card";
-import { FlightStats, AffectedFlights } from "@/lib/types/flights";
+import { FlightStats, AffectedFlight } from "@/lib/types/flight";
 import { AlertTriangle } from "lucide-react";
 
 interface FlightStatsDisplayProps {
