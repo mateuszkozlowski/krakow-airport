@@ -26,7 +26,7 @@ export default async function Page() {
     <p className="text-sm text-white/60">
         Last update: {(() => {
             const date = new Date(weather.current.observed);
-            date.setHours(date.getHours() + 1); // Add one hour
+            date.setHours(date.getHours())loca; // Add one hour
             return date.toLocaleTimeString('en-GB', { 
                 hour: '2-digit',
                 minute: '2-digit',
