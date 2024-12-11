@@ -1,4 +1,3 @@
-// lib/types/flight.ts
 export interface FlightStats {
   delayed: number;
   cancelled: number;

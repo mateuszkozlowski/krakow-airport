@@ -1,6 +1,6 @@
 // components/ui/flight-stats.tsx
 import { Card, CardContent } from "@/components/ui/card";
-import { FlightStats } from "@/lib/types/flight";
+import { FlightStats, AffectedFlights } from "@/lib/types/flights";
 import { AlertTriangle } from "lucide-react";
 
 interface FlightStatsDisplayProps {
@@ -51,11 +51,11 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
           <div>
             <h3 className="font-semibold mb-3">Affected Flights</h3>
             <div className="space-y-2">
-              {stats.affectedFlights.map((flight) => (
-                <div 
-                  key={flight.flightNumber} 
-                  className="p-4 bg-gray-50 rounded-lg"
-                >
+{stats.affectedFlights.map((flight: AffectedFlight) => (
+  <div 
+    key={flight.flightNumber} 
+    className="p-4 bg-gray-50 rounded-lg"
+  >
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
