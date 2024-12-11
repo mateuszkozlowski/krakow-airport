@@ -10,6 +10,14 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-12-11",
+    version: "0.0.3",
+    changes: [
+      "Added real-time flight statistics (cancelled, diverted, and delayed flights)",
+"Added list of affected flights with detailed flight information",
+"Enhanced mobile experience with responsive design",
+    ]
+  },  {
     date: "2024-12-10",
     version: "0.0.2",
     changes: [

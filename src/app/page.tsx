@@ -3,10 +3,13 @@ import { getAirportWeather } from "@/lib/weather";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { getFlightStats } from "@/lib/flights";
+import { FlightStatsDisplay } from "@/components/ui/flight-stats";
 import HourlyForecast from "@/components/HourlyForecast";
 
 export default async function Page() {
     const weather = await getAirportWeather();
+    const flightStats = await getFlightStats();
 
     return (
         <div className="min-h-screen">
@@ -20,14 +23,18 @@ export default async function Page() {
                             <a href="https://krakowairport.pl" className="underline">krakowairport.pl</a>
                         </p>
                         {weather?.current && (
-                            <p className="text-sm text-white/60">
-                                Last update: {new Date(weather.current.observed).toLocaleTimeString('en-GB', { 
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZone: 'Europe/Warsaw'
-                                })}
-                            </p>
-                        )}
+    <p className="text-sm text-white/60">
+        Last update: {(() => {
+            const date = new Date(weather.current.observed);
+            date.setHours(date.getHours() + 1); // Add one hour
+            return date.toLocaleTimeString('en-GB', { 
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Warsaw'
+            });
+        })()}
+    </p>
+)}
                     </div>
                 </Alert>
 
@@ -99,13 +106,25 @@ export default async function Page() {
                     )}
                 </div>
             </div>
+            
+            <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
+    <h2 className="text-lg text-white mb-4">
+        Current Flight Situation
+    </h2>
+    <FlightStatsDisplay stats={flightStats} />
+</div>
 
             {/* Bottom section with forecast */}
-            <div className="max-w-4xl mx-auto px-6 -mt-16 pb-8">
+            <div className="max-w-4xl mx-auto px-6 pb-8">
                 {weather?.forecast && <HourlyForecast forecast={weather.forecast} />}
             </div>
 
+
+
+
+            
             {/* Info cards section */}
+ 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <Card className="bg-white">
                     <CardContent className="p-6">

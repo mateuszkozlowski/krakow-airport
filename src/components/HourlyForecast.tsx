@@ -10,7 +10,7 @@ interface HourlyForecastProps {
 export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Weather Forecast</h2>
+      <h2 className="text-xl font-semibold mb-4 ">Weather Forecast</h2>
       <div className="space-y-3">
         {forecast.map((period, index) => {
           const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
