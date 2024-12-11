@@ -77,7 +77,6 @@ export const AIRLINES: Record<string, string> = {
 
   // Low-cost carriers
   "EJU": "easyJet Europe",
-  "VLG": "Vueling",
 
   // Additional regional airlines
   "PGT": "Pegasus Airlines",

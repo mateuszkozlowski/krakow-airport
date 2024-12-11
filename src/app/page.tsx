@@ -108,7 +108,7 @@ export default async function Page() {
             </div>
             
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-    <h2 className="text-lg text-white mb-4">
+    <h2 className="text-xl font-semibold mb-4 text-white">
         Current Flight Situation
     </h2>
     <FlightStatsDisplay stats={flightStats} />
