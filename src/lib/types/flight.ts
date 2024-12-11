@@ -18,6 +18,8 @@ export interface AffectedFlight {
 // Add these new interfaces for the API response
 export interface FlightAwareResponse {
   arrivals: FlightAwareArrival[];
+  links?: any;
+  num_pages?: number;
 }
 
 export interface FlightAwareArrival {

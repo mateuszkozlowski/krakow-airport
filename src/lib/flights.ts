@@ -28,8 +28,11 @@ export async function getFlightStats(): Promise<FlightStats> {
       throw new Error('Failed to fetch flight data');
     }
 
-    const data: FlightAwareResponse = await response.json();
-    console.log('FlightAware data:', data);
+     const data: FlightAwareResponse = await response.json();
+    console.log('FlightAware raw response:', data);  // Let's see what we actually get
+
+    // Before processing, let's check what arrays we have
+    console.log('Arrivals array:', data.arrivals?.length || 'no arrivals');
 
     const stats: FlightStats = {
       delayed: 0,
