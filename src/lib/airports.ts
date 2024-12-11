@@ -121,6 +121,7 @@ export const AIRPORT_NAMES: Record<string, string> = {
   'LGRP': 'Rhodes Diagoras',
   'LCLK': 'Larnaca',
   'LTBJ': 'Izmir Adnan Menderes',
+  'LTFM': 'Itanbul',
   
   // U.S. Airports with Connections to Kraków
   'KORD': 'Chicago O’Hare',

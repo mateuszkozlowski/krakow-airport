@@ -37,13 +37,13 @@ const RISK_WEIGHTS = {
   
   // Moderate phenomena (adjusted for local conditions)
   PHENOMENA_MODERATE: {
-    SN: 30,     // Snow (further lowered)
-    SG: 30,     // Snow grains (further lowered)
-    BR: 20,     // Mist (kept low)
-    FG: 50,     // Fog (common but still impactful)
+    SN: 40,     // Snow (further lowered)
+    SG: 40,     // Snow grains (further lowered)
+    BR: 25,     // Mist (kept low)
+    FG: 55,     // Fog (common but still impactful)
     RA: 20,     // Rain (reduced significantly for routine tolerance)
     GR: 70,     // Hail (unchanged, still significant)
-    GS: 50,     // Small hail (unchanged)
+    GS: 55,     // Small hail (unchanged)
     '+RA': 40,  // Heavy rain (reduced for familiarity)
     '+SN': 50   // Heavy snow (lowered further)
   },
