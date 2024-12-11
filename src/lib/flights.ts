@@ -1,18 +1,12 @@
 // lib/flights.ts
-import { FlightStats } from "./types/flight";
-import { AIRPORT_NAMES } from "./airports";
+import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
+import { AIRPORT_NAMES } from './airports';
 
-const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
-const AIRPORT = "EPKK";
-
-// lib/flights.ts
 export async function getFlightStats(): Promise<FlightStats> {
   try {
-    // Calculate time range and format properly
     const now = new Date();
     const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
     
-    // Format dates to match exactly: YYYY-MM-DDThh:mm:ssZ
     const startTime = threeHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = now.toISOString().split('.')[0] + 'Z';
 
@@ -31,7 +25,7 @@ export async function getFlightStats(): Promise<FlightStats> {
       throw new Error('Failed to fetch flight data');
     }
 
-    const data = await response.json();
+    const data: FlightAwareResponse = await response.json();
     console.log('FlightAware data:', data);
 
     const stats: FlightStats = {
@@ -41,8 +35,8 @@ export async function getFlightStats(): Promise<FlightStats> {
       affectedFlights: []
     };
 
-    // Process arrivals
-    data.arrivals.forEach((flight: any) => {
+    // Process arrivals with proper typing
+    data.arrivals.forEach((flight: FlightAwareArrival) => {
       if (flight.cancelled) {
         stats.cancelled++;
         stats.affectedFlights.push({
