@@ -1,5 +1,4 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import type { ForecastChange } from "@/lib/types/weather";
 
 interface HourlyForecastProps {
