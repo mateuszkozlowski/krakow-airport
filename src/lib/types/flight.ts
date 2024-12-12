@@ -39,9 +39,17 @@ export interface FlightStats {
   };
 }
 
+export type FlightStatus = 
+  | 'CANCELLED' 
+  | 'DIVERTED' 
+  | 'DELAYED' 
+  | 'ON TIME'
+  | 'DEPARTED'
+  | 'DEPARTED_WITH_DELAY';
+
 export interface AffectedFlight {
   flightNumber: string;
-  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED' | 'ON TIME';
+  status: FlightStatus;
   scheduledTime: string;
   airline: string;
   destination?: string;
