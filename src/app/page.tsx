@@ -4,7 +4,7 @@ import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { getFlightStats } from "@/lib/flights";
-import { FlightStatsDisplay } from "@/components/ui/flight-stats";
+import { FlightTabs } from "@/components/ui/flight-tabs";
 import HourlyForecast from "@/components/HourlyForecast";
 
 export default async function Page() {
@@ -48,9 +48,9 @@ export default async function Page() {
                         <>
                             <p className="text-2xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
-                                    ? "Hm... Have you heard about Katowice or Rzeszów?"
+                                    ? "There is really a big risk of air traffic disruptions."
                                     : weather.current.riskLevel.level === 2
-                                    ? "Maybe yes, maybe not. Be prepared for some delays."
+                                    ? "Be prepared for some delays."
                                     : "I would say so."}
                             </p>
 
@@ -107,11 +107,9 @@ export default async function Page() {
                 </div>
             </div>
             
-            <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-    <h2 className="text-xl font-semibold mb-4 text-white">
-        Current Flight Situation
-    </h2>
-    <FlightStatsDisplay stats={flightStats} />
+            <div className="max-w-4xl mx-auto -mt-36 px-6 pb-8">
+
+    <FlightTabs stats={flightStats} />
 </div>
 
             {/* Bottom section with forecast */}
