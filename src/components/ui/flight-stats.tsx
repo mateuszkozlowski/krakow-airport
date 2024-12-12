@@ -9,7 +9,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FlightStats, AffectedFlight, FlightStatus } from "@/lib/types/flight";
 import { AlertTriangle, Plane, PlaneLanding, Search } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 interface FlightStatsDisplayProps {
   stats: FlightStats;
