@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages and Vercel
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -37,25 +37,3 @@ jobs:
         with:
           folder: out  # Deploy the static build from the `out` folder
           token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
-
-  deploy-vercel:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3  # Checkout the repo
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'  # Node.js version
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Deploy to Vercel
-        run: npx vercel deploy --prod
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}  # Vercel authentication token
-          NEXT_PUBLIC_CHECKWX_API_KEY: ${{ secrets.NEXT_PUBLIC_CHECKWX_API_KEY }}
-          NEXT_PUBLIC_GA4_KEY: ${{ secrets.NEXT_PUBLIC_GA4_KEY }}
-          NEXT_PUBLIC_FLIGHTAWARE_API_KEY: ${{ secrets.NEXT_PUBLIC_FLIGHTAWARE_API_KEY }}
