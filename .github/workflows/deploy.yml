@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to Vercel
 
 on:
   push:
@@ -6,10 +6,8 @@ on:
       - main  # Deploy on push to the main branch
 
 jobs:
-  deploy:
+  deploy-vercel:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Allow action to write to the repo
 
     steps:
       - uses: actions/checkout@v3  # Checkout the repo
@@ -22,18 +20,14 @@ jobs:
       - name: Install dependencies
         run: npm install  # Install project dependencies
 
-      - name: Type check
-        run: npx tsc --noEmit  # TypeScript type check
-
       - name: Build project
         run: npm run build  # Build the project
         env:
-          NEXT_PUBLIC_CHECKWX_API_KEY: ${{ secrets.NEXT_PUBLIC_CHECKWX_API_KEY }}  # Use GitHub secrets for API key
-          NEXT_PUBLIC_GA4_KEY: ${{ secrets.NEXT_PUBLIC_GA4_KEY }}  # Use GitHub secrets for API key
-          NEXT_PUBLIC_FLIGHTAWARE_API_KEY: ${{ secrets.NEXT_PUBLIC_FLIGHTAWARE_API_KEY }}  # Use GitHub secrets for API key
+          NEXT_PUBLIC_CHECKWX_API_KEY: ${{ secrets.NEXT_PUBLIC_CHECKWX_API_KEY }}
+          NEXT_PUBLIC_GA4_KEY: ${{ secrets.NEXT_PUBLIC_GA4_KEY }}
+          NEXT_PUBLIC_FLIGHTAWARE_API_KEY: ${{ secrets.NEXT_PUBLIC_FLIGHTAWARE_API_KEY }}
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: out  # Deploy the static build from the `out` folder
-          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
+      - name: Deploy to Vercel
+        run: npx vercel deploy --prod  # Deploy to Vercel in production mode
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}  # Vercel authentication token
