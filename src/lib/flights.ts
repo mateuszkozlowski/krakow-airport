@@ -9,21 +9,22 @@ const AIRPORT = 'EPKK'; // Kraków Airport ICAO code
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
-    const threeHoursAgo = new Date(now.getTime() - (6 * 60 * 60 * 1000));
+    const sixHoursAgo = new Date(now.getTime() - (6 * 60 * 60 * 1000));
     const threeHoursFuture = new Date(now.getTime() + (3 * 60 * 60 * 1000));
     
-    const startTime = threeHoursAgo.toISOString().split('.')[0] + 'Z';
+    const startTime = sixHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = threeHoursFuture.toISOString().split('.')[0] + 'Z';
 
-    const response = await fetch(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${startTime}&end=${endTime}&type=Airline`,
-      {
-        headers: {
-          'x-apikey': API_KEY!,
-          'Accept': 'application/json; charset=UTF-8'
-        }
-      }
-    );
+const response = await fetch(
+  `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${startTime}&end=${endTime}&type=Airline`,
+  {
+    headers: {
+      'x-apikey': API_KEY!,
+      'Accept': 'application/json; charset=UTF-8',
+      'cache': 'no-store',
+    }
+  }
+);
 
     if (!response.ok) {
       console.error('API Error:', await response.text());
