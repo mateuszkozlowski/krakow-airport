@@ -1,6 +1,5 @@
 // lib/types/flight.ts
 export interface FlightAwareResponse {
-  departures: FlightAwareArrival[];
   arrivals: FlightAwareArrival[];
   links?: {
     next?: string;
@@ -14,37 +13,27 @@ export interface FlightAwareArrival {
   operator: string;
   cancelled: boolean;
   diverted: boolean;
-  scheduled_out?: string;
-  scheduled_in?: string;
-  estimated_out?: string;
-  estimated_in?: string;
-  destination?: {
-    code: string;
-    name?: string;
-  };
+  scheduled_in: string;
+  estimated_in: string;
   origin?: {
     code: string;
     name?: string;
   };
+  // Add any other fields if needed
 }
 
 export interface FlightStats {
   delayed: number;
-  cancelled: number;
+  cancelled: 0;
   diverted: number;
-  onTime: number;
-  affectedFlights: {
-    departures: AffectedFlight[];
-    arrivals: AffectedFlight[];
-  };
+  affectedFlights: AffectedFlight[];
 }
 
 export interface AffectedFlight {
   flightNumber: string;
-  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED' | 'ON TIME';
+  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED';
   scheduledTime: string;
   airline: string;
-  destination?: string;
-  origin?: string;
+  origin: string;
   delayMinutes?: number;
 }
