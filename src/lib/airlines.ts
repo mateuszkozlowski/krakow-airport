@@ -82,5 +82,6 @@ export const AIRLINES: Record<string, string> = {
   "PGT": "Pegasus Airlines",
   "VOE": "Volotea",
   "NOZ": "Norwegian Air Shuttle",
+    "NSZ": "Norwegian Air Shuttle",
   "TRA": "Transavia",
 };

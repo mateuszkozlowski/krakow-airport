@@ -1,4 +1,3 @@
-// components/ui/flight-stats.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { FlightStats, AffectedFlight } from "@/lib/types/flight";
 import { AlertTriangle } from "lucide-react";
@@ -27,20 +26,21 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
   return (
     <Card className="bg-white shadow-sm">
       <CardContent className="p-6">
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <div className="p-4 bg-red-50 rounded-lg">
-    <div className="text-2xl font-bold text-red-700">{stats.cancelled}</div>
-    <div className="text-red-600">Cancelled</div>
-  </div>
-  <div className="p-4 bg-yellow-50 rounded-lg">
-    <div className="text-2xl font-bold text-yellow-700">{stats.diverted}</div>
-    <div className="text-yellow-600">Diverted</div>
-  </div>
-  <div className="p-4 bg-orange-50 rounded-lg">
-    <div className="text-2xl font-bold text-orange-700">{stats.delayed}</div>
-    <div className="text-orange-600">Delayed</div>
-  </div>
-</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="p-4 bg-red-50 rounded-lg">
+            <div className="text-2xl font-bold text-red-700">{stats.cancelled}</div>
+            <div className="text-red-600">Cancelled</div>
+          </div>
+          <div className="p-4 bg-yellow-50 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-700">{stats.diverted}</div>
+            <div className="text-yellow-600">Diverted</div>
+          </div>
+          <div className="p-4 bg-orange-50 rounded-lg">
+            <div className="text-2xl font-bold text-orange-700">{stats.delayed}</div>
+            <div className="text-orange-600">Delayed</div>
+          </div>
+        </div>
+        
         {!hasAffectedFlights && (
           <div className="text-center text-gray-500 py-4">
             No affected flights at the moment
@@ -49,13 +49,12 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
 
         {hasAffectedFlights && (
           <div>
-            <h3 className="font-semibold mb-3">Affected Arrivals</h3>
-            <div className="space-y-2">
-{stats.affectedFlights.map((flight: AffectedFlight) => (
-  <div 
-    key={flight.flightNumber} 
-    className="p-4 bg-gray-50 rounded-lg"
-  >
+            <h3 className="font-semibold mb-3">Affected arrivals in last 6 hours</h3>
+            <div
+              className={`space-y-2 max-h-[calc(5.7*4rem)] overflow-y-auto`} // Adjust this height as needed (5 * 4rem for 5 flights)
+            >
+              {stats.affectedFlights.map((flight: AffectedFlight, index) => (
+                <div key={flight.flightNumber} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -81,7 +80,7 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
                         flight.status === 'DIVERTED' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-orange-100 text-orange-700'
                       }`}>
-                        {flight.status}
+                        {flight.status.charAt(0).toUpperCase() + flight.status.slice(1).toLowerCase()}
                       </span>
                       {flight.delayMinutes && (
                         <span className="text-sm text-gray-500">

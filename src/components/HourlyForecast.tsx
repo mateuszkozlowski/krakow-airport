@@ -1,7 +1,6 @@
-// src/components/HourlyForecast.tsx
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import type { ForecastChange } from '@/lib/types/weather';
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import type { ForecastChange } from "@/lib/types/weather";
 
 interface HourlyForecastProps {
   forecast: ForecastChange[];
@@ -9,64 +8,58 @@ interface HourlyForecastProps {
 
 export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4 ">Weather Forecast</h2>
-      <div className="space-y-3">
-        {forecast.map((period, index) => {
-          const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
-          
-          if (!hasWeatherPhenomena && period.riskLevel.level === 1) {
-            return null;
-          }
+    <Card className="bg-white shadow-md">
+      <CardContent className="p-4 md:p-6">
+        <h2 className="text-lg font-semibold mb-4">Hourly Weather Forecast</h2>
+        <div className="divide-y divide-gray-200">
+          {forecast.map((period, index) => {
+            const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
 
-          return (
-            <Card key={index} className="bg-white">
-              <CardContent className="p-4">
-                {/* Time and Status Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2 text-slate-500 min-w-0">
-                    <span className="text-sm sm:text-base truncate">
-                      {period.timeDescription}
-                    </span>
+            if (!hasWeatherPhenomena && period.riskLevel.level === 1) {
+              return null;
+            }
+
+            return (
+              <div key={index} className="py-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div className="mb-2 md:mb-0">
+                  <div className="text-sm font-medium text-gray-700">
+                    {period.timeDescription}
                   </div>
-                  
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {period.changeType === 'TEMPO' && (
-                      <span className="text-xs sm:text-sm bg-slate-100 text-slate-800 px-2 py-1 rounded-full">
-                        Temporary
-                      </span>
-                    )}
-                    <span className={`px-2 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap ${
-                      period.riskLevel.level === 3 
-                        ? 'bg-red-100 text-red-800'
-                        : period.riskLevel.level === 2 
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {period.riskLevel.title}
-                    </span>
-                  </div>
+                  {period.changeType === "TEMPO" && (
+                    <span className="text-xs text-gray-500">Temporary change</span>
+                  )}
                 </div>
-
-                {/* Weather Phenomena Tags */}
-                {hasWeatherPhenomena && (
-                  <div className="flex flex-wrap gap-2">
-                    {period.conditions.phenomena?.map((phenomenon, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-slate-100 px-2 py-1 rounded-full text-xs sm:text-sm text-slate-600"
-                      >
-                        {phenomenon}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
+                <div className="flex flex-wrap md:flex-nowrap items-center space-x-4 md:space-x-2">
+                  {hasWeatherPhenomena && (
+                    <div className="flex gap-2">
+                      {period.conditions.phenomena.map((phenomenon, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
+                        >
+                          {phenomenon}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      period.riskLevel.level === 3
+                        ? "bg-red-100 text-red-800"
+                        : period.riskLevel.level === 2
+                        ? "bg-orange-100 text-orange-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {period.riskLevel.title}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

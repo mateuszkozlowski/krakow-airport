@@ -73,7 +73,7 @@ export async function getFlightStats(): Promise<FlightStats> {
       } else if (flight.scheduled_in && flight.estimated_in) {
         const delay = new Date(flight.estimated_in).getTime() - 
                      new Date(flight.scheduled_in).getTime();
-        if (delay > 30 * 60 * 1000) {
+        if (delay > 20 * 60 * 1000) {
           stats.delayed++;
           stats.affectedFlights.push({
             flightNumber: flight.ident,

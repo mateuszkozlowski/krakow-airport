@@ -82,6 +82,8 @@ export const AIRPORT_NAMES: Record<string, string> = {
   'EKCH': 'Copenhagen',
   'ESGG': 'Gothenburg Landvetter',
   'EFHK': 'Helsinki Vantaa',
+  'ENZV': 'Stavanger',
+  'ENTO': 'Sandefjord(Oslo)-Torp',
 
   // Eastern Europe
   'EVRA': 'Riga',
