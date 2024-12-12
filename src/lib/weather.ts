@@ -76,10 +76,20 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
     const [metarResponse, tafResponse] = await Promise.all([
       fetch(`https://api.checkwx.com/metar/${AIRPORT}/decoded`, {
-        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
+        headers: { 
+          'X-API-Key': CHECKWX_API_KEY ?? '',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       }),
       fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
-        headers: { 'X-API-Key': CHECKWX_API_KEY ?? '' }
+        headers: { 
+          'X-API-Key': CHECKWX_API_KEY ?? '',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       })
     ]);
 
