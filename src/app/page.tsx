@@ -4,7 +4,6 @@ import { Alert } from "@/components/ui/alert";
 import { getFlightStats } from "@/lib/flights";
 import { FlightStatsDisplay } from "@/components/ui/flight-stats";
 import WeatherTimeline from "@/components/WeatherTimeline";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page() {
     const weather = await getAirportWeather();
@@ -40,8 +39,8 @@ export default async function Page() {
                 </Alert>
 
                 {/* Main content */}
-                <div className="max-w-4xl mx-auto px-6 pb-36">
-                    <h1 className="text-5xl font-bold mt-24 mb-4 text-white">Will I fly today from Krakow?</h1>
+                <div className="max-w-4xl mx-auto px-6 pb-48">
+                    <h1 className="text-5xl font-bold mt-36 mb-4 text-white">Will I fly today from Krakow?</h1>
 
                     {weather?.current && (
                         <>
@@ -53,7 +52,13 @@ export default async function Page() {
                                       : "Yes, it looks like you are good to go!"}
                             </p>
 
-                            <WeatherTimeline current={weather.current} forecast={weather.forecast} />
+                            <WeatherTimeline 
+                                current={weather.current}
+                                forecast={weather.forecast}
+                                isLoading={false}
+                                isError={false}
+                                retry={() => {}}
+                            />
                         </>
                     )}
                 </div>
@@ -61,50 +66,54 @@ export default async function Page() {
 
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
                 <h2 className="text-xl font-semibold mb-4 text-white">Flight Status</h2>
-                <FlightStatsDisplay stats={flightStats} />
+                <FlightStatsDisplay 
+                    stats={flightStats || { 
+                        delayed: 0, 
+                        cancelled: 0, 
+                        diverted: 0, 
+                        onTime: 0, 
+                        affectedFlights: [] 
+                    }}
+                />
             </div>
 
             {/* Info cards section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
-                <Card className="bg-white">
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold mb-2">How we get our data?</h3>
-                        <p className="text-slate-600 mb-4 text-sm">We combine data from three reliable sources:</p>
-                        <ul className="text-slate-600 space-y-2 text-sm">
-                            <li>- Official METAR reports (the stuff pilots actually use)</li>
-                            <li>- TAF forecasts (fancy airport weather predictions)</li>
-                            <li>- Flight status information provided by airlines to show you up-to-date stats</li>
-                        </ul>
-                    </CardContent>
-                </Card>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
+                    <h3 className="font-semibold mb-2 text-slate-200">How we get our data?</h3>
+                    <p className="text-slate-400 mb-4 text-sm">We combine data from three reliable sources:</p>
+                    <ul className="text-slate-400 space-y-2 text-sm">
+                        <li>• Official METAR reports (the stuff pilots actually use)</li>
+                        <li>• TAF forecasts (fancy airport weather predictions)</li>
+                        <li>• Flight status information provided by airlines</li>
+                    </ul>
+                </div>
 
-                <Card className="bg-white">
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold mb-2">Important notice</h3>
-                        <p className="text-slate-600 mb-4 text-sm">
-                            While we try our best to provide accurate information, we are not meteorologists, air
-                            traffic controllers, or fortune tellers.
-                        </p>
-                        <p className="text-slate-600 text-sm">
-                            Always check with your airline for the final word on your flight status. They are the ones
-                            with the actual planes, after all!
-                        </p>
-                    </CardContent>
-                </Card>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
+                    <h3 className="font-semibold mb-2 text-slate-200">Important notice</h3>
+                    <p className="text-slate-400 mb-4 text-sm">
+                        While we try our best to provide accurate information, we are not meteorologists, air
+                        traffic controllers, or fortune tellers.
+                    </p>
+                    <p className="text-slate-400 text-sm">
+                        Always check with your airline for the final word on your flight status. They are the ones
+                        with the actual planes, after all!
+                    </p>
+                </div>
             </div>
 
             {/* Footer */}
-            <footer className="bottom-0 left-0 right-0 bg-white border-t py-4">
-                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-600">
-                    <div>Built by Mateusz Kozłowski.</div>
+            <footer className="border-t border-slate-800 py-4">
+                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-400">
+                    <div>Built by Mateusz Kozłowski</div>
                     <div className="flex gap-4">
-                        <a href="/changelog" className="hover:text-slate-900">
+                        <a href="/changelog" className="hover:text-slate-200">
                             Changelog
                         </a>
-                        <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-900">
+                        <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-200">
                             Email
                         </a>
-                        <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-900">
+                        <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-200">
                             WWW
                         </a>
                     </div>
