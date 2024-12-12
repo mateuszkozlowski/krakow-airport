@@ -15,7 +15,7 @@ export async function getFlightStats(): Promise<FlightStats> {
     const endTime = now.toISOString().split('.')[0] + 'Z';
 
     const response = await fetch(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/scheduled_departures?start=${startTime}&end=${endTime}&type=Airline`,
+      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${startTime}&end=${endTime}&type=Airline`,
       {
         headers: {
           'x-apikey': API_KEY!,

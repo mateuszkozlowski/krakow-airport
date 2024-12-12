@@ -49,7 +49,7 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
 
         {hasAffectedFlights && (
           <div>
-            <h3 className="font-semibold mb-3">Affected Departures</h3>
+            <h3 className="font-semibold mb-3">Affected Arrivals</h3>
             <div className="space-y-2">
 {stats.affectedFlights.map((flight: AffectedFlight) => (
   <div 
