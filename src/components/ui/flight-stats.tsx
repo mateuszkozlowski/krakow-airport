@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FlightStats, AffectedFlight, FlightStatus } from "@/lib/types/flight";
+import { FlightStats, AffectedFlight } from "@/lib/types/flight";
 import { AlertTriangle, Plane, PlaneLanding, Search } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -52,22 +52,20 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
     );
   }
 
-  const StatusBadge = ({ status, delayMinutes }: { status: FlightStatus; delayMinutes?: number }) => {
-    const variants: Record<FlightStatus, string> = {
+  const StatusBadge = ({ status, delayMinutes }: { status: string; delayMinutes?: number }) => {
+    const variants = {
       'CANCELLED': 'bg-red-100 text-red-800',
       'DIVERTED': 'bg-yellow-100 text-yellow-800',
       'DELAYED': 'bg-orange-100 text-orange-800',
       'ON TIME': 'bg-green-100 text-green-800',
-      'DEPARTED': 'bg-blue-100 text-blue-800',
-      'DEPARTED_WITH_DELAY': 'bg-orange-100 text-orange-800'
+      'Departed': 'bg-blue-100 text-blue-800',
+      'Departed with delay': 'bg-orange-100 text-orange-800'
     };
-
-    const displayStatus = status === 'DEPARTED_WITH_DELAY' ? 'Departed with delay' : status;
 
     return (
       <div className="flex flex-col items-end gap-1">
-        <Badge variant="secondary" className={variants[status]}>
-          {displayStatus}
+        <Badge variant="secondary" className={variants[status as keyof typeof variants]}>
+          {status}
         </Badge>
         {delayMinutes && (
           <span className="text-xs text-gray-500">
@@ -96,8 +94,8 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
             const currentTime = new Date().getTime();
             let flightStatus = flight.status;
 
-            if (flightScheduledTime < currentTime && !['CANCELLED', 'DIVERTED'].includes(flight.status)) {
-              flightStatus = flight.delayMinutes ? 'DEPARTED_WITH_DELAY' : 'DEPARTED';
+            if (flightScheduledTime < currentTime && flight.status !== 'CANCELLED') {
+              flightStatus = flight.delayMinutes ? 'Departed with delay' : 'Departed';
             }
 
             return (
@@ -124,7 +122,7 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
                         })}
                       </div>
                     </div>
-                    <StatusBadge status={flightStatus as FlightStatus} delayMinutes={flight.delayMinutes} />
+                    <StatusBadge status={flightStatus} delayMinutes={flight.delayMinutes} />
                   </div>
                 </CardContent>
               </Card>
