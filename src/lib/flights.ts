@@ -1,197 +1,182 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FlightStats, AffectedFlight } from "@/lib/types/flight";
-import { AlertTriangle, Plane, PlaneLanding, Search } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+// lib/flights.ts
+import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
+import { AIRPORT_NAMES } from './airports';
+import { AIRLINES } from './airlines';
 
-interface FlightStatsDisplayProps {
-  stats: FlightStats;
-  error?: string;
-}
+const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
+const AIRPORT = 'EPKK';
 
-export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredFlights, setFilteredFlights] = useState<{
-    departures: AffectedFlight[];
-    arrivals: AffectedFlight[];
-  }>({ departures: [], arrivals: [] });
+export async function getFlightStats(): Promise<FlightStats> {
+  try {
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
-  useEffect(() => {
-    const filtered = {
-      departures: stats.affectedFlights.departures.filter((flight) => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          flight.flightNumber.toLowerCase().includes(searchLower) ||
-          flight.airline.toLowerCase().includes(searchLower) ||
-          (flight.destination?.toLowerCase() || '').includes(searchLower)
-        );
-      }),
-      arrivals: stats.affectedFlights.arrivals.filter((flight) => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          flight.flightNumber.toLowerCase().includes(searchLower) ||
-          flight.airline.toLowerCase().includes(searchLower) ||
-          (flight.origin?.toLowerCase() || '').includes(searchLower)
-        );
-      })
-    };
-    setFilteredFlights(filtered);
-  }, [searchQuery, stats.affectedFlights]);
+    const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
+    const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
 
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>Failed to load flight data</AlertDescription>
-      </Alert>
-    );
-  }
+    // Fetch both departures and arrivals
+    const [departuresResponse, arrivalsResponse] = await Promise.all([
+      fetch(
+        `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/departures?start=${startTime}&end=${endTime}&type=Airline`,
+        {
+          headers: {
+            'x-apikey': API_KEY!,
+            'Accept': 'application/json; charset=UTF-8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store'
+        }
+      ),
+      fetch(
+        `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${startTime}&end=${endTime}&type=Airline`,
+        {
+          headers: {
+            'x-apikey': API_KEY!,
+            'Accept': 'application/json; charset=UTF-8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store'
+        }
+      )
+    ]);
 
-  const StatusBadge = ({ status, delayMinutes }: { status: string; delayMinutes?: number }) => {
-    const variants = {
-      'CANCELLED': 'bg-red-100 text-red-800',
-      'DIVERTED': 'bg-yellow-100 text-yellow-800',
-      'DELAYED': 'bg-orange-100 text-orange-800',
-      'ON TIME': 'bg-green-100 text-green-800',
-      'Departed': 'bg-blue-100 text-blue-800',
-      'Departed with delay': 'bg-orange-100 text-orange-800'
-    };
-
-    return (
-      <div className="flex flex-col items-end gap-1">
-        <Badge variant="secondary" className={variants[status as keyof typeof variants]}>
-          {status}
-        </Badge>
-        {delayMinutes && (
-          <span className="text-xs text-gray-500">
-            Delay: {delayMinutes} min
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  const renderFlightList = (flights: AffectedFlight[], type: 'departures' | 'arrivals') => {
-    if (flights.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-          <Search className="h-12 w-12 mb-2" />
-          <p>No {type} found</p>
-        </div>
-      );
+    if (!departuresResponse.ok || !arrivalsResponse.ok) {
+      throw new Error('Failed to fetch flight data');
     }
 
-    return (
-      <ScrollArea className="h-[500px] pr-4">
-        <div className="space-y-2">
-          {flights.map((flight) => {
-            const flightScheduledTime = new Date(flight.scheduledTime).getTime();
-            const currentTime = new Date().getTime();
-            let flightStatus = flight.status;
+    const departuresData: FlightAwareResponse = await departuresResponse.json();
+    const arrivalsData: FlightAwareResponse = await arrivalsResponse.json();
 
-            if (flightScheduledTime < currentTime && flight.status !== 'CANCELLED') {
-              flightStatus = flight.delayMinutes ? 'Departed with delay' : 'Departed';
-            }
+    const stats: FlightStats = {
+      delayed: 0,
+      cancelled: 0,
+      diverted: 0,
+      onTime: 0,
+      affectedFlights: {
+        departures: [],
+        arrivals: []
+      }
+    };
 
-            return (
-              <Card key={flight.flightNumber} className="bg-white">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{flight.flightNumber}</span>
-                        <span className="text-sm text-gray-500">{flight.airline}</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {type === 'departures' ? (
-                          <>To: {flight.destination}</>
-                        ) : (
-                          <>From: {flight.origin}</>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Scheduled: {new Date(flight.scheduledTime).toLocaleTimeString('en-GB', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          timeZone: 'Europe/Warsaw',
-                        })}
-                      </div>
-                    </div>
-                    <StatusBadge status={flightStatus} delayMinutes={flight.delayMinutes} />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </ScrollArea>
-    );
-  };
+    // Process departures
+    departuresData.departures.forEach((flight: FlightAwareArrival) => {
+      const destinationCode = flight.destination?.code;
+      const airlineCode = flight.operator;
+      const airportName = destinationCode ? AIRPORT_NAMES[destinationCode] : undefined;
+      const airlineName = airlineCode ? AIRLINES[airlineCode] : undefined;
+      const displayDestination = airportName || destinationCode || 'Unknown';
+      const displayAirline = airlineName || airlineCode || 'Unknown';
 
-  return (
-    <Card className="bg-white">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">Flight Status</CardTitle>
-        <CardDescription>Real-time flight information for Kraków Airport</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-red-50 border-red-100">
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-red-700">{stats.cancelled}</div>
-              <div className="text-red-600">Cancelled</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-yellow-50 border-yellow-100">
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-yellow-700">{stats.diverted}</div>
-              <div className="text-yellow-600">Diverted</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-orange-50 border-orange-100">
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-orange-700">{stats.delayed}</div>
-              <div className="text-orange-600">Delayed</div>
-            </CardContent>
-          </Card>
-        </div>
+      if (flight.cancelled) {
+        stats.cancelled++;
+        stats.affectedFlights.departures.push({
+          flightNumber: flight.ident,
+          status: 'CANCELLED',
+          scheduledTime: flight.scheduled_out!,
+          airline: displayAirline,
+          destination: displayDestination
+        });
+      } else if (flight.diverted) {
+        stats.diverted++;
+        stats.affectedFlights.departures.push({
+          flightNumber: flight.ident,
+          status: 'DIVERTED',
+          scheduledTime: flight.scheduled_out!,
+          airline: displayAirline,
+          destination: displayDestination
+        });
+      } else if (flight.scheduled_out && flight.estimated_out) {
+        const delay = new Date(flight.estimated_out).getTime() - new Date(flight.scheduled_out).getTime();
+        if (delay > 30 * 60 * 1000) {
+          stats.delayed++;
+          stats.affectedFlights.departures.push({
+            flightNumber: flight.ident,
+            status: 'DELAYED',
+            scheduledTime: flight.scheduled_out,
+            airline: displayAirline,
+            destination: displayDestination,
+            delayMinutes: Math.floor(delay / (1000 * 60))
+          });
+        } else {
+          stats.onTime++;
+          stats.affectedFlights.departures.push({
+            flightNumber: flight.ident,
+            status: 'ON TIME',
+            scheduledTime: flight.scheduled_out,
+            airline: displayAirline,
+            destination: displayDestination
+          });
+        }
+      }
+    });
 
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by flight number, airline, or destination/origin"
-            className="pl-10"
-          />
-        </div>
+    // Process arrivals
+    arrivalsData.arrivals.forEach((flight: FlightAwareArrival) => {
+      const originCode = flight.origin?.code;
+      const airlineCode = flight.operator;
+      const airportName = originCode ? AIRPORT_NAMES[originCode] : undefined;
+      const airlineName = airlineCode ? AIRLINES[airlineCode] : undefined;
+      const displayOrigin = airportName || originCode || 'Unknown';
+      const displayAirline = airlineName || airlineCode || 'Unknown';
 
-        <Tabs defaultValue="departures" className="w-full">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="departures" className="flex-1">
-              <Plane className="h-4 w-4 mr-2" />
-              Departures ({filteredFlights.departures.length})
-            </TabsTrigger>
-            <TabsTrigger value="arrivals" className="flex-1">
-              <PlaneLanding className="h-4 w-4 mr-2" />
-              Arrivals ({filteredFlights.arrivals.length})
-            </TabsTrigger>
-          </TabsList>
+      if (flight.cancelled) {
+        stats.cancelled++;
+        stats.affectedFlights.arrivals.push({
+          flightNumber: flight.ident,
+          status: 'CANCELLED',
+          scheduledTime: flight.scheduled_in!,
+          airline: displayAirline,
+          origin: displayOrigin
+        });
+      } else if (flight.diverted) {
+        stats.diverted++;
+        stats.affectedFlights.arrivals.push({
+          flightNumber: flight.ident,
+          status: 'DIVERTED',
+          scheduledTime: flight.scheduled_in!,
+          airline: displayAirline,
+          origin: displayOrigin
+        });
+      } else if (flight.scheduled_in && flight.estimated_in) {
+        const delay = new Date(flight.estimated_in).getTime() - new Date(flight.scheduled_in).getTime();
+        if (delay > 30 * 60 * 1000) {
+          stats.delayed++;
+          stats.affectedFlights.arrivals.push({
+            flightNumber: flight.ident,
+            status: 'DELAYED',
+            scheduledTime: flight.scheduled_in,
+            airline: displayAirline,
+            origin: displayOrigin,
+            delayMinutes: Math.floor(delay / (1000 * 60))
+          });
+        } else {
+          stats.onTime++;
+          stats.affectedFlights.arrivals.push({
+            flightNumber: flight.ident,
+            status: 'ON TIME',
+            scheduledTime: flight.scheduled_in,
+            airline: displayAirline,
+            origin: displayOrigin
+          });
+        }
+      }
+    });
 
-          <TabsContent value="departures">
-            {renderFlightList(filteredFlights.departures, 'departures')}
-          </TabsContent>
-
-          <TabsContent value="arrivals">
-            {renderFlightList(filteredFlights.arrivals, 'arrivals')}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
+    return stats;
+  } catch (error) {
+    console.error('Error fetching flight data:', error);
+    return {
+      delayed: 0,
+      cancelled: 0,
+      diverted: 0,
+      onTime: 0,
+      affectedFlights: {
+        departures: [],
+        arrivals: []
+      }
+    };
+  }
 }
