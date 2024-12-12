@@ -53,7 +53,7 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
             <div
               className={`space-y-2 max-h-[calc(5.7*4rem)] overflow-y-auto`} // Adjust this height as needed (5 * 4rem for 5 flights)
             >
-              {stats.affectedFlights.map((flight: AffectedFlight, index) => (
+              {stats.affectedFlights.map((flight: AffectedFlight) => (
                 <div key={flight.flightNumber} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
