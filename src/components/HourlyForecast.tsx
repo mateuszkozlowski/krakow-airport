@@ -8,9 +8,6 @@ interface HourlyForecastProps {
 
 export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   return (
-    <Card className="bg-white shadow-md">
-      <CardContent className="p-4 md:p-6">
-        <h2 className="text-lg font-semibold mb-4">Hourly Weather Forecast</h2>
         <div className="divide-y divide-gray-200">
           {forecast.map((period, index) => {
             const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
@@ -58,8 +55,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+
   );
 };
 

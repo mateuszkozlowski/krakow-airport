@@ -57,7 +57,7 @@ export default async function Page() {
 
                             {/* Status alert */}
                             <div
-                                className={`p-4 rounded-lg ${
+                                className={`p-4 rounded-t-lg ${
                                     weather.current.riskLevel.level === 3
                                         ? "bg-red-500/10"
                                         : weather.current.riskLevel.level === 2
@@ -108,7 +108,9 @@ export default async function Page() {
                                             )}
                                     </div>
                                 </div>
+                                
                             </div>
+                            <div className="bg-white px-6 rounded-b-lg">{weather?.forecast && <HourlyForecast forecast={weather.forecast} />}</div>
                         </>
                     )}
                 </div>
@@ -117,11 +119,6 @@ export default async function Page() {
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
                 <h2 className="text-xl font-semibold mb-4 text-white">Arrivals Insights</h2>
                 <FlightStatsDisplay stats={flightStats} />
-            </div>
-
-            {/* Bottom section with forecast */}
-            <div className="max-w-4xl mx-auto px-6 pb-8">
-                {weather?.forecast && <HourlyForecast forecast={weather.forecast} />}
             </div>
 
             {/* Info cards section */}

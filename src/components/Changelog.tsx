@@ -10,6 +10,13 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-12-12",
+    version: "0.0.4",
+    changes: [
+      "Changed forecast placement",
+"Some usability improvements",
+    ]
+  },   {
     date: "2024-12-11",
     version: "0.0.3",
     changes: [
