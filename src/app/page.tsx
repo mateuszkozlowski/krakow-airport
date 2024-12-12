@@ -1,11 +1,10 @@
 // src/app/page.tsx
 import { getAirportWeather } from "@/lib/weather";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { getFlightStats } from "@/lib/flights";
 import { FlightStatsDisplay } from "@/components/ui/flight-stats";
-import HourlyForecast from "@/components/HourlyForecast";
+import WeatherTimeline from "@/components/WeatherTimeline";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page() {
     const weather = await getAirportWeather();
@@ -29,7 +28,6 @@ export default async function Page() {
                                 Last update:{" "}
                                 {(() => {
                                     const date = new Date(weather.current.observed);
-                                    date.setHours(date.getHours()); // Add one hour
                                     return date.toLocaleTimeString("en-GB", {
                                         hour: "2-digit",
                                         minute: "2-digit",
@@ -42,8 +40,8 @@ export default async function Page() {
                 </Alert>
 
                 {/* Main content */}
-                <div className="max-w-4xl mx-auto px-6 pb-48">
-                    <h1 className="text-5xl font-bold mt-36 mb-4 text-white">Will I fly today from Krakow?</h1>
+                <div className="max-w-4xl mx-auto px-6 pb-36">
+                    <h1 className="text-5xl font-bold mt-24 mb-4 text-white">Will I fly today from Krakow?</h1>
 
                     {weather?.current && (
                         <>
@@ -55,74 +53,18 @@ export default async function Page() {
                                       : "Yes, it looks like you are good to go!"}
                             </p>
 
-                            {/* Status alert */}
-                            <div
-                                className={`p-4 rounded-t-lg ${
-                                    weather.current.riskLevel.level === 3
-                                        ? "bg-red-500/10"
-                                        : weather.current.riskLevel.level === 2
-                                          ? "bg-orange-500/10"
-                                          : "bg-emerald-500/10"
-                                }`}>
-                                <div className="flex gap-3">
-                                    {weather.current.riskLevel.level === 1 ? (
-                                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                                    ) : (
-                                        <AlertTriangle
-                                            className={`h-5 w-5 ${
-                                                weather.current.riskLevel.level === 3
-                                                    ? "text-red-400"
-                                                    : "text-orange-400"
-                                            }`}
-                                        />
-                                    )}
-                                    <div>
-                                        <div
-                                            className={`font-medium ${
-                                                weather.current.riskLevel.level === 3
-                                                    ? "text-red-400"
-                                                    : weather.current.riskLevel.level === 2
-                                                      ? "text-orange-400"
-                                                      : "text-emerald-400"
-                                            }`}>
-                                            {weather.current.riskLevel.level === 1
-                                                ? "No weather-related disruptions expected"
-                                                : weather.current.riskLevel.title}
-                                        </div>
-                                        <div className="text-white/80">
-                                            {weather.current.riskLevel.level === 1
-                                                ? "Weather conditions are looking good"
-                                                : weather.current.riskLevel.message}
-                                        </div>
-                                        {weather.current.conditions.phenomena &&
-                                            weather.current.conditions.phenomena.length > 0 && (
-                                                <div className="flex gap-2 flex-wrap mt-3">
-                                                    {weather.current.conditions.phenomena.map((phenomenon, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className="bg-white/10 px-3 py-1 rounded-full text-sm text-white">
-                                                            {phenomenon}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                    </div>
-                                </div>
-                                
-                            </div>
-                            <div className="bg-white px-6 rounded-b-lg">{weather?.forecast && <HourlyForecast forecast={weather.forecast} />}</div>
+                            <WeatherTimeline current={weather.current} forecast={weather.forecast} />
                         </>
                     )}
                 </div>
             </div>
 
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-                <h2 className="text-xl font-semibold mb-4 text-white">Arrivals Insights</h2>
+                <h2 className="text-xl font-semibold mb-4 text-white">Flight Status</h2>
                 <FlightStatsDisplay stats={flightStats} />
             </div>
 
             {/* Info cards section */}
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <Card className="bg-white">
                     <CardContent className="p-6">
