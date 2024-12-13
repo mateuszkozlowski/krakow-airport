@@ -6,14 +6,7 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    trailingSlash: true,
-    // Add exportPathMap to explicitly define static routes
-    exportPathMap: async function() {
-        return {
-            '/': { page: '/' },
-            '/changelog': { page: '/changelog' }
-        };
-    }
+    trailingSlash: true
 };
 
 module.exports = nextConfig;
