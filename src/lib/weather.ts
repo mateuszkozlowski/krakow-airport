@@ -76,24 +76,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights';
 
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
-    const timestamp = new Date().getTime();
-    
-    const [metarResponse, tafResponse] = await Promise.all([
-      fetch(`${API_URL}/api/proxy/weather/metar`, {
-        headers: { 
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        },
-        cache: 'no-store'
-      }),
-      fetch(`${API_URL}/api/proxy/weather/taf`, {
-        headers: { 
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        },
-        cache: 'no-store'
-      })
-    ]);
+    const response = await fetch('/api/weather', {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
+    });
+
 
 
     if (!metarResponse.ok || !tafResponse.ok) {

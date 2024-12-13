@@ -16,29 +16,37 @@ export async function getFlightStats(): Promise<FlightStats> {
 
     const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
-    
-    const response = await fetch(`${API_URL}/api/proxy/flights?start=${startTime}&end=${endTime}`, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      },
-      cache: 'no-store'
-    });
+
+    const response = await fetch(
+      `/api/flights?start=${startTime}&end=${endTime}`,
+      {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+      }
+    );
 
     if (!response.ok) {
       throw new Error('Failed to fetch flight data');
     }
 
-     const data: FlightAwareResponse = await response.json();
-    console.log('FlightAware raw response:', data);  // Let's see what we actually get
-
-    // Before processing, let's check what arrays we have
-    console.log('Arrivals array:', data.arrivals?.length || 'no arrivals');
-
-    const stats: FlightStats = {
+    const data = await response.json();
+    return {
+      delayed: data.delayed || 0,
+      cancelled: data.cancelled || 0,
+      diverted: data.diverted || 0,
+      onTime: data.onTime || 0,
+      affectedFlights: data.affectedFlights || []
+    };
+  } catch (error) {
+    console.error('Error fetching flight data:', error);
+    return {
       delayed: 0,
       cancelled: 0,
       diverted: 0,
+      onTime: 0,
       affectedFlights: []
     };
 
