@@ -79,18 +79,15 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
       cache: 'no-store'
     });
 
-
-
-    if (!metarResponse.ok || !tafResponse.ok) {
+    if (!response.ok) {
       throw new Error('Weather data fetch failed');
     }
 
+    const data = await response.json();
+    const { metar, taf } = data;
 
-    const metarData = await metarResponse.json();
-    const tafData = await tafResponse.json();
-
-    const currentWeather: WeatherData = metarData.data[0];
-    const forecast: TAFData = tafData.data[0];
+    const currentWeather: WeatherData = metar.data[0];
+    const forecast: TAFData = taf.data[0];
 
     const currentAssessment = assessWeatherRisk(currentWeather);
     const forecastPeriods = processForecast(forecast);
