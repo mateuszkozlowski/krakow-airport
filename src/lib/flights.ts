@@ -1,35 +1,43 @@
 // lib/flights.ts
 import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
-import { AIRPORT_NAMES } from "./airports";
-import { AIRLINES } from "./airlines";
+import { AIRPORT_NAMES } from './airports';
+import { AIRLINES } from './airlines';
 
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    const fourHoursFromNow = new Date(now.getTime() + 6 * 60 * 60 * 1000);
 
-    const startTime = twoHoursAgo.toISOString().split(".")[0] + "Z";
-    const endTime = fourHoursFromNow.toISOString().split(".")[0] + "Z";
+    const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
+    const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
+
+    console.log('Requesting flights for:', { startTime, endTime });
 
     const response = await fetch(
       `/api/flights?start=${startTime}&end=${endTime}`,
       {
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         },
-        cache: "no-store",
+        cache: 'no-store'
       }
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch flight data");
+      throw new Error('Failed to fetch flight data');
     }
 
     const data: FlightAwareResponse = await response.json();
+    console.log('Received flight data:', data);
 
-    // Initialize stats
+    // Check if data.arrivals exists and is an array
+    if (!data.arrivals || !Array.isArray(data.arrivals)) {
+      console.error('Invalid flight data structure:', data);
+      throw new Error('Invalid flight data structure');
+    }
+
     const stats: FlightStats = {
       delayed: 0,
       cancelled: 0,
@@ -37,7 +45,6 @@ export async function getFlightStats(): Promise<FlightStats> {
       affectedFlights: [],
     };
 
-    // Process arrivals with proper typing and null checks
     data.arrivals.forEach((flight: FlightAwareArrival) => {
       const originCode = flight.origin?.code;
       const airlineCode = flight.operator;
@@ -68,7 +75,7 @@ export async function getFlightStats(): Promise<FlightStats> {
         const delay =
           new Date(flight.estimated_in).getTime() -
           new Date(flight.scheduled_in).getTime();
-        if (delay > 20 * 60 * 1000) {
+        if (delay > 20 * 60 * 1000) { // 20 minutes delay threshold
           stats.delayed++;
           stats.affectedFlights.push({
             flightNumber: flight.ident,
@@ -82,6 +89,7 @@ export async function getFlightStats(): Promise<FlightStats> {
       }
     });
 
+    console.log('Processed flight stats:', stats);
     return stats;
   } catch (error) {
     console.error("Error fetching flight data:", error);
