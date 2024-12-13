@@ -1,14 +1,14 @@
 // src/app/layout.tsx
 import '@/app/globals.css';
-import { Inter } from 'next/font/google'
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { Inter } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   const gaId = process.env.NEXT_PUBLIC_GA4_KEY;
 
@@ -21,8 +21,8 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {children}
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
-      {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
-  )
+  );
 }
