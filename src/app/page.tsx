@@ -1,19 +1,69 @@
+'use client';
 // src/app/page.tsx
-import { getAirportWeather } from "@/lib/weather";
+import { useEffect, useState } from 'react';
 import { Alert } from "@/components/ui/alert";
 import { getFlightStats } from "@/lib/flights";
 import { FlightStatsDisplay } from "@/components/ui/flight-stats";
 import WeatherTimeline from "@/components/WeatherTimeline";
+import { Loader2 } from "lucide-react";
+import type { WeatherResponse } from '@/lib/types/weather';
+import type { FlightStats } from '@/lib/types/flight';
 
-export default async function Page() {
-    const weather = await getAirportWeather();
-    const flightStats = await getFlightStats();
+export default function Page() {
+    const [weather, setWeather] = useState<WeatherResponse | null>(null);
+    const [flightStats, setFlightStats] = useState<FlightStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    async function fetchData() {
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const [weatherRes, flightRes] = await Promise.all([
+                fetch('/api/weather'),
+                fetch('/api/flights')
+            ]);
+
+            if (!weatherRes.ok || !flightRes.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            const [weatherData, flightData] = await Promise.all([
+                weatherRes.json(),
+                flightRes.json()
+            ]);
+
+            setWeather(weatherData);
+            setFlightStats(flightData);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError('Failed to load data. Please try again later.');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 5 * 60 * 1000); // Refresh every 5 minutes
+        return () => clearInterval(interval);
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#1a1f36] flex items-center justify-center">
+                <div className="text-white flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen">
-            {/* Top section with dark background */}
             <div className="bg-[#1a1f36]">
-                {/* Alert banner */}
                 <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
                     <div className="max-w-4xl mx-auto w-full flex-wrap md:flex justify-between items-center">
                         <p className="text-sm">
@@ -38,7 +88,6 @@ export default async function Page() {
                     </div>
                 </Alert>
 
-                {/* Main content */}
                 <div className="max-w-4xl mx-auto px-6 pb-48">
                     <h1 className="text-5xl font-bold mt-36 mb-4 text-white">Will I fly today from Krakow?</h1>
 
@@ -55,9 +104,9 @@ export default async function Page() {
                             <WeatherTimeline 
                                 current={weather.current}
                                 forecast={weather.forecast}
-                                isLoading={false}
-                                isError={false}
-                                retry={() => {}}
+                                isLoading={isLoading}
+                                isError={!!error}
+                                retry={fetchData}
                             />
                         </>
                     )}
@@ -77,7 +126,6 @@ export default async function Page() {
                 />
             </div>
 
-            {/* Info cards section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
                 <div className="border border-slate-700/10 rounded-lg p-6">
                     <h3 className="font-semibold mb-2 text-slate-900">How we get our data?</h3>
@@ -102,7 +150,6 @@ export default async function Page() {
                 </div>
             </div>
 
-            {/* Footer */}
             <footer className="border-t border-slate-800 py-4">
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
                     <div>Built by Mateusz Kozłowski</div>
