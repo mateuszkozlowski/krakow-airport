@@ -79,7 +79,7 @@ export default async function Page() {
 
             {/* Info cards section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
-                <div className="border border-slate-700/50 rounded-lg p-6">
+                <div className="border border-slate-700/10 rounded-lg p-6">
                     <h3 className="font-semibold mb-2 text-slate-900">How we get our data?</h3>
                     <p className="text-slate mb-4 text-sm">We combine data from three reliable sources:</p>
                     <ul className="text-slate space-y-2 text-sm">
@@ -89,7 +89,7 @@ export default async function Page() {
                     </ul>
                 </div>
 
-                <div className="border border-slate-700/50 rounded-lg p-6">
+                <div className="border border-slate-700/10 rounded-lg p-6">
                     <h3 className="font-semibold mb-2 text-slate-900">Important notice</h3>
                     <p className="text-slate-900 mb-4 text-sm">
                         While we try our best to provide accurate information, we are not meteorologists, air
