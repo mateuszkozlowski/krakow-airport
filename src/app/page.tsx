@@ -146,7 +146,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <footer className="border-t border-slate-800 py-4">
+            <footer className="border-t border-slate-00 py-4">
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
                     <div>Built by Mateusz Kozłowski</div>
                     <div className="flex gap-4">

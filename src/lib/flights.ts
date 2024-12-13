@@ -9,34 +9,32 @@ export async function getFlightStats(): Promise<FlightStats> {
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
-    const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
-    const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
+    const startTime = twoHoursAgo.toISOString().split(".")[0] + "Z";
+    const endTime = fourHoursFromNow.toISOString().split(".")[0] + "Z";
 
     const response = await fetch(
       `/api/flights?start=${startTime}&end=${endTime}`,
       {
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
-        cache: 'no-store'
+        cache: "no-store",
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch flight data');
+      throw new Error("Failed to fetch flight data");
     }
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching flight data:', error);
-    // Make sure this matches exactly with the FlightStats type
-    return {
+    const data: FlightAwareResponse = await response.json();
+
+    // Initialize stats
+    const stats: FlightStats = {
       delayed: 0,
       cancelled: 0,
       diverted: 0,
-      affectedFlights: []
+      affectedFlights: [],
     };
 
     // Process arrivals with proper typing and null checks
@@ -81,8 +79,6 @@ export async function getFlightStats(): Promise<FlightStats> {
             delayMinutes: Math.floor(delay / (1000 * 60)),
           });
         }
-      } else {
-        stats.onTime++;
       }
     });
 
@@ -93,7 +89,6 @@ export async function getFlightStats(): Promise<FlightStats> {
       delayed: 0,
       cancelled: 0,
       diverted: 0,
-      onTime: 0,
       affectedFlights: [],
     };
   }
