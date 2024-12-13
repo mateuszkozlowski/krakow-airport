@@ -7,6 +7,8 @@ interface FlightStatsDisplayProps {
   error?: string;
 }
 
+
+
 export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
   if (error) {
     return (
