@@ -2,12 +2,13 @@
 // src/app/page.tsx
 import { useEffect, useState } from 'react';
 import { Alert } from "@/components/ui/alert";
-import { getFlightStats } from "@/lib/flights";
 import { FlightStatsDisplay } from "@/components/ui/flight-stats";
 import WeatherTimeline from "@/components/WeatherTimeline";
 import { Loader2 } from "lucide-react";
 import type { WeatherResponse } from '@/lib/types/weather';
 import type { FlightStats } from '@/lib/types/flight';
+import { getAirportWeather } from "@/lib/weather";
+import { getFlightStats } from "@/lib/flights";
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
@@ -20,19 +21,14 @@ export default function Page() {
             setIsLoading(true);
             setError(null);
 
-            const [weatherRes, flightRes] = await Promise.all([
-                fetch('/api/weather'),
-                fetch('/api/flights')
+            const [weatherData, flightData] = await Promise.all([
+                getAirportWeather(),
+                getFlightStats()
             ]);
 
-            if (!weatherRes.ok || !flightRes.ok) {
+            if (!weatherData || !flightData) {
                 throw new Error('Failed to fetch data');
             }
-
-            const [weatherData, flightData] = await Promise.all([
-                weatherRes.json(),
-                flightRes.json()
-            ]);
 
             setWeather(weatherData);
             setFlightStats(flightData);
@@ -46,7 +42,8 @@ export default function Page() {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 5 * 60 * 1000); // Refresh every 5 minutes
+        // Set up polling every 5 minutes
+        const interval = setInterval(fetchData, 5 * 60 * 1000);
         return () => clearInterval(interval);
     }, []);
 

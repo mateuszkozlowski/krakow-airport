@@ -72,26 +72,34 @@ const RISK_WEIGHTS = {
   }
 } as const;
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights';
+
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
+    const timestamp = new Date().getTime();
+    
     const [metarResponse, tafResponse] = await Promise.all([
-  fetch(`https://api.checkwx.com/metar/${AIRPORT}/decoded`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY ?? '',
-      'Cache-Control': 'no-store' // Disable caching
-    }
-  }),
-  fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY ?? '',
-      'Cache-Control': 'no-store' // Disable caching
-    }
-  })
-]);
+      fetch(`${API_URL}/api/proxy/weather/metar`, {
+        headers: { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+      }),
+      fetch(`${API_URL}/api/proxy/weather/taf`, {
+        headers: { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+      })
+    ]);
+
 
     if (!metarResponse.ok || !tafResponse.ok) {
       throw new Error('Weather data fetch failed');
     }
+
 
     const metarData = await metarResponse.json();
     const tafData = await tafResponse.json();

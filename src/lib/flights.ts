@@ -6,28 +6,26 @@ import { AIRLINES } from './airlines';
 const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
 const AIRPORT = 'EPKK'; // Kraków Airport ICAO code
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights';
+
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
-    const sixHoursAgo = new Date(now.getTime() - (6 * 60 * 60 * 1000));
-    const threeHoursFuture = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-    
-    const startTime = sixHoursAgo.toISOString().split('.')[0] + 'Z';
-    const endTime = threeHoursFuture.toISOString().split('.')[0] + 'Z';
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
-const response = await fetch(
-  `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${startTime}&end=${endTime}&type=Airline`,
-  {
-    headers: {
-      'x-apikey': API_KEY!,
-      'Accept': 'application/json; charset=UTF-8',
-      'cache': 'no-store',
-    }
-  }
-);
+    const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
+    const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
+    
+    const response = await fetch(`${API_URL}/api/proxy/flights?start=${startTime}&end=${endTime}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
+    });
 
     if (!response.ok) {
-      console.error('API Error:', await response.text());
       throw new Error('Failed to fetch flight data');
     }
 
