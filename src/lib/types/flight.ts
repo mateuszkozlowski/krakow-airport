@@ -24,16 +24,16 @@ export interface FlightAwareArrival {
 
 export interface FlightStats {
   delayed: number;
-  cancelled: 0;
+  cancelled: number;
   diverted: number;
   affectedFlights: AffectedFlight[];
 }
 
 export interface AffectedFlight {
   flightNumber: string;
-  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED';
+  status: 'CANCELLED' | 'DIVERTED' | 'DELAYED' | 'ON TIME';
   scheduledTime: string;
   airline: string;
-  origin: string;
+  destination: string;
   delayMinutes?: number;
 }
