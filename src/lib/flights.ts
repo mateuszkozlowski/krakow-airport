@@ -3,11 +3,6 @@ import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/fl
 import { AIRPORT_NAMES } from "./airports";
 import { AIRLINES } from "./airlines";
 
-const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
-const AIRPORT = "EPKK"; // Kraków Airport ICAO code
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://krk.flights";
-
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
