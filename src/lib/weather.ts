@@ -13,9 +13,6 @@ import { WEATHER_PHENOMENA } from './types/weather';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 
-const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
-const AIRPORT = 'EPKK';
-
 // CAT I approach minimums for EPKK
 const MINIMUMS = {
   VISIBILITY: 550,   // meters
@@ -74,30 +71,23 @@ const RISK_WEIGHTS = {
 
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
-    const [metarResponse, tafResponse] = await Promise.all([
-  fetch(`https://api.checkwx.com/metar/${AIRPORT}/decoded`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY ?? '',
-      'Cache-Control': 'no-store' // Disable caching
-    }
-  }),
-  fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY ?? '',
-      'Cache-Control': 'no-store' // Disable caching
-    }
-  })
-]);
+    const response = await fetch('/api/weather', {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
+    });
 
-    if (!metarResponse.ok || !tafResponse.ok) {
+    if (!response.ok) {
       throw new Error('Weather data fetch failed');
     }
 
-    const metarData = await metarResponse.json();
-    const tafData = await tafResponse.json();
+    const data = await response.json();
+    const { metar, taf } = data;
 
-    const currentWeather: WeatherData = metarData.data[0];
-    const forecast: TAFData = tafData.data[0];
+    const currentWeather: WeatherData = metar.data[0];
+    const forecast: TAFData = taf.data[0];
 
     const currentAssessment = assessWeatherRisk(currentWeather);
     const forecastPeriods = processForecast(forecast);
