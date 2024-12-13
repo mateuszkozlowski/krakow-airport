@@ -79,15 +79,13 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     headers: {
       'X-API-Key': CHECKWX_API_KEY ?? '',
       'Cache-Control': 'no-store' // Disable caching
-    },
-    cache: 'no-store' 
+    }
   }),
   fetch(`https://api.checkwx.com/taf/${AIRPORT}/decoded`, {
     headers: {
       'X-API-Key': CHECKWX_API_KEY ?? '',
       'Cache-Control': 'no-store' // Disable caching
-    },
-    cache: 'no-store' 
+    }
   })
 ]);
 

@@ -22,8 +22,7 @@ const response = await fetch(
       'x-apikey': API_KEY!,
       'Accept': 'application/json; charset=UTF-8',
       'cache': 'no-store',
-    },
-    cache: 'no-store' 
+    }
   }
 );
 
