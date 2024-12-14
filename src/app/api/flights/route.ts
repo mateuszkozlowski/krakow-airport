@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     console.log('Fetching arrivals data:', { start, end }); // Debug log
 
     const response = await fetch(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${start}&end=${end}&type=Airline`, // Changed to arrivals
+      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${start}&end=${end}&type=Airline&max_pages=10`, // Changed to arrivals
       {
         headers: {
           'x-apikey': API_KEY!,
