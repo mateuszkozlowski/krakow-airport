@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
 
 interface WeatherTimelineProps {
