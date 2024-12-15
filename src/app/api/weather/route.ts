@@ -9,6 +9,42 @@ interface WeatherAPIError {
   details?: string;
 }
 
+interface AeroAPICloud {
+  altitude: number;
+  symbol: string;
+  type: string;
+}
+
+interface AeroAPIObservation {
+  airport_code: string;
+  cloud_friendly: string;
+  clouds: AeroAPICloud[];
+  conditions: string | null;
+  pressure: number;
+  pressure_units: string;
+  raw_data: string;
+  temp_air: number;
+  temp_dewpoint: number;
+  temp_perceived: number;
+  relative_humidity: number;
+  time: string;
+  visibility: number;
+  visibility_units: string;
+  wind_direction: number;
+  wind_friendly: string;
+  wind_speed: number;
+  wind_speed_gust: number;
+  wind_units: string;
+}
+
+interface AeroAPIMetarResponse {
+  observations: AeroAPIObservation[];
+  links?: {
+    next?: string;
+  };
+  num_pages: number;
+}
+
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
   let lastError: Error | null = null;
   
@@ -78,7 +114,7 @@ export async function GET() {
         throw new Error('Both METAR and TAF requests failed');
       }
 
-      const metarData = metarResult.status === 'fulfilled' ? await metarResult.value.json() : null;
+      const metarData: AeroAPIMetarResponse | null = metarResult.status === 'fulfilled' ? await metarResult.value.json() : null;
       const tafData = tafResult.status === 'fulfilled' ? await tafResult.value.json() : null;
 
       // Transform the data to match the expected structure
@@ -92,7 +128,7 @@ export async function GET() {
               meters: metarData?.observations[0]?.visibility
             },
             ceiling: {
-              feet: metarData?.observations[0]?.clouds.find(c => c.type === 'BKN' || c.type === 'OVC')?.altitude * 100
+              feet: metarData?.observations[0]?.clouds.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')?.altitude * 100
             },
             wind: {
               speed_kts: metarData?.observations[0]?.wind_speed,
