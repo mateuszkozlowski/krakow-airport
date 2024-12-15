@@ -128,7 +128,9 @@ export async function GET() {
               meters: metarData?.observations[0]?.visibility
             },
             ceiling: {
-              feet: metarData?.observations[0]?.clouds.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')?.altitude * 100
+              feet: metarData?.observations[0]?.clouds?.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')?.altitude ? 
+                metarData.observations[0].clouds.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')!.altitude * 100 : 
+                undefined
             },
             wind: {
               speed_kts: metarData?.observations[0]?.wind_speed,
