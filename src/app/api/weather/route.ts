@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 
 export const runtime = 'edge';
 
+// Error Types
 interface WeatherAPIError {
   error: string;
   details?: string;
@@ -13,7 +14,7 @@ interface WeatherAPIError {
 interface AeroAPICloud {
   altitude: number;
   symbol: string;
-  type: string;
+  type: 'FEW' | 'SCT' | 'BKN' | 'OVC';
 }
 
 interface AeroAPIObservation {
@@ -47,26 +48,126 @@ interface AeroAPIMetarResponse {
 }
 
 // AeroAPI TAF Types
-interface AeroAPITAFCondition {
-  text: string;
-  time_from: string;
-  time_to: string;
-  visibility: number;
-  visibility_units: string;
-  wind_direction: number;
-  wind_speed: number;
-  wind_units: string;
-  change_indicator?: 'TEMPO' | 'BECMG' | 'PROB30' | 'PROB40';
+interface AeroAPITAFCloud {
+  symbol: string;
+  coverage: string | null;
+  altitude: string;
+  special: string;
 }
 
-interface AeroAPITAFForecast {
-  conditions: AeroAPITAFCondition[];
-  raw_data: string;
-  time: string;
+interface AeroAPITAFWind {
+  symbol: string;
+  direction: string;
+  speed: number;
+  units: string;
+  peak_gusts: number;
+}
+
+interface AeroAPITAFWindshear {
+  symbol: string;
+  height: string;
+  direction: string;
+  speed: string;
+  units: string;
+}
+
+interface AeroAPITAFVisibility {
+  symbol: string;
+  visibility: string;
+  units: string;
+}
+
+type TAFLineType = 'FM' | 'TEMPO' | 'BECMG' | 'PROB30' | 'PROB40';
+
+interface AeroAPITAFLine {
+  type: TAFLineType;
+  start: string;
+  end: string;
+  turbulence_layers: string;
+  icing_layers: string;
+  barometric_pressure: number;
+  significant_weather: string;
+  winds: AeroAPITAFWind;
+  windshear: AeroAPITAFWindshear;
+  visibility: AeroAPITAFVisibility;
+  clouds: AeroAPITAFCloud[];
+}
+
+interface AeroAPITAFDecodedForecast {
+  start: string;
+  end: string;
+  lines: AeroAPITAFLine[];
 }
 
 interface AeroAPITAFResponse {
-  forecast: AeroAPITAFForecast;
+  airport_code: string;
+  raw_forecast: string[];
+  time: string;
+  decoded_forecast: AeroAPITAFDecodedForecast;
+}
+
+// Transformed Weather Types
+interface WeatherCondition {
+  code: string;
+  prefix: '+' | '-' | null;
+}
+
+interface CloudInfo {
+  code: string;
+  base_feet_agl: number;
+  text: string;
+}
+
+interface WindInfo {
+  speed_kts: number;
+  gust_kts?: number;
+  degrees: number;
+}
+
+interface VisibilityInfo {
+  meters: number;
+}
+
+interface ChangeIndicator {
+  code: TAFLineType;
+  desc: string;
+  text: string;
+}
+
+interface ForecastPeriod {
+  timestamp: {
+    from: string;
+    to: string;
+  };
+  conditions: WeatherCondition[];
+  visibility: VisibilityInfo;
+  wind: WindInfo;
+  clouds: CloudInfo[];
+  change?: {
+    indicator: ChangeIndicator;
+  };
+}
+
+interface TransformedResponse {
+  metar: {
+    data: Array<{
+      raw_text: string;
+      observed: string;
+      visibility: VisibilityInfo;
+      ceiling: {
+        feet?: number;
+      };
+      wind: WindInfo;
+      conditions: WeatherCondition[];
+    }>;
+  };
+  taf: {
+    data: Array<{
+      raw_text: string;
+      forecast: ForecastPeriod[];
+    }>;
+  };
+  partial: boolean;
 }
 
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
@@ -76,7 +177,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
     try {
       const response = await fetch(url, {
         ...options,
-        next: { revalidate: 60 }, // Cache for 1 minute
+        next: { revalidate: 60 },
       });
       
       if (!response.ok) {
@@ -97,7 +198,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
   throw lastError;
 }
 
-export async function GET() {
+export async function GET(): Promise<NextResponse<TransformedResponse | WeatherAPIError>> {
   const headersList = await headers();
   const userAgent = headersList.get('user-agent') ?? 'Weather-App/1.0';
   
@@ -119,21 +220,17 @@ export async function GET() {
     };
 
     try {
-      // Using Promise.allSettled to handle partial failures
       const [metarResult, tafResult] = await Promise.allSettled([
-        // Get last 24 hours of METAR observations
         fetchWithRetry(
           `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/weather/observations`,
           { headers: requestHeaders }
         ),
-        // Get TAF data
         fetchWithRetry(
           `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/weather/forecast`,
           { headers: requestHeaders }
         ),
       ]);
 
-      // Handle potential partial failures
       if (metarResult.status === 'rejected' && tafResult.status === 'rejected') {
         throw new Error('Both METAR and TAF requests failed');
       }
@@ -142,56 +239,62 @@ export async function GET() {
       const tafData: AeroAPITAFResponse | null = tafResult.status === 'fulfilled' ? await tafResult.value.json() : null;
 
       const latestObs = metarData?.observations[0];
-      const ceilingCloud = latestObs?.clouds?.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC');
+      const ceilingCloud = latestObs?.clouds?.find(c => c.type === 'BKN' || c.type === 'OVC');
 
-      // Transform the data to match the expected structure
-      const transformedData = {
+      const transformedData: TransformedResponse = {
         metar: {
           data: [{
-            raw_text: latestObs?.raw_data,
-            observed: latestObs?.time,
+            raw_text: latestObs?.raw_data ?? '',
+            observed: latestObs?.time ?? '',
             visibility: {
-              meters: latestObs?.visibility
+              meters: latestObs?.visibility ?? 0
             },
             ceiling: {
               feet: ceilingCloud?.altitude ? ceilingCloud.altitude * 100 : undefined
             },
             wind: {
-              speed_kts: latestObs?.wind_speed,
+              speed_kts: latestObs?.wind_speed ?? 0,
               gust_kts: latestObs?.wind_speed_gust,
-              degrees: latestObs?.wind_direction
+              degrees: latestObs?.wind_direction ?? 0
             },
             conditions: latestObs?.conditions ? 
               latestObs.conditions.split(' ').map(code => ({
-                code: code.replace(/^[+-]/, ''), // Remove intensity indicators
-                prefix: code.startsWith('+') ? '+' : code.startsWith('-') ? '-' : null
+                code: code.replace(/^[+-]/, ''),
+                prefix: (code.startsWith('+') ? '+' : code.startsWith('-') ? '-' : null) as ('+' | '-' | null)
               })) : []
           }]
         },
         taf: {
           data: [{
-            raw_text: tafData?.forecast?.raw_data,
-            forecast: tafData?.forecast?.conditions?.map((period: AeroAPITAFCondition) => ({
+            raw_text: tafData?.raw_forecast?.[0] ?? '',
+            forecast: tafData?.decoded_forecast?.lines?.map((line) => ({
               timestamp: {
-                from: period.time_from,
-                to: period.time_to
+                from: line.start,
+                to: line.end
               },
-              conditions: period.text?.split(' ').map(code => ({
-                code: code.replace(/^[+-]/, ''),
-                prefix: code.startsWith('+') ? '+' : code.startsWith('-') ? '-' : null
-              })),
+              conditions: line.significant_weather ? 
+                line.significant_weather.split(' ').map(code => ({
+                  code: code.replace(/^[+-]/, ''),
+                  prefix: (code.startsWith('+') ? '+' : code.startsWith('-') ? '-' : null) as ('+' | '-' | null)
+                })) : [],
               visibility: {
-                meters: period.visibility
+                meters: parseInt(line.visibility.visibility) || 0
               },
               wind: {
-                speed_kts: period.wind_speed,
-                degrees: period.wind_direction
+                speed_kts: line.winds.speed,
+                gust_kts: line.winds.peak_gusts,
+                degrees: parseInt(line.winds.direction) || 0
               },
-              change: period.change_indicator ? {
+              clouds: line.clouds.map(cloud => ({
+                code: cloud.coverage || '',
+                base_feet_agl: parseInt(cloud.altitude) * 100,
+                text: cloud.special || ''
+              })),
+              change: line.type !== 'FM' ? {
                 indicator: {
-                  code: period.change_indicator,
-                  desc: period.change_indicator === 'TEMPO' ? 'Temporary' : 'Becoming',
-                  text: period.change_indicator === 'TEMPO' ? 'Temporary' : 'Becoming'
+                  code: line.type,
+                  desc: line.type === 'TEMPO' ? 'Temporary' : 'Becoming',
+                  text: line.type === 'TEMPO' ? 'Temporary' : 'Becoming'
                 }
               } : undefined
             })) || []
@@ -204,7 +307,7 @@ export async function GET() {
         transformedData,
         {
           headers: {
-            'Cache-Control': 'public, max-age=60', // Cache for 1 minute
+            'Cache-Control': 'public, max-age=60',
             'Vary': 'Accept-Encoding',
           }
         }
