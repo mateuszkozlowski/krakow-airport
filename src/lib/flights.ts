@@ -1,7 +1,7 @@
 // lib/flights.ts
-import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
-import { AIRPORT_NAMES } from './airports';
-import { AIRLINES } from './airlines';
+import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "@/lib/types/flight";
+import { AIRPORT_NAMES } from "@/lib/airports" ;
+import { AIRLINES } from "@/lib/airlines"; 
 
 export async function getFlightStats(): Promise<FlightStats> {
   try {

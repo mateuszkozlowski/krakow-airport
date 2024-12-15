@@ -15,6 +15,7 @@ export default function Page() {
     const [flightStats, setFlightStats] = useState<FlightStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
 
     async function fetchData() {
         try {
