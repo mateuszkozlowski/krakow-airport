@@ -39,7 +39,9 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
 
 export async function GET() {
   const headersList = headers();
-  const userAgent = headersList.get('user-agent') || 'Weather-App/1.0';
+  const userAgent = headersList.has('user-agent') 
+    ? headersList.get('user-agent')
+    : 'Weather-App/1.0';
   
   try {
     const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
