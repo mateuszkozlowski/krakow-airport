@@ -130,7 +130,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                 {getStatusColors(current.riskLevel.level).icon}
                 <div className="space-y-2">
                   <div>
-                    <div className={`text-l font-medium ${getStatusColors(current.riskLevel.level).text}`}>
+                    <div className={`text-l font-medium mb-1 ${getStatusColors(current.riskLevel.level).text}`}>
                       {current.riskLevel.title}
                     </div>
                     <div className="text-sm text-slate-300">{current.riskLevel.message}</div>
@@ -145,14 +145,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <Clock className="h-3 w-3" />
-                    <span>Last check at {new Date(current.observed).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      timeZone: 'Europe/Warsaw'
-                    })}</span>
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -161,12 +153,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
           {/* Timeline card */}
           <Card className="bg-slate-800/50 border-slate-700/50">
             <CardContent className="p-4">
-              <h3 className="text-sm font-medium text-slate-200 mb-4">Expected Changes</h3>
+              <h3 className="text-l font-medium text-slate-200 mb-4">Expected Changes</h3>
+            <div
+              className={`space-y-2 max-h-[calc(3.2*4rem)] overflow-y-auto`} // Adjust this height as needed (5 * 4rem for 5 flights)
+            >
               <div className="space-y-4 divide-y divide-slate-700/50">
                 {processedForecasts.map((period, index) => {
                   const colors = getStatusColors(period.riskLevel);
 
                   return (
+
                     <div key={index} className="pt-4 first:pt-0">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div className="space-y-0.5">
@@ -204,7 +200,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     </div>
                   );
                 })}
-              </div>
+              </div></div>
             </CardContent>
           </Card>
         </>

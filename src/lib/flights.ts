@@ -6,8 +6,8 @@ import { AIRLINES } from './airlines';
 export async function getFlightStats(): Promise<FlightStats> {
   try {
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
-    const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    const fourHoursFromNow = new Date(now.getTime());
 
     const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';

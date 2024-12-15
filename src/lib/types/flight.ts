@@ -40,4 +40,5 @@ export interface AffectedFlight {
   airline: string;
   origin: string;
   delayMinutes?: number;
+  divertedTo?: string;
 }
