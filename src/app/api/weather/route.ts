@@ -9,6 +9,7 @@ interface WeatherAPIError {
   details?: string;
 }
 
+// AeroAPI METAR Types
 interface AeroAPICloud {
   altitude: number;
   symbol: string;
@@ -43,6 +44,29 @@ interface AeroAPIMetarResponse {
     next?: string;
   };
   num_pages: number;
+}
+
+// AeroAPI TAF Types
+interface AeroAPITAFCondition {
+  text: string;
+  time_from: string;
+  time_to: string;
+  visibility: number;
+  visibility_units: string;
+  wind_direction: number;
+  wind_speed: number;
+  wind_units: string;
+  change_indicator?: 'TEMPO' | 'BECMG' | 'PROB30' | 'PROB40';
+}
+
+interface AeroAPITAFForecast {
+  conditions: AeroAPITAFCondition[];
+  raw_data: string;
+  time: string;
+}
+
+interface AeroAPITAFResponse {
+  forecast: AeroAPITAFForecast;
 }
 
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
@@ -115,30 +139,30 @@ export async function GET() {
       }
 
       const metarData: AeroAPIMetarResponse | null = metarResult.status === 'fulfilled' ? await metarResult.value.json() : null;
-      const tafData = tafResult.status === 'fulfilled' ? await tafResult.value.json() : null;
+      const tafData: AeroAPITAFResponse | null = tafResult.status === 'fulfilled' ? await tafResult.value.json() : null;
+
+      const latestObs = metarData?.observations[0];
+      const ceilingCloud = latestObs?.clouds?.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC');
 
       // Transform the data to match the expected structure
       const transformedData = {
         metar: {
           data: [{
-            // Take the most recent observation
-            raw_text: metarData?.observations[0]?.raw_data,
-            observed: metarData?.observations[0]?.time,
+            raw_text: latestObs?.raw_data,
+            observed: latestObs?.time,
             visibility: {
-              meters: metarData?.observations[0]?.visibility
+              meters: latestObs?.visibility
             },
             ceiling: {
-              feet: metarData?.observations[0]?.clouds?.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')?.altitude ? 
-                metarData.observations[0].clouds.find((c: AeroAPICloud) => c.type === 'BKN' || c.type === 'OVC')!.altitude * 100 : 
-                undefined
+              feet: ceilingCloud?.altitude ? ceilingCloud.altitude * 100 : undefined
             },
             wind: {
-              speed_kts: metarData?.observations[0]?.wind_speed,
-              gust_kts: metarData?.observations[0]?.wind_speed_gust,
-              degrees: metarData?.observations[0]?.wind_direction
+              speed_kts: latestObs?.wind_speed,
+              gust_kts: latestObs?.wind_speed_gust,
+              degrees: latestObs?.wind_direction
             },
-            conditions: metarData?.observations[0]?.conditions ? 
-              metarData.observations[0].conditions.split(' ').map(code => ({
+            conditions: latestObs?.conditions ? 
+              latestObs.conditions.split(' ').map(code => ({
                 code: code.replace(/^[+-]/, ''), // Remove intensity indicators
                 prefix: code.startsWith('+') ? '+' : code.startsWith('-') ? '-' : null
               })) : []
@@ -147,7 +171,7 @@ export async function GET() {
         taf: {
           data: [{
             raw_text: tafData?.forecast?.raw_data,
-            forecast: tafData?.forecast?.conditions?.map(period => ({
+            forecast: tafData?.forecast?.conditions?.map((period: AeroAPITAFCondition) => ({
               timestamp: {
                 from: period.time_from,
                 to: period.time_to
