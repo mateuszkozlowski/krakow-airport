@@ -18,10 +18,12 @@ interface WeatherTimelineProps {
     visibility?: { meters: number };
     ceiling?: { feet: number };
   };
+  forecast: ForecastChange[]; // Matches the corrected ForecastChange type
   isLoading: boolean;
   isError: boolean;
-  retry: () => void;
+  retry: () => Promise<void>; // Ensure retry matches this signature
 }
+
 
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {

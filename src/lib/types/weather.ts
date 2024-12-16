@@ -75,23 +75,22 @@ export interface ProcessedConditions {
 }
 
 export interface ForecastChange {
-  timeDescription: string; // Short description of the forecast time
-  from: Date; // Start of the forecast period
-  to: Date; // End of the forecast period
+  from: Date; // Start time of the forecast
+  to: Date; // End time of the forecast
   conditions: {
-    phenomena: string[]; // Array of weather phenomena (e.g., "rain", "snow")
+    phenomena: string[]; // List of weather phenomena (e.g., "rain", "fog")
   };
   riskLevel: {
-    level: 1 | 2 | 3; // Risk level (1: low, 2: moderate, 3: high)
-    title: string; // Title of the risk level
+    level: 1 | 2 | 3; // Risk level
+    title: string; // Title for the risk level (e.g., "Low", "High")
   };
-  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT'; // Type of forecast change
-  isTemporary?: boolean; // Indicates if the forecast is temporary
-  probability?: number; // Probability of the forecast event (e.g., 50%)
-  wind?: { speed_kts: number; direction: number; gust_kts?: number }; // Wind data
-  visibility?: { meters: number }; // Visibility in meters
-  ceiling?: { feet: number }; // Ceiling height in feet
+  isTemporary?: boolean; // Optional flag for short-term weather
+  probability?: number; // Probability of occurrence (percentage)
+  wind?: { speed_kts: number; direction: number; gust_kts?: number }; // Wind information
+  visibility?: { meters: number }; // Visibility information
+  ceiling?: { feet: number }; // Ceiling altitude
 }
+
 
 
 export interface WeatherResponse {
