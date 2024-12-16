@@ -19,6 +19,26 @@ const MINIMUMS = {
   CEILING: 200     // feet
 } as const;
 
+export interface ForecastChange {
+  timeDescription: string;
+  from: Date;
+  to: Date;
+  conditions: ProcessedConditions;
+  riskLevel: RiskAssessment;
+  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
+  wind?: {
+    speed_kts: number;
+    direction: number;
+    gust_kts?: number;
+  };
+  visibility?: {
+    meters: number;
+  };
+  ceiling?: {
+    feet: number;
+  };
+}
+
 // Risk weights for different conditions tailored to Kraków's usual conditions
 const RISK_WEIGHTS = {
   // Severe phenomena (immediate impact)
@@ -144,7 +164,10 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
           phenomena
         },
         riskLevel: assessment,
-        changeType: period.change?.indicator?.code || 'PERSISTENT'
+        changeType: period.change?.indicator?.code || 'PERSISTENT',
+        wind: period.wind,
+        visibility: period.visibility,
+        ceiling: period.ceiling
       });
     }
   });
@@ -258,30 +281,76 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   const { score, reasons } = calculateRiskScore(weather);
   
+// Map weather conditions to friendly descriptions with emojis
+  const weatherDescriptions = {
+    // Severe conditions
+    TS: "⛈️ Thunderstorm",
+    TSRA: "⛈️ Thunderstorm & rain",
+    FZRA: "🌨️ Freezing rain",
+    FZDZ: "🌨️ Freezing drizzle",
+    FZFG: "❄️ Freezing fog",
+    FC: "🌪️ Funnel cloud",
+    SS: "🌪️ Sandstorm",
+    
+    // Moderate conditions
+    SN: "🌨️ Snowing",
+    SG: "🌨️ Snow grains",
+    BR: "🌫️ Misty",
+    FG: "🌫️ Foggy",
+    RA: "🌧️ Rainy",
+    GR: "🌧️ Hail",
+    GS: "🌧️ Small hail",
+    "+RA": "🌧️ Heavy rain",
+    "+SN": "🌨️ Heavy snow",
+    
+    // Generic conditions
+    "Strong wind gusts": "💨 Very windy",
+    "Strong winds": "💨 Strong winds",
+    "Moderate winds": "💨 Windy",
+    "Very low visibility": "🌫️ Very low visibility",
+    "Low visibility": "🌫️ Poor visibility",
+    "Reduced visibility": "🌫️ Slightly reduced visibility",
+    "Very low ceiling": "☁️ Very low clouds",
+    "Low ceiling": "☁️ Low clouds",
+    "Moderate ceiling": "☁️ Some clouds"
+  };
+
+  const getWeatherDescription = (reasons) => {
+    if (!reasons.length) return "☀️ Perfect weather";
+    
+    const primaryReason = reasons[0];
+    for (const [condition, description] of Object.entries(weatherDescriptions)) {
+      if (primaryReason.includes(condition)) {
+        return description;
+      }
+    }
+    return "⚠️ Poor weather";
+  };
+
   if (score >= 150) {
     return {
       level: 3,
       title: "High risk of disruptions",
-      message: "Flights may be cancelled or diverted",
-      explanation: `Multiple severe weather conditions (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling.`,
+      message: "Contact your airline",
+      explanation: getWeatherDescription(reasons),
       color: "red"
     };
   }
   else if (score >= 80) {
     return {
       level: 3,
-      title: "High risk of disruptions",
-      message: "Flights may be cancelled or diverted",
-      explanation: `Severe weather conditions (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck with your airline before traveling.`,
+      title: "High risk of disruptions due to weather conditions",
+      message: "Check your flight status urgently with your airline or at the airport",
+      explanation: getWeatherDescription(reasons),
       color: "red"
     };
   }
   else if (score >= 40) {
     return {
       level: 2,
-      title: "Some delays possible",
-      message: "Weather might affect schedules",
-      explanation: `Weather conditions that may cause delays (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nCheck flight status before traveling.`,
+      title: "Some delays possible due to weather conditions",
+      message: "It is recommended to check flight status with your airline or at the airport",
+      explanation: getWeatherDescription(reasons),
       color: "orange"
     };
   }
@@ -290,9 +359,7 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
       level: 1,
       title: "No disruptions expected",
       message: "Good flying conditions",
-      explanation: score > 0 
-        ? `Minor weather conditions present (Risk score: ${score}):\n• ${reasons.join('\n• ')}\n\nNo significant impact expected.`
-        : "Current weather conditions are favorable for flying. ✈️",
+      explanation: getWeatherDescription(reasons),
       color: "green"
     };
   }

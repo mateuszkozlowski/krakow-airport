@@ -11,10 +11,11 @@ export async function GET(request: Request) {
     const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
     const AIRPORT = 'EPKK';
 
-    console.log('Fetching arrivals data:', { start, end }); // Debug log
+    console.log('Fetching flights data:', { start, end });
 
+    // For now, let's just use the regular arrivals endpoint
     const response = await fetch(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${start}&end=${end}&type=Airline&max_pages=10`, // Changed to arrivals
+      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/arrivals?start=${start}&end=${end}&type=Airline&max_pages=10`,
       {
         headers: {
           'x-apikey': API_KEY!,
@@ -24,13 +25,11 @@ export async function GET(request: Request) {
     );
 
     if (!response.ok) {
-      console.error('FlightAware API error:', response.status);
       throw new Error(`FlightAware API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('FlightAware API response:', data); // Debug log
-
+    
     return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -39,7 +38,12 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error('Flights API error:', error);
+    console.error('Detailed error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
+
     return NextResponse.json(
       { error: 'Failed to fetch flight data', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

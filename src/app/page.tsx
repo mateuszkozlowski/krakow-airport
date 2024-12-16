@@ -111,7 +111,7 @@ export default function Page() {
             </div>
 
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-                <h2 className="text-xl font-semibold mb-4 text-white">Flight Status</h2>
+                <h2 className="text-xl font-semibold mb-4 text-white">Arrivals Insights</h2>
 <FlightStatsDisplay 
     stats={flightStats || { 
         delayed: 0, 
