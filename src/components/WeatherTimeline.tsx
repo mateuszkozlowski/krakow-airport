@@ -9,6 +9,7 @@ interface WeatherTimelineProps {
       level: 1 | 2 | 3;
       title: string;
       message: string;
+      explanation?: string;
     };
     conditions: {
       phenomena: string[];
