@@ -77,19 +77,20 @@ export interface ProcessedConditions {
 export interface ForecastChange {
   from: Date; // Start time of the forecast
   to: Date; // End time of the forecast
+  timeDescription: string; // Human-readable description of the time period
   conditions: {
-    phenomena: string[]; // List of weather phenomena (e.g., "rain", "fog")
+    phenomena: string[]; // List of weather phenomena
   };
   riskLevel: {
-    level: 1 | 2 | 3; // Risk level
-    title: string; // Title for the risk level (e.g., "Low", "High")
+    level: 1 | 2 | 3;
+    title: string;
   };
-  isTemporary?: boolean; // Optional flag for short-term weather
-  probability?: number; // Probability of occurrence (percentage)
-  wind?: { speed_kts: number; direction: number; gust_kts?: number }; // Wind information
-  visibility?: { meters: number }; // Visibility information
-  ceiling?: { feet: number }; // Ceiling altitude
+  changeType?: "TEMPO" | "PERM"; // Optional: type of forecast change
+  wind?: { speed_kts: number; direction: number; gust_kts?: number };
+  visibility?: { meters: number };
+  ceiling?: { feet: number };
 }
+
 
 
 
