@@ -112,7 +112,7 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
   }
 }
 
-function processForecast(taf: TAFData | null): ForecastChange[] {
+export function processForecast(taf: TAFData | null): ForecastChange[] {
   if (!taf || !taf.forecast) {
     console.log('No TAF data to process');
     return [];
@@ -258,7 +258,7 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
   return { score: totalScore, reasons };
 }
 
-function assessWeatherRisk(weather: WeatherData): RiskAssessment {
+export function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   const { score, reasons } = calculateRiskScore(weather);
   
 // Map weather conditions to friendly descriptions with emojis

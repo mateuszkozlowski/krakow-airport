@@ -1,13 +1,15 @@
 // src/app/api/weather/route.ts
 import { NextResponse } from 'next/server';
 import { getCacheKey, getFromCache, setCache } from '@/lib/cache';
+import { assessWeatherRisk, processForecast } from '@/lib/weather';
+import { WEATHER_PHENOMENA } from '@/lib/types/weather';
 import type {
   AeroAPIObservationsResponse,
   AeroAPIForecastResponse,
   TransformedMetarResponse,
   TransformedTafResponse,
-  TransformedCondition,
-} from './types';
+  TransformedCondition
+} from '@/lib/types/weather';
 
 export const runtime = 'edge';
 
@@ -17,6 +19,23 @@ const BASE_URL = 'https://aeroapi.flightaware.com/aeroapi';
 interface AeroAPIResponse<T> {
   data?: T;
   error?: string;
+}
+
+function isValidWeatherCode(code: string): code is keyof typeof WEATHER_PHENOMENA {
+  return code in WEATHER_PHENOMENA;
+}
+
+function parseConditions(conditionsStr: string | null): TransformedCondition[] {
+  if (!conditionsStr) return [];
+  
+  return conditionsStr.split(' ')
+    .map(code => code.replace('light ', '-')
+                    .replace('heavy ', '+')
+                    .toUpperCase())
+    .filter(isValidWeatherCode)
+    .map(code => ({
+      code
+    }));
 }
 
 async function fetchFromAeroAPI<T>(endpoint: string): Promise<AeroAPIResponse<T>> {
@@ -38,16 +57,6 @@ async function fetchFromAeroAPI<T>(endpoint: string): Promise<AeroAPIResponse<T>
     console.error(`Error fetching from ${endpoint}:`, error);
     return { error: error instanceof Error ? error.message : 'Unknown error' };
   }
-}
-
-function parseConditions(conditionsStr: string | null): TransformedCondition[] {
-  if (!conditionsStr) return [];
-  
-  return conditionsStr.split(' ').map(code => ({
-    code: code.replace('light ', '-')
-             .replace('heavy ', '+')
-             .toUpperCase()
-  }));
 }
 
 function transformMetarData(aeroData: AeroAPIObservationsResponse): TransformedMetarResponse | null {
@@ -76,7 +85,7 @@ function transformMetarData(aeroData: AeroAPIObservationsResponse): TransformedM
       wind: {
         speed_kts: observation.wind_speed,
         direction: observation.wind_direction,
-        gust_kts: observation.wind_speed_gust || null
+        gust_kts: observation.wind_speed_gust || undefined
       },
       ceiling: clouds?.length ? {
         feet: Math.min(...clouds.map(c => c.altitude))
@@ -104,7 +113,7 @@ function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResp
     wind: line.winds ? {
       speed_kts: line.winds.speed,
       direction: parseInt(line.winds.direction),
-      gust_kts: line.winds.peak_gusts
+      gust_kts: line.winds.peak_gusts || undefined
     } : null,
     visibility: line.visibility ? {
       meters: line.visibility.visibility === 'unlimited' ? 9999 : 
@@ -160,9 +169,27 @@ export async function GET() {
       throw new Error('Failed to transform weather data');
     }
 
-    const data = { 
-      metar: transformedMetar, 
-      taf: transformedTaf 
+    const currentWeather = transformedMetar.data[0];
+    const forecast = transformedTaf.data[0];
+    
+    // Calculate risk assessment and process forecast
+    const currentAssessment = assessWeatherRisk(currentWeather);
+    const forecastPeriods = processForecast(forecast);
+
+    const data = {
+      current: {
+        riskLevel: currentAssessment,
+        conditions: {
+          phenomena: currentWeather.conditions?.map(c => WEATHER_PHENOMENA[c.code]) || []
+        },
+        raw: currentWeather.raw_text,
+        observed: currentWeather.observed,
+        wind: currentWeather.wind,
+        visibility: currentWeather.visibility,
+        ceiling: currentWeather.ceiling
+      },
+      forecast: forecastPeriods,
+      raw_taf: forecast.raw_text
     };
 
     // Save to cache before returning

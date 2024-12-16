@@ -1,65 +1,180 @@
 // src/lib/types/weather.ts
 
-export interface WindInfo {
-  degrees: number;
-  speed_kts: number;
-  gust_kts?: number;
+export interface AeroAPICloud {
+  type: string;
+  altitude: number;
 }
 
-export interface CloudInfo {
-  code: 'SCT' | 'BKN' | 'OVC' | 'FEW' | 'CLR';
-  base_feet_agl: number;
+export interface AeroAPIWinds {
+  symbol: string;
+  direction: string;
+  speed: number;
+  units: string;
+  peak_gusts: number | null;
 }
 
-export interface Visibility {
-  meters: number;
+export interface AeroAPIVisibility {
+  symbol: string;
+  visibility: string | number;
+  units: string | null;
 }
 
-export interface WeatherCondition {
-  code: keyof typeof WEATHER_PHENOMENA;
+export interface AeroAPIObservation {
+  airport_code: string;
+  cloud_friendly: string;
+  clouds: AeroAPICloud[];
+  conditions: string | null;
+  pressure: number;
+  pressure_units: string;
+  raw_data: string;
+  temp_air: number;
+  temp_dewpoint: number;
+  temp_perceived: number;
+  relative_humidity: number;
+  time: string;
+  visibility: number;
+  visibility_units: string;
+  wind_direction: number;
+  wind_friendly: string;
+  wind_speed: number;
+  wind_speed_gust: number;
+  wind_units: string;
 }
 
-export interface WeatherTimestamp {
-  from: string;
-  to: string;
+export interface AeroAPIObservationsResponse {
+  observations: AeroAPIObservation[];
+  links: {
+    next?: string;
+  };
+  num_pages: number;
 }
 
-export interface ChangeIndicator {
-  code: 'TEMPO' | 'BECMG';
-  text: string;
-  desc: string;
+export interface AeroAPIForecastLine {
+  type: string;
+  start: string | null;
+  end: string | null;
+  significant_weather: string | null;
+  winds: AeroAPIWinds | null;
+  visibility: AeroAPIVisibility | null;
+  clouds: Array<{
+    symbol: string;
+    coverage: string;
+    altitude: string;
+    special: string | null;
+  }>;
 }
 
-export interface Change {
-  probability?: number;
-  indicator?: ChangeIndicator;
+export interface AeroAPIForecastResponse {
+  airport_code: string;
+  raw_forecast: string[];
+  decoded_forecast: {
+    start: string;
+    end: string;
+    lines: AeroAPIForecastLine[];
+  };
 }
 
+export interface TransformedCloud {
+  altitude: number;
+  symbol: string;
+  type: string;
+}
+
+// Basic weather types
 export interface WeatherData {
   temperature?: {
     celsius: number;
   };
-  wind?: WindInfo;
-  visibility?: Visibility;
-  clouds?: CloudInfo[];
-  ceiling?: {
-    feet: number;
-  };
-  conditions?: WeatherCondition[];
+  wind?: TransformedWind;
+  visibility?: TransformedVisibility;
+  clouds?: TransformedCloud[];
+  ceiling?: TransformedCeiling;
+  conditions?: TransformedCondition[];
   raw_text: string;
   observed: string;
   change?: Change;
 }
 
-export interface ForecastPeriod extends WeatherData {
-  timestamp?: WeatherTimestamp;
-  change_indicator?: 'TEMPO' | 'BECMG' | 'PERSISTENT';
-  change?: Change;
+// wind types
+export interface TransformedWind {
+  speed_kts: number;
+  direction: number;
+  gust_kts?: number | undefined;
 }
 
-export interface TAFData {
-  forecast: ForecastPeriod[];
+export interface TransformedVisibility {
+  meters: number;
+}
+
+export interface TransformedCeiling {
+  feet: number;
+}
+
+export interface TransformedCondition {
+  code: keyof typeof WEATHER_PHENOMENA;
+}
+
+export interface TransformedMetarData {
+  airport_code: string;
+  clouds: TransformedCloud[];
+  conditions: TransformedCondition[];
+  pressure: number;
+  pressure_units: string;
   raw_text: string;
+  temp_air: number;
+  temp_dewpoint: number;
+  visibility: number;
+  visibility_units: string;
+  wind: TransformedWind;
+  ceiling: TransformedCeiling | null;
+  observed: string;
+}
+
+export interface TransformedForecastPeriod {
+  timestamp: {
+    from: string;
+    to: string;
+  } | null;
+  change: {
+    indicator: {
+      code: string;
+    };
+    probability?: number;
+  };
+  conditions: TransformedCondition[];
+  wind: TransformedWind | null;
+  visibility: TransformedVisibility | null;
+  ceiling: TransformedCeiling | null;
+}
+
+export interface TransformedMetarResponse {
+  data: TransformedMetarData[];
+}
+
+export interface TransformedTafResponse {
+  data: Array<{
+    airport_code: string;
+    forecast: TransformedForecastPeriod[];
+    raw_text: string;
+  }>;
+}
+
+export interface WeatherResponse {
+  current: {
+    riskLevel: RiskAssessment;
+    conditions: ProcessedConditions;
+    raw: string;
+    observed: string;
+    wind?: TransformedWind;
+    visibility?: TransformedVisibility;
+    ceiling?: TransformedCeiling;
+  };
+  forecast: ForecastChange[];
+  raw_taf: string;
+}
+
+export interface ProcessedConditions {
+  phenomena: string[];
 }
 
 export interface RiskAssessment {
@@ -70,10 +185,6 @@ export interface RiskAssessment {
   color: 'red' | 'orange' | 'green';
 }
 
-export interface ProcessedConditions {
-  phenomena: string[];  // No longer optional
-}
-
 export interface ForecastChange {
   timeDescription: string;
   from: Date;
@@ -81,44 +192,11 @@ export interface ForecastChange {
   conditions: ProcessedConditions;
   riskLevel: RiskAssessment;
   changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
-  wind?: {
-    speed_kts: number;
-    direction?: number;
-    gust_kts?: number;
-  };
-  visibility?: {
-    meters: number;
-  };
-  ceiling?: {
-    feet: number;
-  };
+  wind?: TransformedWind;
+  visibility?: TransformedVisibility;
+  ceiling?: TransformedCeiling;
   isTemporary?: boolean;
   probability?: number;
-}
-
-// Example for ProcessedConditions
-export interface ProcessedConditions {
-  phenomena: string[]; // List of weather phenomena
-  description?: string; // Optional description of conditions
-}
-
-// Example for RiskAssessment
-export interface RiskAssessment {
-  level: 1 | 2 | 3; 
-  title: string;
-  message: string; // Make this required
-  explanation?: string;
-}
-
-export interface WeatherResponse {
-  current: {
-    riskLevel: RiskAssessment;
-    conditions: ProcessedConditions;
-    raw: string;
-    observed: string;
-  };
-  forecast: ForecastChange[];
-  raw_taf: string;
 }
 
 export const WEATHER_PHENOMENA = {
@@ -127,11 +205,9 @@ export const WEATHER_PHENOMENA = {
   FC: '🌪️ Tornado/Waterspout',
   SQ: '💨 Violent Squall',
   SS: '🏜️ Severe Sandstorm',
-
   FZRA: '🌧️❄️ Freezing Rain',
   FZDZ: '💧❄️ Freezing Drizzle',
   FZFG: '🌫️❄️ Freezing Fog',
-
   RA: '🌧️ Rain',
   SN: '❄️ Snow',
   GR: '🌨️ Hail',
@@ -144,7 +220,6 @@ export const WEATHER_PHENOMENA = {
   '-SN': '🌨️ Light Snow',
   '+RA': '🌧️⚠️ Heavy Rain',
   '+SN': '❄️⚠️ Heavy Snow',
-
   FG: '🌫️ Dense Fog',
   BR: '🌫️ Mist',
   HZ: '🌫️ Haze',
@@ -154,8 +229,9 @@ export const WEATHER_PHENOMENA = {
   SA: '🏜️ Blowing Sand',
   PO: '💨 Dust/Sand Whirls',
   DS: '🏜️ Duststorm',
-
   SCT: '⛅ Scattered Clouds',
   BKN: '☁️ Broken Clouds',
   OVC: '☁️ Overcast'
 } as const;
+
+export type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, CheckCircle2, Wind, Eye, Cloud } from "lucide-react";
-import type { ForecastChange } from "@/lib/types/weather";
+import type { ForecastChange, TransformedWind } from "@/lib/types/weather";
 
 interface WeatherTimelineProps {
   current: {
@@ -15,24 +16,38 @@ interface WeatherTimelineProps {
       phenomena: string[];
     };
     observed: string;
-    wind?: { speed_kts: number; direction: number; gust_kts?: number };
-    visibility?: { meters: number };
-    ceiling?: { feet: number };
+    raw: string;
+    wind?: TransformedWind;
+    visibility?: { 
+      meters: number 
+    };
+    ceiling?: { 
+      feet: number 
+    };
   };
-  forecast: ForecastChange[]; // Matches the corrected ForecastChange type
+  forecast: ForecastChange[];
+  raw_taf: string;
   isLoading: boolean;
   isError: boolean;
-  retry: () => Promise<void>; // Ensure retry matches this signature
+  retry: () => Promise<void>;
 }
 
-const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
-const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts?: number }) => {
-  if (!wind) return null;
-  const gustInfo = wind.gust_kts ? ` (gusts ${wind.gust_kts}kt)` : '';
-  const direction = wind.direction ?? 0; // Use 0 as a default value if direction is undefined
-  return `${wind.speed_kts}kt from ${direction}°${gustInfo}`;
-};
+const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ 
+  current, 
+  forecast, 
+  raw_taf,
+  isLoading, 
+  isError, 
+  retry 
+}) => {
+  const [showCurrentRaw, setShowCurrentRaw] = useState(false);
+  const [showForecastRaw, setShowForecastRaw] = useState(false);
 
+  const formatWindInfo = (wind?: TransformedWind) => {
+    if (!wind) return null;
+    const gustInfo = wind.gust_kts != null ? ` (gusts ${wind.gust_kts}kt)` : '';
+    return `${wind.speed_kts}kt from ${wind.direction}°${gustInfo}`;
+  };
 
   const formatVisibility = (visibility?: { meters: number }) => {
     if (!visibility) return null;
@@ -107,45 +122,64 @@ const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts
             <CardContent className="p-4">
               <div className="flex gap-2">
                 {getStatusColors(current.riskLevel.level).icon}
-                <div className="space-y-2">
-                  <div>
+                <div className="space-y-2 w-full">
+                  <div className="flex items-center justify-between">
                     <div className={`text-l font-medium mb-1 ${getStatusColors(current.riskLevel.level).text}`}>
                       {current.riskLevel.title}
                     </div>
-                    <div className="text-sm text-slate-300 mb-2">{current.riskLevel.message}</div>
-                    {current.riskLevel.explanation && (
-                      <span className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                        {current.riskLevel.explanation}
-                      </span>
-                    )}
+                    <div className="flex items-center">
+                      <label htmlFor="raw-data-current" className="mr-2 text-xs text-slate-300">
+                        Raw METAR
+                      </label>
+                      <Switch 
+                        id="raw-data-current" 
+                        checked={showCurrentRaw}
+                        onCheckedChange={setShowCurrentRaw}
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {current.conditions.phenomena.map((phenomenon, index) => (
-                      <span
-                        key={index}
-                        className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white"
-                      >
-                        {phenomenon}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="space-y-1 mt-2">
-                    <WeatherDetail 
-                      icon={Wind} 
-                      label="Wind" 
-                      value={formatWindInfo(current.wind)}
-                    />
-                    <WeatherDetail 
-                      icon={Eye} 
-                      label="Visibility" 
-                      value={formatVisibility(current.visibility)}
-                    />
-                    <WeatherDetail 
-                      icon={Cloud} 
-                      label="Ceiling" 
-                      value={formatCeiling(current.ceiling)}
-                    />
-                  </div>
+                  
+                  {showCurrentRaw ? (
+                    <pre className="font-mono text-xs bg-slate-900/60 p-3 rounded text-slate-300 overflow-x-auto whitespace-pre-wrap">
+                      {current.raw}
+                    </pre>
+                  ) : (
+                    <>
+                      <div className="text-sm text-slate-300 mb-2">{current.riskLevel.message}</div>
+                      {current.riskLevel.explanation && (
+                        <span className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
+                          {current.riskLevel.explanation}
+                        </span>
+                      )}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {current.conditions.phenomena.map((phenomenon, index) => (
+                          <span
+                            key={index}
+                            className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white"
+                          >
+                            {phenomenon}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="space-y-1 mt-2">
+                        <WeatherDetail
+                          icon={Wind}
+                          label="Wind"
+                          value={formatWindInfo(current.wind)}
+                        />
+                        <WeatherDetail
+                          icon={Eye}
+                          label="Visibility"
+                          value={formatVisibility(current.visibility)}
+                        />
+                        <WeatherDetail
+                          icon={Cloud}
+                          label="Ceiling"
+                          value={formatCeiling(current.ceiling)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -154,72 +188,91 @@ const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts
           {/* Timeline card */}
           <Card className="bg-slate-800/50 border-slate-700/50">
             <CardContent className="p-4">
-              <h3 className="text-l font-medium text-slate-200 mb-4">Expected Changes</h3>
-              <div className="space-y-4 divide-y divide-slate-700/50">
-                {forecast.map((period, index) => {
-                  const colors = getStatusColors(period.riskLevel.level);
-
-                  return (
-                    <div key={index} className="pt-4 first:pt-0">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <div className="text-sm font-medium text-slate-200">
-                            {period.from.toLocaleTimeString('en-GB', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Europe/Warsaw'
-                            })} - {period.to.toLocaleTimeString('en-GB', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Europe/Warsaw'
-                            })}
-                          </div>
-                          {period.isTemporary && (
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500 mr-1">
-                              Short-term
-                            </span>
-                          )}
-                          {period.probability && (
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
-                              {period.probability}% chance
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {period.conditions.phenomena.map((condition, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-slate-800/40 text-slate-300 px-2 py-0.5 rounded-full text-xs hover:bg-slate-700 hover:text-white"
-                            >
-                              {condition}
-                            </span>
-                          ))}
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${colors.pill}`}>
-                            {period.riskLevel.title}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-1 mt-2">
-                        <WeatherDetail 
-                          icon={Wind} 
-                          label="Wind" 
-                          value={formatWindInfo(period.wind)}
-                        />
-                        <WeatherDetail 
-                          icon={Eye} 
-                          label="Visibility" 
-                          value={formatVisibility(period.visibility)}
-                        />
-                        <WeatherDetail 
-                          icon={Cloud} 
-                          label="Ceiling" 
-                          value={formatCeiling(period.ceiling)}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-l font-medium text-slate-200">Expected Changes</h3>
+                <div className="flex items-center">
+                  <label htmlFor="raw-data-forecast" className="mr-2 text-xs text-slate-300">
+                    Raw TAF
+                  </label>
+                  <Switch 
+                    id="raw-data-forecast" 
+                    checked={showForecastRaw}
+                    onCheckedChange={setShowForecastRaw}
+                  />
+                </div>
               </div>
+
+              {showForecastRaw ? (
+                <pre className="font-mono text-xs bg-slate-900/60 p-3 rounded text-slate-300 overflow-x-auto whitespace-pre-wrap">
+                  {raw_taf}
+                </pre>
+              ) : (
+                <div className="space-y-4 divide-y divide-slate-700/50">
+                  {forecast.map((period, index) => {
+                    const colors = getStatusColors(period.riskLevel.level);
+
+                    return (
+                      <div key={index} className="pt-4 first:pt-0">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="space-y-0.5">
+                            <div className="text-sm font-medium text-slate-200">
+                              {period.from.toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Europe/Warsaw'
+                              })} - {period.to.toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Europe/Warsaw'
+                              })}
+                            </div>
+                            {period.isTemporary && (
+                              <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500 mr-1">
+                                Short-term
+                              </span>
+                            )}
+                            {period.probability && (
+                              <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
+                                {period.probability}% chance
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {period.conditions.phenomena.map((condition, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-slate-800/40 text-slate-300 px-2 py-0.5 rounded-full text-xs hover:bg-slate-700 hover:text-white"
+                              >
+                                {condition}
+                              </span>
+                            ))}
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${colors.pill}`}>
+                              {period.riskLevel.title}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-1 mt-2">
+                          <WeatherDetail
+                            icon={Wind}
+                            label="Wind"
+                            value={formatWindInfo(period.wind)}
+                          />
+                          <WeatherDetail
+                            icon={Eye}
+                            label="Visibility"
+                            value={formatVisibility(period.visibility)}
+                          />
+                          <WeatherDetail
+                            icon={Cloud}
+                            label="Ceiling"
+                            value={formatCeiling(period.ceiling)}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </>

@@ -1,4 +1,5 @@
-// AeroAPI Types
+// src/lib/types/weather.ts
+
 export interface AeroAPICloud {
   type: string;
   altitude: number;
@@ -73,17 +74,32 @@ export interface AeroAPIForecastResponse {
   };
 }
 
-// Transformed Types
 export interface TransformedCloud {
   altitude: number;
   symbol: string;
   type: string;
 }
 
+// Basic weather types
+export interface WeatherData {
+  temperature?: {
+    celsius: number;
+  };
+  wind?: TransformedWind;
+  visibility?: TransformedVisibility;
+  clouds?: TransformedCloud[];
+  ceiling?: TransformedCeiling;
+  conditions?: TransformedCondition[];
+  raw_text: string;
+  observed: string;
+  change?: Change;
+}
+
+// wind types
 export interface TransformedWind {
   speed_kts: number;
   direction: number;
-  gust_kts: number | null;
+  gust_kts?: number | undefined;
 }
 
 export interface TransformedVisibility {
@@ -95,7 +111,7 @@ export interface TransformedCeiling {
 }
 
 export interface TransformedCondition {
-  code: string;
+  code: keyof typeof WEATHER_PHENOMENA;
 }
 
 export interface TransformedMetarData {
@@ -107,7 +123,7 @@ export interface TransformedMetarData {
   raw_text: string;
   temp_air: number;
   temp_dewpoint: number;
-  visibility: number;
+  visibility: TransformedVisibility;
   visibility_units: string;
   wind: TransformedWind;
   ceiling: TransformedCeiling | null;
@@ -142,3 +158,80 @@ export interface TransformedTafResponse {
     raw_text: string;
   }>;
 }
+
+export interface WeatherResponse {
+  current: {
+    riskLevel: RiskAssessment;
+    conditions: ProcessedConditions;
+    raw: string;
+    observed: string;
+    wind?: TransformedWind;
+    visibility?: TransformedVisibility;
+    ceiling?: TransformedCeiling;
+  };
+  forecast: ForecastChange[];
+  raw_taf: string;
+}
+
+export interface ProcessedConditions {
+  phenomena: string[];
+}
+
+export interface RiskAssessment {
+  level: 1 | 2 | 3;
+  title: string;
+  message: string;
+  explanation?: string;
+  color: 'red' | 'orange' | 'green';
+}
+
+export interface ForecastChange {
+  timeDescription: string;
+  from: Date;
+  to: Date;
+  conditions: ProcessedConditions;
+  riskLevel: RiskAssessment;
+  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
+  wind?: TransformedWind;
+  visibility?: TransformedVisibility;
+  ceiling?: TransformedCeiling;
+  isTemporary?: boolean;
+  probability?: number;
+}
+
+export const WEATHER_PHENOMENA = {
+  TS: '⛈️ Thunderstorm',
+  TSRA: '⛈️🌧️ Thunderstorm with Heavy Rain',
+  FC: '🌪️ Tornado/Waterspout',
+  SQ: '💨 Violent Squall',
+  SS: '🏜️ Severe Sandstorm',
+  FZRA: '🌧️❄️ Freezing Rain',
+  FZDZ: '💧❄️ Freezing Drizzle',
+  FZFG: '🌫️❄️ Freezing Fog',
+  RA: '🌧️ Rain',
+  SN: '❄️ Snow',
+  GR: '🌨️ Hail',
+  GS: '🌨️ Small Hail/Snow Pellets',
+  PL: '🧊 Ice Pellets',
+  IC: '❄️ Ice Crystals',
+  SG: '🌨️ Snow Grains',
+  DZ: '💧 Drizzle',
+  '-RA': '🌦️ Light Rain',
+  '-SN': '🌨️ Light Snow',
+  '+RA': '🌧️⚠️ Heavy Rain',
+  '+SN': '❄️⚠️ Heavy Snow',
+  FG: '🌫️ Dense Fog',
+  BR: '🌫️ Mist',
+  HZ: '🌫️ Haze',
+  FU: '🔥 Smoke',
+  VA: '🌋 Volcanic Ash',
+  DU: '💨 Dust',
+  SA: '🏜️ Blowing Sand',
+  PO: '💨 Dust/Sand Whirls',
+  DS: '🏜️ Duststorm',
+  SCT: '⛅ Scattered Clouds',
+  BKN: '☁️ Broken Clouds',
+  OVC: '☁️ Overcast'
+} as const;
+
+export type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];

@@ -39,7 +39,11 @@ export default function Page() {
             setFlightStats(flightData);
         } catch (err) {
             console.error('Error fetching data:', err);
-            setError('Failed to load data. Please try again later.');
+            setError('Failed to load data. Retrying...');
+            
+            // Wait 1 second and try again
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return fetchData(true);
         } finally {
             setIsLoading(false);
         }
@@ -103,6 +107,7 @@ export default function Page() {
                             <WeatherTimeline 
                                 current={weather.current}
                                 forecast={weather.forecast}
+                                raw_taf={weather.raw_taf}
                                 isLoading={isLoading}
                                 isError={!!error}
                                 retry={fetchData}
