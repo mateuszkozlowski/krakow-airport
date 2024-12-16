@@ -102,9 +102,10 @@ export interface ProcessedConditions {
 
 // Example for RiskAssessment
 export interface RiskAssessment {
-  level: 1 | 2 | 3; // Risk level
-  title: string; // Title for the risk level
-  message?: string; // Optional message
+  level: 1 | 2 | 3; 
+  title: string;
+  message: string; // Make this required
+  explanation?: string;
 }
 
 export interface WeatherResponse {
