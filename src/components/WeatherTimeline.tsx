@@ -19,7 +19,6 @@ interface WeatherTimelineProps {
     visibility?: { meters: number };
     ceiling?: { feet: number };
   };
-  forecast: ForecastChange[];
   isLoading: boolean;
   isError: boolean;
   retry: () => void;
