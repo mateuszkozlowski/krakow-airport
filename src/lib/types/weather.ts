@@ -75,20 +75,28 @@ export interface ProcessedConditions {
 }
 
 export interface ForecastChange {
-  from: Date; // Start time of the forecast
-  to: Date; // End time of the forecast
-  timeDescription: string; // Human-readable description of the time period
-  conditions: {
-    phenomena: string[]; // List of weather phenomena
-  };
+  from: Date; // Start time of the forecast period
+  to: Date; // End time of the forecast period
   riskLevel: {
-    level: 1 | 2 | 3;
-    title: string;
+    level: 1 | 2 | 3; // Severity level
+    title: string; // Title of the risk level
   };
-  changeType?: "TEMPO" | "PERM"; // Optional: type of forecast change
-  wind?: { speed_kts: number; direction: number; gust_kts?: number };
-  visibility?: { meters: number };
-  ceiling?: { feet: number };
+  conditions: {
+    phenomena: string[]; // Array of weather phenomena
+  };
+  wind?: {
+    speed_kts: number; // Wind speed in knots
+    direction: number; // Wind direction in degrees
+    gust_kts?: number; // Gust speed in knots (optional)
+  };
+  visibility?: {
+    meters: number; // Visibility in meters
+  };
+  ceiling?: {
+    feet: number; // Ceiling height in feet
+  };
+  probability?: number; // Probability percentage (optional)
+  isTemporary?: boolean; // Indicates if the period is temporary (optional)
 }
 
 
