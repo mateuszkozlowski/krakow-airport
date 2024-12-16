@@ -81,7 +81,9 @@ export interface ForecastChange {
   conditions: ProcessedConditions;
   riskLevel: RiskAssessment;
   changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
+  isTemporary?: boolean; // Optional boolean to indicate temporary changes
 }
+
 
 export interface WeatherResponse {
   current: {
