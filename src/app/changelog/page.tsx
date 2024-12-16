@@ -20,14 +20,14 @@ export default function Page() {
                     </div>
                 </Alert>
 
-                <div className="max-w-4xl mx-auto px-6 pb-48">
-                    <h1 className="text-5xl font-bold mt-36 mb-4 text-white">What&apos;s New?</h1>
+                <div className="max-w-4xl mx-auto px-6 pb-16">
+                    <h1 className="text-3xl font-bold mt-16 mb-4 text-white">What&apos;s New?</h1>
 
-                    <div className="text-2xl mb-8 text-white/80">Keep track of changes and improvements.</div>
+                    <div className="text-xl mb-8 text-white/80">Keep track of changes and improvements.</div>
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-6 -mt-16 pb-8">
+            <div className="max-w-4xl mx-auto px-6 pb-8">
                 <Changelog />
             </div>
 

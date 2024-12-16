@@ -1,6 +1,6 @@
 // src/components/Changelog.tsx
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PartyPopper, Rocket, GitMerge } from "lucide-react";
 
 interface ChangelogEntry {
   date: string;
@@ -9,11 +9,32 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
-    {
+      {
+    date: "2024-12-16",
+    version: "0.1.0",
+    changes: [
+      "Added departures tab to track outbound flights",
+      "Implemented in-memory cache system with 10-minute TTL",
+      "Added automatic retries for API failures with exponential backoff",
+      "Enhanced error handling with fallback to cached data",
+      "Improved data loading with better pagination (up to 10 pages)"
+    ]
+  },
+{
+    date: "2024-12-16",
+    version: "0.0.6",
+    changes: [
+      "Added Departures tab to track outbound flights",
+      "Improved error handling with automatic retries",
+      "Enhanced flight data loading with better pagination",
+      "Updated UI for better visibility of flight status"
+    ]
+  }, {
     date: "2024-12-16",
     version: "0.0.5",
     changes: [
-      "Changes in the current conditions display. Now users are aware what impacted on the risk calculation.",
+      "Enhanced risk level explanation with detailed weather factors that affect flight conditions",
+      "Added weather impact indicators to help users understand why certain risk levels are shown"
     ]
   }, {
     date: "2024-12-12",
@@ -52,35 +73,66 @@ const changelog: ChangelogEntry[] = [
   }
 ];
 
+
+
+
+
+function getVersionIcon(version: string) {
+  if (version.endsWith('.0.0')) {
+    return <PartyPopper className="w-6 h-6 text-blue-500" />;
+  } else if (version.endsWith('.0')) {
+    return <Rocket className="w-6 h-6 text-green-500" />;
+  }
+  return <GitMerge className="w-6 h-6 text-gray-500" />;
+}
+
+function getVersionClasses(version: string) {
+  if (version.endsWith('.0.0')) {
+    return 'bg-blue-100 text-blue-800 border-blue-200';
+  } else if (version.endsWith('.0')) {
+    return 'bg-green-100 text-green-800 border-green-200';
+  }
+  return 'bg-gray-100 text-gray-800 border-gray-200';
+}
+
 export function Changelog() {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Changelog</h2>
-      <div className="space-y-4">
+    <div className="space-y-8 p-6">
+      <h2 className="text-2xl font-bold text-slate-900">Changelog</h2>
+      <div className="space-y-8">
         {changelog.map((entry, index) => (
-          <Card key={index} className="bg-white">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">
-                  {entry.version && (
-                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-sm mr-2">
-                      v{entry.version}
-                    </span>
-                  )}
-                  <span className="text-slate-500 text-sm">{entry.date}</span>
-                </CardTitle>
+          <div key={index} className="relative pl-12">
+            {/* Timeline line */}
+            {index !== changelog.length - 1}
+            
+            {/* Timeline icon */}
+<div className="absolute left-4 top-0 transform -translate-x-1/2 bg-white p-1">
+  {getVersionIcon(entry.version || '0.0.0')}
+</div>
+
+            <div>
+              {/* Version and date header */}
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className={`inline-flex px-2.5 py-1 rounded-full text-sm font-medium border ${getVersionClasses(entry.version || '0.0.0')}`}>
+                  v{entry.version}
+                </span>
+                <span className="text-sm text-gray-500">{entry.date}</span>
               </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc list-inside space-y-2">
+
+              {/* Changes list */}
+              <ul className="space-y-2">
                 {entry.changes.map((change, changeIndex) => (
-                  <li key={changeIndex} className="text-slate-600">
-                    {change}
+                  <li 
+                    key={changeIndex}
+                    className="flex items-start gap-2 text-gray-700 leading-relaxed"
+                  >
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-300 mt-2 flex-shrink-0" />
+                    <span>{change}</span>
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>

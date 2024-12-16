@@ -1,5 +1,6 @@
 // src/app/api/weather/route.ts
 import { NextResponse } from 'next/server';
+import { getCacheKey, getFromCache, setCache } from '@/lib/cache';
 import type {
   AeroAPIObservationsResponse,
   AeroAPIForecastResponse,
@@ -127,6 +128,15 @@ function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResp
 export async function GET() {
   try {
     const AIRPORT = 'EPKK';
+    
+    // Check cache first
+    const cacheKey = getCacheKey('weather', AIRPORT);
+    const cachedData = getFromCache(cacheKey);
+    
+    if (cachedData) {
+      console.log('Serving weather from cache');
+      return NextResponse.json(cachedData);
+    }
 
     // Fetch both METAR and TAF data
     const [metarResponse, tafResponse] = await Promise.all([
@@ -150,19 +160,19 @@ export async function GET() {
       throw new Error('Failed to transform weather data');
     }
 
-    return NextResponse.json(
-      { 
-        metar: transformedMetar, 
-        taf: transformedTaf 
-      },
-      {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+    const data = { 
+      metar: transformedMetar, 
+      taf: transformedTaf 
+    };
+
+    // Save to cache before returning
+    setCache(cacheKey, data);
+    
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, max-age=600'
       }
-    );
+    });
   } catch (error) {
     console.error('Weather API error:', error);
     return NextResponse.json(

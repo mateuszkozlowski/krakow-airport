@@ -16,14 +16,21 @@ export interface FlightAwareArrival {
   operator: string;
   cancelled?: boolean;
   diverted?: boolean;
-  scheduled_in: string;
-  estimated_in: string;
+  scheduled_in?: string;
+  scheduled_out?: string;
+  estimated_in?: string;
+  estimated_out?: string;
   actual_runway_off?: string;
   actual_runway_on?: string;
   origin?: {
     code: string;
     name?: string;
   };
+  destination?: {
+    code: string;
+    name?: string;
+  };
+  diverted_airport?: string;
 }
 
 export interface FlightStats {

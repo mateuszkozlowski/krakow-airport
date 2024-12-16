@@ -2,20 +2,21 @@
 import { FlightStats, FlightAwareResponse, FlightAwareArrival } from "./types/flight";
 import { AIRPORT_NAMES } from './airports';
 import { AIRLINES } from './airlines';
+import { withRetry } from './utils/retry';
 
-export async function getFlightStats(): Promise<FlightStats> {
-  try {
+async function fetchFlightData(type: 'arrivals' | 'departures'): Promise<FlightStats> {
+  return withRetry(async () => {
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
     const fourHoursFromNow = new Date(now.getTime());
 
-    const startTime = twoHoursAgo.toISOString().split('.')[0] + 'Z';
+    const startTime = sixHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
 
-    console.log('Requesting flights for:', { startTime, endTime });
+    console.log(`Requesting ${type} for:`, { startTime, endTime });
 
     const response = await fetch(
-      `/api/flights?start=${startTime}&end=${endTime}`,
+      `/api/flights?type=${type}&start=${startTime}&end=${endTime}`,
       {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -30,11 +31,9 @@ export async function getFlightStats(): Promise<FlightStats> {
     }
 
     const data: FlightAwareResponse = await response.json();
-    console.log('Received flight data:', data);
+    const flights = type === 'arrivals' ? data.arrivals : data.departures;
 
-    // Check if data.arrivals exists and is an array
-    if (!data.arrivals || !Array.isArray(data.arrivals)) {
-      console.error('Invalid flight data structure:', data);
+    if (!flights || !Array.isArray(flights)) {
       throw new Error('Invalid flight data structure');
     }
 
@@ -45,12 +44,12 @@ export async function getFlightStats(): Promise<FlightStats> {
       affectedFlights: [],
     };
 
-    data.arrivals.forEach((flight: FlightAwareArrival) => {
-      const originCode = flight.origin?.code;
+    flights.forEach((flight: FlightAwareArrival) => {
+      const originCode = type === 'arrivals' ? flight.origin?.code : flight.destination?.code;
       const airlineCode = flight.operator;
       const airportName = originCode ? AIRPORT_NAMES[originCode] : undefined;
       const airlineName = airlineCode ? AIRLINES[airlineCode] : undefined;
-      const displayOrigin = airportName || originCode || "Unknown";
+      const displayAirport = airportName || originCode || "Unknown";
       const displayAirline = airlineName || airlineCode || "Unknown";
 
       if (flight.cancelled) {
@@ -58,46 +57,53 @@ export async function getFlightStats(): Promise<FlightStats> {
         stats.affectedFlights.push({
           flightNumber: flight.ident,
           status: "CANCELLED",
-          scheduledTime: flight.scheduled_in,
+          scheduledTime: (type === 'arrivals' ? flight.scheduled_in : flight.scheduled_out) ?? new Date().toISOString(),
           airline: displayAirline,
-          origin: displayOrigin,
+          origin: displayAirport,
         });
       } else if (flight.diverted) {
         stats.diverted++;
         stats.affectedFlights.push({
           flightNumber: flight.ident,
           status: "DIVERTED",
-          scheduledTime: flight.scheduled_in,
+          scheduledTime: (type === 'arrivals' ? flight.scheduled_in : flight.scheduled_out) ?? new Date().toISOString(),
           airline: displayAirline,
-          origin: displayOrigin,
+          origin: displayAirport,
+          divertedTo: flight.diverted_airport
         });
-      } else if (flight.scheduled_in && flight.estimated_in) {
-        const delay =
-          new Date(flight.estimated_in).getTime() -
-          new Date(flight.scheduled_in).getTime();
-        if (delay > 20 * 60 * 1000) { // 20 minutes delay threshold
-          stats.delayed++;
-          stats.affectedFlights.push({
-            flightNumber: flight.ident,
-            status: "DELAYED",
-            scheduledTime: flight.scheduled_in,
-            airline: displayAirline,
-            origin: displayOrigin,
-            delayMinutes: Math.floor(delay / (1000 * 60)),
-          });
+      } else {
+        const scheduledTime = type === 'arrivals' ? flight.scheduled_in : flight.scheduled_out;
+        const estimatedTime = type === 'arrivals' ? flight.estimated_in : flight.estimated_out;
+        
+        if (scheduledTime && estimatedTime) {
+          const delay = new Date(estimatedTime).getTime() - new Date(scheduledTime).getTime();
+          if (delay > 20 * 60 * 1000) { // 20 minutes delay threshold
+            stats.delayed++;
+            stats.affectedFlights.push({
+              flightNumber: flight.ident,
+              status: "DELAYED",
+              scheduledTime,
+              airline: displayAirline,
+              origin: displayAirport,
+              delayMinutes: Math.floor(delay / (1000 * 60)),
+            });
+          }
         }
       }
     });
 
-    console.log('Processed flight stats:', stats);
     return stats;
-  } catch (error) {
-    console.error("Error fetching flight data:", error);
-    return {
-      delayed: 0,
-      cancelled: 0,
-      diverted: 0,
-      affectedFlights: [],
-    };
-  }
+  });
+}
+
+export async function getFlightStats(): Promise<{
+  arrivals: FlightStats;
+  departures: FlightStats;
+}> {
+  const [arrivals, departures] = await Promise.all([
+    fetchFlightData('arrivals'),
+    fetchFlightData('departures')
+  ]);
+
+  return { arrivals, departures };
 }

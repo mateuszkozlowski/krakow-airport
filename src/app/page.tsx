@@ -2,7 +2,7 @@
 // src/app/page.tsx
 import { useEffect, useState } from 'react';
 import { Alert } from "@/components/ui/alert";
-import { FlightStatsDisplay } from "@/components/ui/flight-stats";
+import { FlightTabs } from "@/components/FlightTabs";
 import WeatherTimeline from "@/components/WeatherTimeline";
 import { Loader2 } from "lucide-react";
 import type { WeatherResponse } from '@/lib/types/weather';
@@ -12,13 +12,18 @@ import { getFlightStats } from "@/lib/flights";
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
-    const [flightStats, setFlightStats] = useState<FlightStats | null>(null);
+    const [flightStats, setFlightStats] = useState<{
+        arrivals: FlightStats;
+        departures: FlightStats;
+    } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    async function fetchData() {
+    async function fetchData(isRetry = false) {
         try {
-            setIsLoading(true);
+            if (!isRetry) {
+                setIsLoading(true);
+            }
             setError(null);
 
             const [weatherData, flightData] = await Promise.all([
@@ -72,14 +77,11 @@ export default function Page() {
                         {weather?.current && (
                             <p className="text-sm text-white/60">
                                 Last update:{" "}
-                                {(() => {
-                                    const date = new Date(weather.current.observed);
-                                    return date.toLocaleTimeString("en-GB", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        timeZone: "Europe/Warsaw"
-                                    });
-                                })()}
+                                {new Date(weather.current.observed).toLocaleTimeString("en-GB", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    timeZone: "Europe/Warsaw"
+                                })}
                             </p>
                         )}
                     </div>
@@ -111,15 +113,12 @@ export default function Page() {
             </div>
 
             <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-                <h2 className="text-xl font-semibold mb-4 text-white">Arrivals Insights</h2>
-<FlightStatsDisplay 
-    stats={flightStats || { 
-        delayed: 0, 
-        cancelled: 0, 
-        diverted: 0, 
-        affectedFlights: [] 
-    }}
-/>
+                {flightStats && (
+                    <FlightTabs
+                        arrivalsStats={flightStats.arrivals}
+                        departuresStats={flightStats.departures}
+                    />
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
