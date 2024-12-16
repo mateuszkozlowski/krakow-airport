@@ -114,7 +114,7 @@ const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts
                     </div>
                     <div className="text-sm text-slate-300 mb-2">{current.riskLevel.message}</div>
                     {current.riskLevel.explanation && (
-                      <span className="text-xs text-slate-400 bg-slate-900/40 rounded-full p-2 mt-1 whitespace-pre-line">
+                      <span className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
                         {current.riskLevel.explanation}
                       </span>
                     )}
