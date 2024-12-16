@@ -111,9 +111,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     </div>
                     <div className="text-sm text-slate-300 mb-2">{current.riskLevel.message}</div>
                     {current.riskLevel.explanation && (
-                      <div className="text-xs text-slate-400 bg-slate-900/40 rounded-md p-2 mt-1 whitespace-pre-line">
+                      <span className="text-xs text-slate-400 bg-slate-900/40 rounded-full p-2 mt-1 whitespace-pre-line">
                         {current.riskLevel.explanation}
-                      </div>
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
