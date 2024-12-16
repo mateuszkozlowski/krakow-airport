@@ -9,7 +9,7 @@ type RetryConfig = {
 export async function withRetry<T>(
   fn: () => Promise<T>,
   {
-    maxAttempts = 3,
+    maxAttempts = 10,
     baseDelay = 1000,
     maxDelay = 5000
   }: RetryConfig = {}
