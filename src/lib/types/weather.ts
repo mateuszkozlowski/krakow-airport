@@ -77,6 +77,7 @@ export interface ProcessedConditions {
 export interface ForecastChange {
   from: Date; // Start time of the forecast period
   to: Date; // End time of the forecast period
+  timeDescription: string; // Human-readable description of the time range
   riskLevel: {
     level: 1 | 2 | 3; // Severity level
     title: string; // Title of the risk level
