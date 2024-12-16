@@ -75,37 +75,37 @@ export interface ProcessedConditions {
 }
 
 export interface ForecastChange {
-  from: Date; // Start time of the forecast period
-  to: Date; // End time of the forecast period
-  timeDescription: string; // Human-readable description of the time range
-  changeType?: "TEMPO" | "PERM"; // Optional change type for temporary or permanent changes
-  riskLevel: {
-    level: 1 | 2 | 3; // Severity level of the risk (1: Low, 2: Moderate, 3: High)
-    title: string; // Title or label for the risk level
-    message?: string; // Optional message providing further explanation of the risk
-    explanation?: string; // Optional detailed explanation of the risk level
-  };
-  conditions: {
-    phenomena: string[]; // Array of weather phenomena (e.g., ["Rain", "Fog"])
-  };
+  timeDescription: string;
+  from: Date;
+  to: Date;
+  conditions: ProcessedConditions;
+  riskLevel: RiskAssessment;
+  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
   wind?: {
-    speed_kts: number; // Wind speed in knots
-    direction: number; // Wind direction in degrees (0-360)
-    gust_kts?: number; // Optional gust speed in knots
+    speed_kts: number;
+    direction: number;
+    gust_kts?: number;
   };
   visibility?: {
-    meters: number; // Visibility distance in meters
+    meters: number;
   };
   ceiling?: {
-    feet: number; // Ceiling height in feet (for aviation)
+    feet: number;
   };
-  probability?: number; // Probability of the event occurring (optional)
-  isTemporary?: boolean; // Indicates if the forecast period is temporary (optional)
 }
 
+// Example for ProcessedConditions
+export interface ProcessedConditions {
+  phenomena: string[]; // List of weather phenomena
+  description?: string; // Optional description of conditions
+}
 
-
-
+// Example for RiskAssessment
+export interface RiskAssessment {
+  level: 1 | 2 | 3; // Risk level
+  title: string; // Title for the risk level
+  message?: string; // Optional message
+}
 
 export interface WeatherResponse {
   current: {
