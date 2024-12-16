@@ -18,14 +18,30 @@ interface WeatherTimelineProps {
     wind?: { speed_kts: number; direction: number; gust_kts?: number };
     visibility?: { meters: number };
     ceiling?: { feet: number };
-     isTemporary?: boolean;
-  probability?: number; 
   };
   forecast: ForecastChange[];
   isLoading: boolean;
   isError: boolean;
   retry: () => void;
 }
+
+export interface ForecastChange {
+  from: Date;
+  to: Date;
+  riskLevel: {
+    level: 1 | 2 | 3;
+    title: string;
+  };
+  conditions: {
+    phenomena: string[];
+  };
+  wind?: { speed_kts: number; direction: number; gust_kts?: number };
+  visibility?: { meters: number };
+  ceiling?: { feet: number };
+  isTemporary?: boolean;
+  probability?: number;
+}
+
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const formatWindInfo = (wind?: { speed_kts: number; direction: number; gust_kts?: number }) => {
