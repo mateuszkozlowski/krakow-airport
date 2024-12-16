@@ -25,14 +25,14 @@ interface WeatherTimelineProps {
   retry: () => Promise<void>; // Ensure retry matches this signature
 }
 
-
-
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
-  const formatWindInfo = (wind?: { speed_kts: number; direction: number; gust_kts?: number }) => {
-    if (!wind) return null;
-    const gustInfo = wind.gust_kts ? ` (gusts ${wind.gust_kts}kt)` : '';
-    return `${wind.speed_kts}kt from ${wind.direction}°${gustInfo}`;
-  };
+const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts?: number }) => {
+  if (!wind) return null;
+  const gustInfo = wind.gust_kts ? ` (gusts ${wind.gust_kts}kt)` : '';
+  const direction = wind.direction ?? 0; // Use 0 as a default value if direction is undefined
+  return `${wind.speed_kts}kt from ${direction}°${gustInfo}`;
+};
+
 
   const formatVisibility = (visibility?: { meters: number }) => {
     if (!visibility) return null;
@@ -108,7 +108,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               <div className="flex gap-2">
                 {getStatusColors(current.riskLevel.level).icon}
                 <div className="space-y-2">
-<div>
+                  <div>
                     <div className={`text-l font-medium mb-1 ${getStatusColors(current.riskLevel.level).text}`}>
                       {current.riskLevel.title}
                     </div>

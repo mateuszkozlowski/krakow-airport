@@ -19,26 +19,6 @@ const MINIMUMS = {
   CEILING: 200     // feet
 } as const;
 
-export interface ForecastChange {
-  timeDescription: string;
-  from: Date;
-  to: Date;
-  conditions: ProcessedConditions;
-  riskLevel: RiskAssessment;
-  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
-  wind?: {
-    speed_kts: number;
-    direction: number;
-    gust_kts?: number;
-  };
-  visibility?: {
-    meters: number;
-  };
-  ceiling?: {
-    feet: number;
-  };
-}
-
 // Risk weights for different conditions tailored to Kraków's usual conditions
 const RISK_WEIGHTS = {
   // Severe phenomena (immediate impact)
@@ -315,7 +295,7 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
     "Moderate ceiling": "☁️ Some clouds"
   };
 
-  const getWeatherDescription = (reasons) => {
+const getWeatherDescription = (reasons: string[]): string => {
     if (!reasons.length) return "☀️ Perfect weather";
     
     const primaryReason = reasons[0];

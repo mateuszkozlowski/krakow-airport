@@ -66,7 +66,7 @@ export interface RiskAssessment {
   level: 1 | 2 | 3;
   title: string;
   message: string;
-  explanation: string;
+  explanation?: string;
   color: 'red' | 'orange' | 'green';
 }
 
@@ -83,7 +83,7 @@ export interface ForecastChange {
   changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
   wind?: {
     speed_kts: number;
-    direction: number;
+    direction?: number;
     gust_kts?: number;
   };
   visibility?: {
@@ -92,6 +92,8 @@ export interface ForecastChange {
   ceiling?: {
     feet: number;
   };
+  isTemporary?: boolean;
+  probability?: number;
 }
 
 // Example for ProcessedConditions
