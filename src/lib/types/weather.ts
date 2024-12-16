@@ -82,6 +82,7 @@ export interface ForecastChange {
   riskLevel: RiskAssessment;
   changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
   isTemporary?: boolean; // Optional boolean to indicate temporary changes
+  probability?: string;
 }
 
 
