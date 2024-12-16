@@ -78,27 +78,31 @@ export interface ForecastChange {
   from: Date; // Start time of the forecast period
   to: Date; // End time of the forecast period
   timeDescription: string; // Human-readable description of the time range
+  changeType?: "TEMPO" | "PERM"; // Optional change type for temporary or permanent changes
   riskLevel: {
-    level: 1 | 2 | 3; // Severity level
-    title: string; // Title of the risk level
+    level: 1 | 2 | 3; // Severity level of the risk (1: Low, 2: Moderate, 3: High)
+    title: string; // Title or label for the risk level
+    message?: string; // Optional message providing further explanation of the risk
+    explanation?: string; // Optional detailed explanation of the risk level
   };
   conditions: {
-    phenomena: string[]; // Array of weather phenomena
+    phenomena: string[]; // Array of weather phenomena (e.g., ["Rain", "Fog"])
   };
   wind?: {
     speed_kts: number; // Wind speed in knots
-    direction: number; // Wind direction in degrees
-    gust_kts?: number; // Gust speed in knots (optional)
+    direction: number; // Wind direction in degrees (0-360)
+    gust_kts?: number; // Optional gust speed in knots
   };
   visibility?: {
-    meters: number; // Visibility in meters
+    meters: number; // Visibility distance in meters
   };
   ceiling?: {
-    feet: number; // Ceiling height in feet
+    feet: number; // Ceiling height in feet (for aviation)
   };
-  probability?: number; // Probability percentage (optional)
-  isTemporary?: boolean; // Indicates if the period is temporary (optional)
+  probability?: number; // Probability of the event occurring (optional)
+  isTemporary?: boolean; // Indicates if the forecast period is temporary (optional)
 }
+
 
 
 
