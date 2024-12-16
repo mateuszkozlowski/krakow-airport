@@ -18,6 +18,8 @@ interface WeatherTimelineProps {
     wind?: { speed_kts: number; direction: number; gust_kts?: number };
     visibility?: { meters: number };
     ceiling?: { feet: number };
+     isTemporary?: boolean;
+  probability?: number; 
   };
   forecast: ForecastChange[];
   isLoading: boolean;
