@@ -9,7 +9,13 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
-  {
+    {
+    date: "2024-12-16",
+    version: "0.0.5",
+    changes: [
+      "Changes in the current conditions display. Now users are aware what impacted on the risk calculation.",
+    ]
+  }, {
     date: "2024-12-12",
     version: "0.0.4",
     changes: [
