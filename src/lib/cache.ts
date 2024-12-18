@@ -21,29 +21,50 @@ export async function getCacheOrFetch<T>(
   let cached: CacheData | null = null;
 
   try {
-    // Try to get from cache first
-    cached = await redis.get<CacheData>(key);
-
-    if (cached && (Date.now() / 1000 - cached.timestamp) < STALE_AFTER) {
-      console.log(`Serving fresh cache for ${key}`);
-      return { data: cached.data as T, fromCache: true };
+    console.log(`🔍 Checking cache for key: ${key}`);
+    
+    // Test Redis connection
+    try {
+      await redis.ping();
+      console.log('✅ Redis connection successful');
+    } catch (redisError) {
+      console.error('❌ Redis connection failed:', redisError);
+      throw redisError;
     }
 
-    console.log(`Fetching fresh data for ${key}`);
+    // Try to get from cache first
+    cached = await redis.get<CacheData>(key);
+    console.log(`Cache status for ${key}:`, cached ? 'HIT' : 'MISS');
+
+    if (cached) {
+      const age = Date.now() / 1000 - cached.timestamp;
+      console.log(`Cache age: ${Math.round(age)} seconds (stale after ${STALE_AFTER} seconds)`);
+      
+      if (age < STALE_AFTER) {
+        console.log(`✅ Serving fresh cache for ${key}`);
+        return { data: cached.data as T, fromCache: true };
+      } else {
+        console.log(`⚠️ Cache is stale for ${key}`);
+      }
+    }
+
+    console.log(`🔄 Fetching fresh data for ${key}`);
     const freshData = await fetchFn();
 
+    console.log(`💾 Saving to cache: ${key}`);
     await redis.set(key, {
       data: freshData,
       timestamp: Math.floor(Date.now() / 1000)
     }, { ex: CACHE_TTL });
+    console.log(`✅ Cache updated for ${key}`);
 
     return { data: freshData, fromCache: false };
 
   } catch (error) {
-    console.error(`Error in getCacheOrFetch for ${key}:`, error);
+    console.error(`❌ Error in getCacheOrFetch for ${key}:`, error);
 
     if (cached) {
-      console.log(`Serving stale cache for ${key} after error`);
+      console.log(`⚠️ Serving stale cache for ${key} after error`);
       return { data: cached.data as T, fromCache: true };
     }
 
