@@ -6,7 +6,6 @@ import type {
   AeroAPIForecastResponse,
   TransformedMetarResponse,
   TransformedTafResponse,
-  TransformedCondition,
 } from './types';
 
 export const runtime = 'edge';
@@ -15,22 +14,32 @@ const AERO_API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
 const BASE_URL = 'https://aeroapi.flightaware.com/aeroapi';
 const AIRPORT = 'EPKK';
 
+async function fetchFromAeroAPI<T>(endpoint: string) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: {
+      'x-apikey': AERO_API_KEY ?? '',
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AeroAPI responded with status ${response.status}`);
+  }
+
+  const data = await response.json() as T;
+  return { data };
+}
+
 async function fetchWeatherData() {
   const [metarResponse, tafResponse] = await Promise.all([
     fetchFromAeroAPI<AeroAPIObservationsResponse>(`/airports/${AIRPORT}/weather/observations`),
     fetchFromAeroAPI<AeroAPIForecastResponse>(`/airports/${AIRPORT}/weather/forecast`)
   ]);
 
-  // Validate responses
-  if (metarResponse.error || tafResponse.error) {
-    throw new Error(`API Error: ${metarResponse.error || tafResponse.error}`);
-  }
-
   if (!metarResponse.data?.observations?.length || !tafResponse.data) {
     throw new Error('Incomplete weather data received');
   }
 
-  // Transform the data
   const transformedMetar = transformMetarData(metarResponse.data);
   const transformedTaf = transformTafData(tafResponse.data);
 
@@ -61,7 +70,6 @@ export async function GET() {
   } catch (error) {
     console.error('Weather API error:', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
       error
     });
 
@@ -72,27 +80,6 @@ export async function GET() {
       },
       { status: 500 }
     );
-  }
-}
-
-async function fetchFromAeroAPI<T>(endpoint: string) {
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      headers: {
-        'x-apikey': AERO_API_KEY ?? '',
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`AeroAPI responded with status ${response.status}`);
-    }
-
-    const data = await response.json() as T;
-    return { data };
-  } catch (error) {
-    console.error(`Error fetching from ${endpoint}:`, error);
-    return { error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 

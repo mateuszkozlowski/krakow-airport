@@ -19,20 +19,16 @@ export async function getCacheOrFetch<T>(
   fetchFn: () => Promise<T>
 ): Promise<{ data: T, fromCache: boolean }> {
   try {
-    // Try to get from cache first
     const cached = await redis.get<CacheData>(key);
 
-    // If we have valid cache that's not stale, return it
     if (cached && (Date.now() / 1000 - cached.timestamp) < STALE_AFTER) {
       console.log(`Serving fresh cache for ${key}`);
       return { data: cached.data as T, fromCache: true };
     }
 
-    // If cache is stale or missing, fetch new data
     console.log(`Fetching fresh data for ${key}`);
     const freshData = await fetchFn();
 
-    // Store in cache with timestamp
     await redis.set(key, {
       data: freshData,
       timestamp: Math.floor(Date.now() / 1000)
@@ -43,7 +39,6 @@ export async function getCacheOrFetch<T>(
   } catch (error) {
     console.error(`Error in getCacheOrFetch for ${key}:`, error);
 
-    // If fetch failed and we have stale cache, return it
     if (cached) {
       console.log(`Serving stale cache for ${key} after error`);
       return { data: cached.data as T, fromCache: true };

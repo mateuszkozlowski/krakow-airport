@@ -4,44 +4,26 @@ import { getCacheOrFetch } from '@/lib/cache';
 
 export const runtime = 'edge';
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 5, baseDelay = 2000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      
-      if (response.ok) {
-        return response;
-      }
-      
-      // Handle rate limiting (429)
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After');
-        const waitTime = retryAfter 
-          ? parseInt(retryAfter) * 1000 
-          : Math.min(baseDelay * Math.pow(2, i), 10000); // Cap at 10 seconds
-        
-        console.log(`Rate limited, waiting ${waitTime/1000}s before retry ${i + 1}/${retries}`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        continue;
-      }
-      
-      // Other server errors
-      if (response.status >= 500) {
-        const waitTime = Math.min(baseDelay * Math.pow(2, i), 5000);
-        console.log(`Server error ${response.status}, retrying in ${waitTime/1000}s...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        continue;
-      }
-      
-      throw new Error(`API responded with status: ${response.status}`);
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      const waitTime = Math.min(baseDelay * Math.pow(2, i), 5000);
-      console.log(`Network error on attempt ${i + 1}/${retries}, retrying in ${waitTime/1000}s...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
+const AERO_API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
+const BASE_URL = 'https://aeroapi.flightaware.com/aeroapi';
+const AIRPORT = 'EPKK';
+
+async function fetchFlightData(type: string, start: string | null, end: string | null) {
+  const endpoint = type === 'departures' ? 'departures' : 'arrivals';
+  const url = `${BASE_URL}/airports/${AIRPORT}/flights/${endpoint}?start=${start}&end=${end}&type=Airline&max_pages=2`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'x-apikey': AERO_API_KEY ?? '',
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AeroAPI responded with status ${response.status}`);
   }
-  throw new Error('All retry attempts failed');
+
+  return response.json();
 }
 
 export async function GET(request: Request) {
