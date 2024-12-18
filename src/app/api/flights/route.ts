@@ -1,6 +1,6 @@
 // src/app/api/flights/route.ts
 import { NextResponse } from 'next/server';
-import { getCacheKey, getFromCache, setCache } from '@/lib/cache';
+import { getCacheOrFetch } from '@/lib/cache';
 
 export const runtime = 'edge';
 
@@ -49,84 +49,30 @@ export async function GET(request: Request) {
   const start = searchParams.get('start');
   const end = searchParams.get('end');
   const type = searchParams.get('type') || 'arrivals';
-  const API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
-  const AIRPORT = 'EPKK';
-
+  
   try {
-    // Check cache first
-    const cacheKey = getCacheKey('flights', `${type}-${start}-${end}`);
-    const cachedData = await getFromCache(cacheKey);
-    
-    if (cachedData) {
-      console.log('Serving flights from cache:', { type, start, end });
-      return NextResponse.json(cachedData);
-    }
-
-    console.log('Fetching flights data:', { start, end });
-
-    const endpoint = type === 'departures' ? 'departures' : 'arrivals';
-    const response = await fetchWithRetry(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/${endpoint}?start=${start}&end=${end}&type=Airline&max_pages=2`,
-      {
-        headers: {
-          'x-apikey': API_KEY!,
-          'Accept': 'application/json; charset=UTF-8',
+    const { data, fromCache } = await getCacheOrFetch(
+      `flights-${type}-${start}-${end}`,
+      async () => {
+        const response = await fetchFlightData(type, start, end);
+        if (!response || !Array.isArray(response[type])) {
+          throw new Error('Invalid flight data structure');
         }
+        return response;
       }
     );
 
-    const data = await response.json();
-    
-    // Validate data structure
-    if (!data || (type === 'arrivals' && !Array.isArray(data.arrivals)) || 
-        (type === 'departures' && !Array.isArray(data.departures))) {
-      console.error('Invalid API response structure:', data);
-      throw new Error(`Invalid API response structure for ${type}`);
-    }
-
-    // Log data structure for debugging
-    console.log(`${type} data structure:`, {
-      hasData: !!data,
-      dataKeys: Object.keys(data),
-      flightsCount: data[type]?.length,
-      sampleFlight: data[type]?.[0]
-    });
-
-    await setCache(cacheKey, data);
-    
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, max-age=600'
+        'Cache-Control': 'public, max-age=1200',
+        ...(fromCache && { 'X-Served-From': 'cache' })
       }
     });
+
   } catch (error) {
-    console.error('Detailed flight error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      params: { type, start, end },
-      error
-    });
-
-    // Try to serve stale cache on error
-    const cacheKey = getCacheKey('flights', `${type}-${start}-${end}`);
-    const cachedData = await getFromCache(cacheKey);
-    if (cachedData) {
-      console.log('Serving stale flight data from cache after error');
-      return NextResponse.json(cachedData, {
-        headers: {
-          'X-Served-From': 'stale-cache'
-        }
-      });
-    }
-
+    console.error('Flight API error:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch flight data', 
-        details: error instanceof Error ? error.message : 'Unknown error',
-        type,
-        start,
-        end
-      },
+      { error: 'Failed to fetch flight data' },
       { status: 500 }
     );
   }

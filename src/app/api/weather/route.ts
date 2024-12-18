@@ -1,6 +1,6 @@
 // src/app/api/weather/route.ts
 import { NextResponse } from 'next/server';
-import { getCacheKey, getFromCache, setCache } from '@/lib/cache';
+import { getCacheOrFetch } from '@/lib/cache';
 import type {
   AeroAPIObservationsResponse,
   AeroAPIForecastResponse,
@@ -13,13 +13,69 @@ export const runtime = 'edge';
 
 const AERO_API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
 const BASE_URL = 'https://aeroapi.flightaware.com/aeroapi';
+const AIRPORT = 'EPKK';
 
-interface AeroAPIResponse<T> {
-  data?: T;
-  error?: string;
+async function fetchWeatherData() {
+  const [metarResponse, tafResponse] = await Promise.all([
+    fetchFromAeroAPI<AeroAPIObservationsResponse>(`/airports/${AIRPORT}/weather/observations`),
+    fetchFromAeroAPI<AeroAPIForecastResponse>(`/airports/${AIRPORT}/weather/forecast`)
+  ]);
+
+  // Validate responses
+  if (metarResponse.error || tafResponse.error) {
+    throw new Error(`API Error: ${metarResponse.error || tafResponse.error}`);
+  }
+
+  if (!metarResponse.data?.observations?.length || !tafResponse.data) {
+    throw new Error('Incomplete weather data received');
+  }
+
+  // Transform the data
+  const transformedMetar = transformMetarData(metarResponse.data);
+  const transformedTaf = transformTafData(tafResponse.data);
+
+  if (!transformedMetar || !transformedTaf) {
+    throw new Error('Failed to transform weather data');
+  }
+
+  return { 
+    metar: transformedMetar, 
+    taf: transformedTaf 
+  };
 }
 
-async function fetchFromAeroAPI<T>(endpoint: string): Promise<AeroAPIResponse<T>> {
+export async function GET() {
+  try {
+    const { data, fromCache } = await getCacheOrFetch(
+      `weather-${AIRPORT}`,
+      fetchWeatherData
+    );
+
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, max-age=1200',
+        ...(fromCache && { 'X-Served-From': 'cache' })
+      }
+    });
+
+  } catch (error) {
+    console.error('Weather API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error
+    });
+
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch weather data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+async function fetchFromAeroAPI<T>(endpoint: string) {
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       headers: {
@@ -123,86 +179,4 @@ function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResp
       raw_text: aeroData.raw_forecast.join(' ')
     }]
   };
-}
-
-export async function GET() {
-  try {
-    const AIRPORT = 'EPKK';
-    
-    // Check cache first
-    const cacheKey = getCacheKey('weather', AIRPORT);
-    const cachedData = await getFromCache(cacheKey);
-    
-    if (cachedData) {
-      console.log('Serving weather from cache');
-      return NextResponse.json(cachedData);
-    }
-
-    // Fetch both METAR and TAF data
-    const [metarResponse, tafResponse] = await Promise.all([
-      fetchFromAeroAPI<AeroAPIObservationsResponse>(`/airports/${AIRPORT}/weather/observations`),
-      fetchFromAeroAPI<AeroAPIForecastResponse>(`/airports/${AIRPORT}/weather/forecast`)
-    ]);
-
-    // Log responses for debugging
-    console.log('METAR Response:', metarResponse);
-    console.log('TAF Response:', tafResponse);
-
-    // More detailed error checking
-    if (metarResponse.error || tafResponse.error) {
-      throw new Error(`Failed to fetch weather data: ${metarResponse.error || tafResponse.error}`);
-    }
-
-    if (!metarResponse.data?.observations?.length || !tafResponse.data) {
-      throw new Error('Incomplete weather data received');
-    }
-
-    // Transform the data to match existing format
-    const transformedMetar = transformMetarData(metarResponse.data);
-    const transformedTaf = transformTafData(tafResponse.data);
-
-    if (!transformedMetar || !transformedTaf) {
-      throw new Error('Failed to transform weather data');
-    }
-
-    const data = { 
-      metar: transformedMetar, 
-      taf: transformedTaf 
-    };
-
-    // Save to cache before returning
-    await setCache(cacheKey, data);
-    
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, max-age=600'
-      }
-    });
-  } catch (error) {
-    console.error('Weather API error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      error
-    });
-
-    // Try to serve stale cache on error
-    const cacheKey = getCacheKey('weather', 'EPKK');
-    const cachedData = await getFromCache(cacheKey);
-    if (cachedData) {
-      console.log('Serving stale weather data from cache after error');
-      return NextResponse.json(cachedData, {
-        headers: {
-          'X-Served-From': 'stale-cache'
-        }
-      });
-    }
-
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch weather data',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
 }
