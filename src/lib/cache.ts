@@ -1,4 +1,11 @@
 // lib/cache.ts
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
 interface CacheData {
   metar?: unknown;
   taf?: unknown;
@@ -7,34 +14,26 @@ interface CacheData {
   [key: string]: unknown;
 }
 
-type CacheEntry = {
-  data: CacheData;
-  timestamp: number;
-};
-
-const cache = new Map<string, CacheEntry>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache
+const CACHE_TTL = 10 * 60; // 10 minutes cache (in seconds for Redis)
 
 export function getCacheKey(type: string, params: string): string {
   return `${type}-${params}`;
 }
 
-export function getFromCache(key: string): CacheData | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
-
-  // Check if cache is still valid
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    cache.delete(key);
+export async function getFromCache(key: string): Promise<CacheData | null> {
+  try {
+    const data = await redis.get(key);
+    return data as CacheData | null;
+  } catch (error) {
+    console.error('Cache get error:', error);
     return null;
   }
-
-  return entry.data;
 }
 
-export function setCache(key: string, data: CacheData): void {
-  cache.set(key, {
-    data,
-    timestamp: Date.now()
-  });
+export async function setCache(key: string, data: CacheData): Promise<void> {
+  try {
+    await redis.set(key, data, { ex: CACHE_TTL });
+  } catch (error) {
+    console.error('Cache set error:', error);
+  }
 }

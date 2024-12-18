@@ -26,6 +26,8 @@ jobs:
           NEXT_PUBLIC_CHECKWX_API_KEY: ${{ secrets.NEXT_PUBLIC_CHECKWX_API_KEY }}
           NEXT_PUBLIC_GA4_KEY: ${{ secrets.NEXT_PUBLIC_GA4_KEY }}
           NEXT_PUBLIC_FLIGHTAWARE_API_KEY: ${{ secrets.NEXT_PUBLIC_FLIGHTAWARE_API_KEY }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
       - name: Deploy to Vercel
         run: npx vercel deploy --prod  # Deploy to Vercel in production mode
