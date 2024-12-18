@@ -131,7 +131,7 @@ export async function GET() {
     
     // Check cache first
     const cacheKey = getCacheKey('weather', AIRPORT);
-    const cachedData = getFromCache(cacheKey);
+    const cachedData = await getFromCache(cacheKey);
     
     if (cachedData) {
       console.log('Serving weather from cache');
@@ -144,12 +144,17 @@ export async function GET() {
       fetchFromAeroAPI<AeroAPIForecastResponse>(`/airports/${AIRPORT}/weather/forecast`)
     ]);
 
+    // Log responses for debugging
+    console.log('METAR Response:', metarResponse);
+    console.log('TAF Response:', tafResponse);
+
+    // More detailed error checking
     if (metarResponse.error || tafResponse.error) {
-      throw new Error('Failed to fetch weather data');
+      throw new Error(`Failed to fetch weather data: ${metarResponse.error || tafResponse.error}`);
     }
 
-    if (!metarResponse.data || !tafResponse.data) {
-      throw new Error('No weather data received');
+    if (!metarResponse.data?.observations?.length || !tafResponse.data) {
+      throw new Error('Incomplete weather data received');
     }
 
     // Transform the data to match existing format
@@ -166,7 +171,7 @@ export async function GET() {
     };
 
     // Save to cache before returning
-    setCache(cacheKey, data);
+    await setCache(cacheKey, data);
     
     return NextResponse.json(data, {
       headers: {
@@ -174,9 +179,29 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('Weather API error:', error);
+    console.error('Weather API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error
+    });
+
+    // Try to serve stale cache on error
+    const cacheKey = getCacheKey('weather', 'EPKK');
+    const cachedData = await getFromCache(cacheKey);
+    if (cachedData) {
+      console.log('Serving stale weather data from cache after error');
+      return NextResponse.json(cachedData, {
+        headers: {
+          'X-Served-From': 'stale-cache'
+        }
+      });
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch weather data' },
+      { 
+        error: 'Failed to fetch weather data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

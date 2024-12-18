@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   try {
     // Check cache first
     const cacheKey = getCacheKey('flights', `${type}-${start}-${end}`);
-    const cachedData = getFromCache(cacheKey);
+    const cachedData = await getFromCache(cacheKey);
     
     if (cachedData) {
       console.log('Serving flights from cache:', { type, start, end });
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
 
     const endpoint = type === 'departures' ? 'departures' : 'arrivals';
     const response = await fetchWithRetry(
-      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/${endpoint}?start=${start}&end=${end}&type=Airline&max_pages=10`,
+      `https://aeroapi.flightaware.com/aeroapi/airports/${AIRPORT}/flights/${endpoint}?start=${start}&end=${end}&type=Airline&max_pages=2`,
       {
         headers: {
           'x-apikey': API_KEY!,
@@ -76,7 +76,23 @@ export async function GET(request: Request) {
     );
 
     const data = await response.json();
-    setCache(cacheKey, data);
+    
+    // Validate data structure
+    if (!data || (type === 'arrivals' && !Array.isArray(data.arrivals)) || 
+        (type === 'departures' && !Array.isArray(data.departures))) {
+      console.error('Invalid API response structure:', data);
+      throw new Error(`Invalid API response structure for ${type}`);
+    }
+
+    // Log data structure for debugging
+    console.log(`${type} data structure:`, {
+      hasData: !!data,
+      dataKeys: Object.keys(data),
+      flightsCount: data[type]?.length,
+      sampleFlight: data[type]?.[0]
+    });
+
+    await setCache(cacheKey, data);
     
     return NextResponse.json(data, {
       headers: {
@@ -84,17 +100,18 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error('Detailed error:', {
+    console.error('Detailed flight error:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      error: error
+      params: { type, start, end },
+      error
     });
 
-    // If we have cached data, return it on error
+    // Try to serve stale cache on error
     const cacheKey = getCacheKey('flights', `${type}-${start}-${end}`);
-    const cachedData = getFromCache(cacheKey);
+    const cachedData = await getFromCache(cacheKey);
     if (cachedData) {
-      console.log('Serving stale cache after error');
+      console.log('Serving stale flight data from cache after error');
       return NextResponse.json(cachedData, {
         headers: {
           'X-Served-From': 'stale-cache'
@@ -103,7 +120,13 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to fetch flight data', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to fetch flight data', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        type,
+        start,
+        end
+      },
       { status: 500 }
     );
   }
