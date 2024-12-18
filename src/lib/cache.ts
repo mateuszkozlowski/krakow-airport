@@ -18,8 +18,11 @@ export async function getCacheOrFetch<T>(
   key: string,
   fetchFn: () => Promise<T>
 ): Promise<{ data: T, fromCache: boolean }> {
+  let cached: CacheData | null = null;
+
   try {
-    const cached = await redis.get<CacheData>(key);
+    // Try to get from cache first
+    cached = await redis.get<CacheData>(key);
 
     if (cached && (Date.now() / 1000 - cached.timestamp) < STALE_AFTER) {
       console.log(`Serving fresh cache for ${key}`);

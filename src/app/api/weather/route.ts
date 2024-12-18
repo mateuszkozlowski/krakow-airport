@@ -6,6 +6,8 @@ import type {
   AeroAPIForecastResponse,
   TransformedMetarResponse,
   TransformedTafResponse,
+  TransformedCondition,
+  Cloud
 } from './types';
 
 export const runtime = 'edge';
@@ -28,6 +30,88 @@ async function fetchFromAeroAPI<T>(endpoint: string) {
 
   const data = await response.json() as T;
   return { data };
+}
+
+function parseConditions(conditionsStr: string | null): TransformedCondition[] {
+  if (!conditionsStr) return [];
+  
+  return conditionsStr.split(' ').map(code => ({
+    code
+  }));
+}
+
+function transformMetarData(aeroData: AeroAPIObservationsResponse): TransformedMetarResponse | null {
+  if (!aeroData.observations?.length) return null;
+  
+  const observation = aeroData.observations[0];
+  const clouds: Cloud[] = (observation.clouds || []).map(cloud => ({
+    altitude: cloud.altitude * 100, // Convert to feet
+    symbol: cloud.type + String(cloud.altitude).padStart(3, '0'),
+    type: cloud.type
+  }));
+
+  return {
+    data: [{
+      airport_code: observation.airport_code,
+      clouds,
+      conditions: parseConditions(observation.conditions),
+      pressure: observation.pressure,
+      pressure_units: observation.pressure_units,
+      raw_text: observation.raw_data,
+      temp_air: observation.temp_air,
+      temp_dewpoint: observation.temp_dewpoint,
+      visibility: observation.visibility,
+      visibility_units: observation.visibility_units,
+      wind: {
+        speed_kts: observation.wind_speed,
+        direction: observation.wind_direction,
+        gust_kts: observation.wind_speed_gust || null
+      },
+      ceiling: clouds?.length ? {
+        feet: Math.min(...clouds.map(c => c.altitude))
+      } : null,
+      observed: observation.time
+    }]
+  };
+}
+
+function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResponse | null {
+  if (!aeroData.decoded_forecast) return null;
+
+  const forecast = aeroData.decoded_forecast.lines.map(line => ({
+    timestamp: line.start && line.end ? {
+      from: line.start,
+      to: line.end
+    } : null,
+    change: {
+      indicator: {
+        code: line.type.toUpperCase(),
+        probability: line.type === 'tempo' ? 30 : undefined
+      }
+    },
+    conditions: parseConditions(line.significant_weather),
+    wind: line.winds ? {
+      speed_kts: line.winds.speed,
+      direction: parseInt(line.winds.direction),
+      gust_kts: line.winds.peak_gusts
+    } : null,
+    visibility: line.visibility ? {
+      meters: line.visibility.visibility === 'unlimited' ? 9999 : 
+              typeof line.visibility.visibility === 'string' ? 
+                parseInt(line.visibility.visibility) : line.visibility.visibility
+    } : null,
+    ceiling: line.clouds?.length ? {
+      feet: Math.min(...line.clouds.map(cloud => parseInt(cloud.altitude)))
+    } : null
+  }));
+
+  return {
+    data: [{
+      airport_code: aeroData.airport_code,
+      forecast,
+      raw_text: aeroData.raw_forecast.join(' ')
+    }]
+  };
 }
 
 async function fetchWeatherData() {
@@ -81,89 +165,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-function parseConditions(conditionsStr: string | null): TransformedCondition[] {
-  if (!conditionsStr) return [];
-  
-  return conditionsStr.split(' ').map(code => ({
-    code: code.replace('light ', '-')
-             .replace('heavy ', '+')
-             .toUpperCase()
-  }));
-}
-
-function transformMetarData(aeroData: AeroAPIObservationsResponse): TransformedMetarResponse | null {
-  const observation = aeroData.observations[0];
-  
-  if (!observation) return null;
-
-  const clouds = observation.clouds?.map(cloud => ({
-    altitude: cloud.altitude * 100, // Convert to feet
-    symbol: cloud.type + String(cloud.altitude).padStart(3, '0'),
-    type: cloud.type
-  }));
-
-  return {
-    data: [{
-      airport_code: observation.airport_code,
-      clouds,
-      conditions: parseConditions(observation.conditions),
-      pressure: observation.pressure,
-      pressure_units: observation.pressure_units,
-      raw_text: observation.raw_data,
-      temp_air: observation.temp_air,
-      temp_dewpoint: observation.temp_dewpoint,
-      visibility: observation.visibility,
-      visibility_units: observation.visibility_units,
-      wind: {
-        speed_kts: observation.wind_speed,
-        direction: observation.wind_direction,
-        gust_kts: observation.wind_speed_gust || null
-      },
-      ceiling: clouds?.length ? {
-        feet: Math.min(...clouds.map(c => c.altitude))
-      } : null,
-      observed: observation.time
-    }]
-  };
-}
-
-function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResponse | null {
-  if (!aeroData.decoded_forecast) return null;
-
-  const forecast = aeroData.decoded_forecast.lines.map(line => ({
-    timestamp: line.start && line.end ? {
-      from: line.start,
-      to: line.end
-    } : null,
-    change: {
-      indicator: {
-        code: line.type.toUpperCase()
-      },
-      probability: line.type === 'tempo' ? 30 : undefined
-    },
-    conditions: parseConditions(line.significant_weather),
-    wind: line.winds ? {
-      speed_kts: line.winds.speed,
-      direction: parseInt(line.winds.direction),
-      gust_kts: line.winds.peak_gusts
-    } : null,
-    visibility: line.visibility ? {
-      meters: line.visibility.visibility === 'unlimited' ? 9999 : 
-              typeof line.visibility.visibility === 'string' ? 
-                parseInt(line.visibility.visibility) : line.visibility.visibility
-    } : null,
-    ceiling: line.clouds?.length ? {
-      feet: Math.min(...line.clouds.map(cloud => parseInt(cloud.altitude)))
-    } : null
-  }));
-
-  return {
-    data: [{
-      airport_code: aeroData.airport_code,
-      forecast,
-      raw_text: aeroData.raw_forecast.join(' ')
-    }]
-  };
 }
