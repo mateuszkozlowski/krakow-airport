@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, Wind, Eye, Cloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
 
 interface WeatherTimelineProps {
@@ -26,25 +26,25 @@ interface WeatherTimelineProps {
 }
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
-const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts?: number }) => {
-  if (!wind) return null;
-  const gustInfo = wind.gust_kts ? ` (gusts ${wind.gust_kts}kt)` : '';
-  const direction = wind.direction ?? 0; // Use 0 as a default value if direction is undefined
-  return `${wind.speed_kts}kt from ${direction}°${gustInfo}`;
-};
+  const [showAll, setShowAll] = useState(false);
 
+  const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
+    const uniquePeriods = periods.reduce((acc, current) => {
+      const key = `${current.from.getTime()}-${current.to.getTime()}`;
+      const existing = acc.get(key);
+      
+      if (!existing || 
+          (existing.isTemporary && !current.isTemporary)) {
+        acc.set(key, current);
+      }
+      
+      return acc;
+    }, new Map<string, ForecastChange>());
 
-  const formatVisibility = (visibility?: { meters: number }) => {
-    if (!visibility) return null;
-    return visibility.meters >= 9999 
-      ? '10+ km' 
-      : `${(visibility.meters / 1000).toFixed(1)} km`;
+    return Array.from(uniquePeriods.values());
   };
 
-  const formatCeiling = (ceiling?: { feet: number }) => {
-    if (!ceiling) return null;
-    return `${ceiling.feet} ft`;
-  };
+  const uniqueForecast = deduplicateForecastPeriods(forecast);
 
   const getStatusColors = (level: 1 | 2 | 3) => {
     switch (level) {
@@ -72,22 +72,16 @@ const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts
     }
   };
 
-  const WeatherDetail = ({ icon: Icon, label, value }: { 
-    icon: React.ElementType; 
-    label: string; 
-    value: string | null;
-  }) => {
-    if (!value) return null;
-    return (
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-slate-400" />
-        <span className="text-sm">
-          <span className="text-slate-400">{label}:</span>{' '}
-          <span className="text-slate-200">{value}</span>
-        </span>
+  const LoadingSkeleton = () => (
+    <div className="animate-pulse space-y-4">
+      <div className="h-20 bg-slate-800 rounded-lg" />
+      <div className="space-y-3">
+        <div className="h-12 bg-slate-800 rounded-lg" />
+        <div className="h-12 bg-slate-800 rounded-lg" />
+        <div className="h-12 bg-slate-800 rounded-lg" />
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -96,132 +90,172 @@ const formatWindInfo = (wind?: { speed_kts: number; direction?: number; gust_kts
           Failed to load data. <button onClick={retry} className="underline">Try again</button>
         </div>
       ) : isLoading ? (
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-slate-700 rounded"></div>
-          <div className="h-4 bg-slate-700 rounded"></div>
-        </div>
+        <LoadingSkeleton />
       ) : (
         <>
-          {/* Current conditions card */}
-          <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
-            <CardContent className="p-4">
-              <div className="flex gap-2">
-                {getStatusColors(current.riskLevel.level).icon}
-                <div className="space-y-2">
-                  <div>
-                    <div className={`text-l font-medium mb-1 ${getStatusColors(current.riskLevel.level).text}`}>
-                      {current.riskLevel.title}
-                    </div>
-                    <div className="text-sm text-slate-300 mb-2">{current.riskLevel.message}</div>
-                    {current.riskLevel.explanation && (
-                      <span className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                        {current.riskLevel.explanation}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {current.conditions.phenomena.map((phenomenon, index) => (
-                      <span
-                        key={index}
-                        className="bg-slate-900/40 text-slate-300 px-2 py-1 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white"
-                      >
-                        {phenomenon}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="space-y-1 mt-2">
-                    <WeatherDetail 
-                      icon={Wind} 
-                      label="Wind" 
-                      value={formatWindInfo(current.wind)}
-                    />
-                    <WeatherDetail 
-                      icon={Eye} 
-                      label="Visibility" 
-                      value={formatVisibility(current.visibility)}
-                    />
-                    <WeatherDetail 
-                      icon={Cloud} 
-                      label="Ceiling" 
-                      value={formatCeiling(current.ceiling)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Timeline card */}
-          <Card className="bg-slate-800/50 border-slate-700/50">
-            <CardContent className="p-4">
-              <h3 className="text-l font-medium text-slate-200 mb-4">Expected Changes</h3>
-              <div className="space-y-4 divide-y divide-slate-700/50">
-                {forecast.map((period, index) => {
-                  const colors = getStatusColors(period.riskLevel.level);
-
-                  return (
-                    <div key={index} className="pt-4 first:pt-0">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <div className="text-sm font-medium text-slate-200">
-                            {period.from.toLocaleTimeString('en-GB', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Europe/Warsaw'
-                            })} - {period.to.toLocaleTimeString('en-GB', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Europe/Warsaw'
-                            })}
-                          </div>
-                          {period.isTemporary && (
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500 mr-1">
-                              Short-term
-                            </span>
-                          )}
-                          {period.probability && (
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
-                              {period.probability}% chance
-                            </span>
-                          )}
+          {forecast.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <p className="text-lg">No weather changes expected</p>
+              <p className="text-sm mt-2">Current conditions should remain stable</p>
+            </div>
+          ) : (
+            <>
+              {/* Current conditions card */}
+              <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
+                <CardContent className="p-6">
+                  <div className="flex flex-col gap-6">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                      <div className="flex items-start gap-3 w-full sm:w-auto">
+                        <div className="mt-1">
+                          {getStatusColors(current.riskLevel.level).icon}
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {period.conditions.phenomena.map((condition, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-slate-800/40 text-slate-300 px-2 py-0.5 rounded-full text-xs hover:bg-slate-700 hover:text-white"
-                            >
-                              {condition}
-                            </span>
-                          ))}
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${colors.pill}`}>
-                            {period.riskLevel.title}
+                        <div className="flex-1">
+                          <div className={`text-ld font-medium ${getStatusColors(current.riskLevel.level).text}`}>
+                            {current.riskLevel.title}
+                          </div>
+                          <div className="text-base text-slate-300 mt-1">
+                            {current.riskLevel.message}
+                          </div>
+                          
+                        </div>
+                      </div>
+                      {current.riskLevel.level > 1 && (
+                        <div className="w-full sm:w-auto">
+                          <span className="animate-pulse px-3 py-1.5 rounded-full text-sm bg-red-400/10 text-red-400 flex items-center justify-center sm:justify-start gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            Check flight status
                           </span>
                         </div>
-                      </div>
-                      <div className="space-y-1 mt-2">
-                        <WeatherDetail 
-                          icon={Wind} 
-                          label="Wind" 
-                          value={formatWindInfo(period.wind)}
-                        />
-                        <WeatherDetail 
-                          icon={Eye} 
-                          label="Visibility" 
-                          value={formatVisibility(period.visibility)}
-                        />
-                        <WeatherDetail 
-                          icon={Cloud} 
-                          label="Ceiling" 
-                          value={formatCeiling(period.ceiling)}
-                        />
-                      </div>
+                      )}
+                      {/* Weather conditions */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {current.conditions.phenomena.length === 0 ? (
+                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap">
+                          ☀️ Clear conditions
+                        </span>
+                      ) : (
+                        Array.from(new Set(current.conditions.phenomena)).map((phenomenon, index) => (
+                          <span
+                            key={index}
+                            className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                          >
+                            {phenomenon}
+                          </span>
+                        ))
+                      )}
+                      {current.wind?.speed_kts && current.wind.speed_kts >= 15 && (
+                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                          💨 Strong winds
+                        </span>
+                      )}
+                      {current.visibility?.meters && current.visibility.meters < 5000 && (
+                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                          👁️ Poor visibility
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+
+                    
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Timeline card */}
+              <Card className="bg-slate-800/50 border-slate-700/50">
+                <CardContent className="p-4">
+                  <h3 className="text-l font-medium text-slate-200 mb-4">Expected Changes</h3>
+                  {forecast.length === 0 || forecast.every(p => p.riskLevel.level === 1 && p.conditions.phenomena.length === 0) ? (
+                    <div className="text-center py-6 text-slate-400">
+                      <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
+                      <p className="text-lg text-emerald-400">Perfect flying conditions</p>
+                      <p className="text-sm mt-2">No significant weather changes expected</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-4 divide-y divide-slate-700/50">
+                        {uniqueForecast.slice(0, showAll ? undefined : 3).map((period, index) => {
+                          const colors = getStatusColors(period.riskLevel.level);
+
+                          return (
+                            <div key={index} className="pt-4 first:pt-0">
+                              <div className="flex flex-col gap-3">
+                                {/* Time and status group */}
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <span className="text-sm font-medium text-slate-200">
+                                      {period.from.toLocaleTimeString('en-GB', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        timeZone: 'Europe/Warsaw'
+                                      })} - {period.to.toLocaleTimeString('en-GB', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        timeZone: 'Europe/Warsaw'
+                                      })}
+                                    </span>
+                                    {period.isTemporary && (
+                                      <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
+                                        Temporary
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
+                                    {period.riskLevel.title}
+                                  </span>
+                                </div>
+
+                                {/* Weather conditions group */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
+                                    <span
+                                      key={idx}
+                                      role="status"
+                                      aria-label={`Weather condition: ${condition}`}
+                                      title={condition}
+                                      className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                                    >
+                                      {condition}
+                                    </span>
+                                  ))}
+                                  {period.visibility?.meters && period.visibility.meters < 2000 && (
+                                    <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
+                                      👁️ Poor visibility
+                                    </span>
+                                  )}
+                                  {period.wind?.speed_kts && period.wind.speed_kts >= 18 && (
+                                    <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
+                                      💨 Strong winds
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Probability if exists */}
+                                {period.probability && (
+                                  <span className="text-xs text-slate-400">
+                                    {period.probability}% chance of these conditions
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {forecast.length > 3 && (
+                        <button
+                          onClick={() => setShowAll(!showAll)}
+                          className="mt-4 w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200"
+                        >
+                          {showAll ? 'Show less' : `Show ${forecast.length - 3} more periods`}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </>
       )}
     </div>

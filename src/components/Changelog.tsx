@@ -9,7 +9,14 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
-      {
+  {
+    date: "2024-12-24",
+    version: "0.1.1",
+    changes: [
+      "Improved chaching with using external Cache API"
+    ]
+  },
+  {
     date: "2024-12-16",
     version: "0.1.0",
     changes: [

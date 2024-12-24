@@ -11,13 +11,22 @@ interface CacheData {
   timestamp: number;
 }
 
-const CACHE_TTL = 60 * 60; // 1 hour cache (in seconds for Redis)
-const STALE_AFTER = 20 * 60; // 20 minutes (in seconds)
+interface CacheConfig {
+  staleDuration: number;  // in seconds
+  cacheDuration: number;  // in seconds
+}
+
+const DEFAULT_CACHE_CONFIG: CacheConfig = {
+  staleDuration: 20 * 60,  // 20 minutes
+  cacheDuration: 60 * 60,  // 1 hour
+};
 
 export async function getCacheOrFetch<T>(
   key: string,
-  fetchFn: () => Promise<T>
-): Promise<{ data: T, fromCache: boolean }> {
+  fetchFn: () => Promise<T>,
+  config: Partial<CacheConfig> = {}
+): Promise<{ data: T, fromCache: boolean, age?: number }> {
+  const { staleDuration, cacheDuration } = { ...DEFAULT_CACHE_CONFIG, ...config };
   let cached: CacheData | null = null;
 
   try {
@@ -37,14 +46,14 @@ export async function getCacheOrFetch<T>(
     console.log(`Cache status for ${key}:`, cached ? 'HIT' : 'MISS');
 
     if (cached) {
-      const age = Date.now() / 1000 - cached.timestamp;
-      console.log(`Cache age: ${Math.round(age)} seconds (stale after ${STALE_AFTER} seconds)`);
+      const age = Math.floor(Date.now() / 1000) - cached.timestamp;
+      console.log(`Cache age: ${age} seconds (stale after ${staleDuration} seconds)`);
       
-      if (age < STALE_AFTER) {
+      if (age < staleDuration) {
         console.log(`✅ Serving fresh cache for ${key}`);
-        return { data: cached.data as T, fromCache: true };
+        return { data: cached.data as T, fromCache: true, age };
       } else {
-        console.log(`⚠️ Cache is stale for ${key}`);
+        console.log(`⚠️ Cache is stale for ${key}, refreshing...`);
       }
     }
 
@@ -55,17 +64,18 @@ export async function getCacheOrFetch<T>(
     await redis.set(key, {
       data: freshData,
       timestamp: Math.floor(Date.now() / 1000)
-    }, { ex: CACHE_TTL });
+    }, { ex: cacheDuration });
     console.log(`✅ Cache updated for ${key}`);
 
-    return { data: freshData, fromCache: false };
+    return { data: freshData, fromCache: false, age: 0 };
 
   } catch (error) {
     console.error(`❌ Error in getCacheOrFetch for ${key}:`, error);
 
     if (cached) {
+      const age = Math.floor(Date.now() / 1000) - cached.timestamp;
       console.log(`⚠️ Serving stale cache for ${key} after error`);
-      return { data: cached.data as T, fromCache: true };
+      return { data: cached.data as T, fromCache: true, age };
     }
 
     throw error;

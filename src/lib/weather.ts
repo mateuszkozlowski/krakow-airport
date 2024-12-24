@@ -34,15 +34,16 @@ const RISK_WEIGHTS = {
   
   // Moderate phenomena (adjusted for local conditions)
   PHENOMENA_MODERATE: {
-    SN: 40,     // Snow (further lowered)
-    SG: 40,     // Snow grains (further lowered)
-    BR: 25,     // Mist (kept low)
-    FG: 55,     // Fog (common but still impactful)
-    RA: 20,     // Rain (reduced significantly for routine tolerance)
-    GR: 70,     // Hail (unchanged, still significant)
-    GS: 55,     // Small hail (unchanged)
-    '+RA': 40,  // Heavy rain (reduced for familiarity)
-    '+SN': 50   // Heavy snow (lowered further)
+    SN: 40,     // Snow
+    SG: 40,     // Snow grains
+    BR: 25,     // Mist
+    FG: 55,     // Fog
+    RA: 20,     // Rain
+    SHRA: 30,   // Shower rain
+    GR: 70,     // Hail
+    GS: 55,     // Small hail
+    '+RA': 40,  // Heavy rain
+    '+SN': 50   // Heavy snow
   },
   
   // Visibility weights (adjusted for operational tolerance)
@@ -68,6 +69,19 @@ const RISK_WEIGHTS = {
     MODERATE: 40         // >= 15kt
   }
 } as const;
+
+// Add this mapping at the top of the file
+const CONDITION_CODE_MAP: Record<string, keyof typeof WEATHER_PHENOMENA> = {
+  'light': '-RA',
+  'rain': 'RA',
+  'rain,': 'RA',
+  'rain_showers': 'SHRA',
+  'mist': 'BR',
+  'fog': 'FG',
+  'snow': 'SN',
+  'thunderstorm': 'TS',
+  // Add more mappings as needed
+};
 
 export async function getAirportWeather(): Promise<WeatherResponse | null> {
   try {
@@ -122,22 +136,32 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
   taf.forecast.forEach((period) => {
     if (period.timestamp) {
+      console.log('Processing period:', {
+        conditions: period.conditions,
+        raw: period?.raw_text,
+        change: period.change
+      });
+      
       const periodStart = new Date(period.timestamp.from);
       const periodEnd = new Date(period.timestamp.to);
       
       const timeDescription = formatTimeDescription(periodStart, periodEnd);
       const assessment = assessWeatherRisk(period);
       
-      const phenomena = period.conditions?.map(c => WEATHER_PHENOMENA[c.code])
-        .filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
+      const phenomena = period.conditions?.map(c => {
+        const mappedCode = CONDITION_CODE_MAP[c.code] || c.code;
+        console.log('Processing condition:', c.code, '→', mappedCode, WEATHER_PHENOMENA[mappedCode]);
+        return WEATHER_PHENOMENA[mappedCode];
+      })
+      .filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
 
-      let description = timeDescription;
-      if (period.change?.probability) {
-        description = `${timeDescription} (${period.change.probability}% probability)`;
-      }
+      console.log('Processed phenomena:', phenomena);
+
+      const isTemporary = period.change?.indicator?.code === 'TEMPO';
+      const probability = period.change?.probability;
 
       changes.push({
-        timeDescription: description,
+        timeDescription,
         from: periodStart,
         to: periodEnd,
         conditions: {
@@ -147,19 +171,14 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         changeType: period.change?.indicator?.code || 'PERSISTENT',
         wind: period.wind,
         visibility: period.visibility,
-        ceiling: period.ceiling
+        ceiling: period.ceiling,
+        isTemporary,
+        probability
       });
     }
   });
 
-  return changes.sort((a, b) => {
-    const timeCompare = a.from.getTime() - b.from.getTime();
-    if (timeCompare === 0) {
-      if (a.changeType === 'BECMG' && b.changeType === 'TEMPO') return -1;
-      if (a.changeType === 'TEMPO' && b.changeType === 'BECMG') return 1;
-    }
-    return timeCompare;
-  });
+  return changes;
 }
 
 function formatTimeDescription(start: Date, end: Date): string {

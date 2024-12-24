@@ -133,6 +133,7 @@ export const WEATHER_PHENOMENA = {
   FZFG: '🌫️❄️ Freezing Fog',
 
   RA: '🌧️ Rain',
+  SHRA: '🌧️ Rain Showers',
   SN: '❄️ Snow',
   GR: '🌨️ Hail',
   GS: '🌨️ Small Hail/Snow Pellets',
