@@ -23,29 +23,25 @@ export function FlightStatsDisplay({ stats, error }: FlightStatsDisplayProps) {
 
   const hasAffectedFlights = stats.affectedFlights.length > 0;
   const hasHighDelays = stats.delayed > 8;
-  const hasHighCancellations = stats.cancelled >= 3;
-  const hasHighDiversions = stats.diverted > 3;
 
   return (
     <Card className="bg-white shadow-sm">
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className={`p-4 rounded-lg ${hasHighCancellations ? 'bg-red-100' : 'bg-red-50'}`}>
+          <div className="p-4 rounded-lg bg-gray-50">
             <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-red-700">{stats.cancelled}</div>
-              {hasHighCancellations && <AlertCircle className="h-5 w-5 text-red-600" />}
+              <div className="text-2xl font-bold text-gray-500">--</div>
             </div>
-            <div className="text-red-600">
-              {hasHighCancellations ? 'High number of cancellations' : 'Cancelled'}
+            <div className="text-gray-500">
+              Cancelled (Coming Soon)
             </div>
           </div>
-          <div className={`p-4 rounded-lg ${hasHighDiversions ? 'bg-yellow-100' : 'bg-yellow-50'}`}>
+          <div className="p-4 rounded-lg bg-gray-50">
             <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-yellow-700">{stats.diverted}</div>
-              {hasHighDiversions && <AlertCircle className="h-5 w-5 text-yellow-600" />}
+              <div className="text-2xl font-bold text-gray-500">--</div>
             </div>
-            <div className="text-yellow-600">
-              {hasHighDiversions ? 'High number of diversions' : 'Diverted'}
+            <div className="text-gray-500">
+              Diverted (Coming Soon)
             </div>
           </div>
           <div className={`p-4 rounded-lg ${hasHighDelays ? 'bg-orange-100' : 'bg-orange-50'}`}>
