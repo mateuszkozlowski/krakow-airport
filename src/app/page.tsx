@@ -88,11 +88,11 @@ export default function Page() {
                 </Alert>
 
                 <div className="max-w-4xl mx-auto px-6 pb-36">
-                    <h1 className="text-xl md:text-3xl font-bold mt-24 mb-2 md:mb-4 text-white">Will I fly today from Krakow?</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">Will I fly today from Krakow?</h1>
 
                     {weather?.current && (
                         <>
-                            <p className="text-xl md:text-2xl mb-8 text-white/80">
+                            <p className="text-xl md:text-3xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 3
                                     ? "It does not look promising. Your flight might be canceled or seriously delayed."
                                     : weather.current.riskLevel.level === 2

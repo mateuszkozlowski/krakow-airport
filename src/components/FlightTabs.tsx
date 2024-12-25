@@ -33,20 +33,6 @@ export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) 
                     
                     <TabsContent value="arrivals" className="mt-0">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div className={`p-4 rounded-lg ${arrivalsStats.cancelled > 2 ? 'bg-red-100' : 'bg-red-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-bold text-red-700">{arrivalsStats.cancelled}</div>
-                                    {arrivalsStats.cancelled > 2 && <AlertCircle className="h-5 w-5 text-red-600" />}
-                                </div>
-                                <div className="text-red-600">Cancelled</div>
-                            </div>
-                            <div className={`p-4 rounded-lg ${arrivalsStats.diverted > 2 ? 'bg-yellow-100' : 'bg-yellow-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-bold text-yellow-700">{arrivalsStats.diverted}</div>
-                                    {arrivalsStats.diverted > 2 && <AlertCircle className="h-5 w-5 text-yellow-600" />}
-                                </div>
-                                <div className="text-yellow-600">Diverted</div>
-                            </div>
                             <div className={`p-4 rounded-lg ${arrivalsStats.delayed > 8 ? 'bg-orange-100' : 'bg-orange-50'}`}>
                                 <div className="flex items-center gap-2">
                                     <div className="text-2xl font-bold text-orange-700">{arrivalsStats.delayed}</div>
@@ -54,9 +40,21 @@ export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) 
                                 </div>
                                 <div className="text-orange-600">Delayed</div>
                             </div>
+                            <div className="p-4 rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl font-bold text-gray-400">-</div>
+                                </div>
+                                <div className="text-gray-400">Diverted (Coming Soon)</div>
+                            </div>
+                            <div className="p-4 rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl font-bold text-gray-400">-</div>
+                                </div>
+                                <div className="text-gray-400">Cancelled (Coming Soon)</div>
+                            </div>
                         </div>
                         
-                        {arrivalsStats.affectedFlights.length > 0 && (
+                        {arrivalsStats.affectedFlights.length > 0 ? (
                             <div>
                                 <h3 className="font-semibold mb-3">Affected arrivals in last 6 hours</h3>
                                 <div className="space-y-2 h-[calc(5.7*4rem)] overflow-y-auto">
@@ -105,26 +103,15 @@ export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) 
                                     ))}
                                 </div>
                             </div>
+                        ) : (
+                            <div className="p-8 text-center bg-gray-50 rounded-lg">
+                                <p className="text-gray-500">No affected arrivals at the moment</p>
+                            </div>
                         )}
                     </TabsContent>
                     
                     <TabsContent value="departures" className="mt-0">
-                        {/* Similar content for departures */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div className={`p-4 rounded-lg ${departuresStats.cancelled > 2 ? 'bg-red-100' : 'bg-red-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-bold text-red-700">{departuresStats.cancelled}</div>
-                                    {departuresStats.cancelled > 2 && <AlertCircle className="h-5 w-5 text-red-600" />}
-                                </div>
-                                <div className="text-red-600">Cancelled</div>
-                            </div>
-                            <div className={`p-4 rounded-lg ${departuresStats.diverted > 2 ? 'bg-yellow-100' : 'bg-yellow-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-bold text-yellow-700">{departuresStats.diverted}</div>
-                                    {departuresStats.diverted > 2 && <AlertCircle className="h-5 w-5 text-yellow-600" />}
-                                </div>
-                                <div className="text-yellow-600">Diverted</div>
-                            </div>
                             <div className={`p-4 rounded-lg ${departuresStats.delayed > 8 ? 'bg-orange-100' : 'bg-orange-50'}`}>
                                 <div className="flex items-center gap-2">
                                     <div className="text-2xl font-bold text-orange-700">{departuresStats.delayed}</div>
@@ -132,9 +119,21 @@ export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) 
                                 </div>
                                 <div className="text-orange-600">Delayed</div>
                             </div>
+                            <div className="p-4 rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl font-bold text-gray-400">-</div>
+                                </div>
+                                <div className="text-gray-400">Diverted (Coming Soon)</div>
+                            </div>
+                            <div className="p-4 rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl font-bold text-gray-400">-</div>
+                                </div>
+                                <div className="text-gray-400">Cancelled (Coming Soon)</div>
+                            </div>
                         </div>
 
-                        {departuresStats.affectedFlights.length > 0 && (
+                        {departuresStats.affectedFlights.length > 0 ? (
                             <div>
                                 <h3 className="font-semibold mb-3">Affected departures in last 6 hours</h3>
                                 <div className="space-y-2 h-[calc(5.7*4rem)] overflow-y-auto">
@@ -182,6 +181,10 @@ export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) 
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center bg-gray-50 rounded-lg">
+                                <p className="text-gray-500">No affected departures at the moment</p>
                             </div>
                         )}
                     </TabsContent>
