@@ -8,7 +8,7 @@ async function fetchFlightData(type: 'arrivals' | 'departures'): Promise<FlightS
   return withRetry(async () => {
     const now = new Date();
     const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-    const fourHoursFromNow = new Date(now.getTime());
+    const fourHoursFromNow = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
     const startTime = sixHoursAgo.toISOString().split('.')[0] + 'Z';
     const endTime = fourHoursFromNow.toISOString().split('.')[0] + 'Z';
