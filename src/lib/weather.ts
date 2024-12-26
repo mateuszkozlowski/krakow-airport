@@ -338,7 +338,7 @@ const getWeatherDescription = (reasons: string[]): string => {
   else if (score >= 80) {
     return {
       level: 3,
-      title: "High risk of disruptions due to weather conditions in next hour",
+      title: "High risk of disruptions due to weather conditions",
       message: "Check your flight status urgently with your airline or at the airport",
       explanation: getWeatherDescription(reasons),
       color: "red"
@@ -347,7 +347,7 @@ const getWeatherDescription = (reasons: string[]): string => {
   else if (score >= 40) {
     return {
       level: 2,
-      title: "Some delays possible due to weather conditions in next hour",
+      title: "Some delays possible due to weather conditions",
       message: "It is recommended to check flight status with your airline or at the airport",
       explanation: getWeatherDescription(reasons),
       color: "orange"
@@ -356,7 +356,7 @@ const getWeatherDescription = (reasons: string[]): string => {
   else {
     return {
       level: 1,
-      title: "No disruptions expected in next hour",
+      title: "No disruptions expected",
       message: "Good flying conditions",
       explanation: getWeatherDescription(reasons),
       color: "green"

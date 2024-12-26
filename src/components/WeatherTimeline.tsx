@@ -117,19 +117,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           <div className="text-base text-slate-300 mt-1">
                             {current.riskLevel.message}
                           </div>
-                          
-                        </div>
-                      </div>
-                      {current.riskLevel.level > 1 && (
-                        <div className="w-full sm:w-auto">
-                          <span className="animate-pulse px-3 py-1.5 rounded-full text-sm bg-red-400/10 text-red-400 flex items-center justify-center sm:justify-start gap-2">
-                            <AlertTriangle className="h-4 w-4" />
-                            Check flight status
-                          </span>
-                        </div>
-                      )}
-                      {/* Weather conditions */}
-                    <div className="flex flex-wrap items-center gap-2">
+                                                {/* Weather conditions */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
                       {current.conditions.phenomena.length === 0 ? (
                         <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap">
                           ☀️ Clear conditions
@@ -155,6 +144,18 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         </span>
                       )}
                     </div>
+                          
+                        </div>
+                      </div>
+                      {current.riskLevel.level > 1 && (
+                        <div className="w-full sm:w-auto">
+                          <span className="animate-pulse px-3 py-1.5 rounded-full text-sm bg-red-400/10 text-red-400 flex items-center justify-center sm:justify-start gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            Check flight status
+                          </span>
+                        </div>
+                      )}
+
                     </div>
 
                     
