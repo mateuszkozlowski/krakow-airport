@@ -10,6 +10,8 @@ export interface FlightAwareResponse {
 }
 
 export interface FlightAwareArrival {
+  arrival_delay: boolean;
+  departure_delay: boolean;
   ident: string;
   ident_icao: string;
   ident_iata: string;

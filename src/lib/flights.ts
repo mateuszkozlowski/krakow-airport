@@ -72,20 +72,32 @@ async function fetchFlightData(type: 'arrivals' | 'departures'): Promise<FlightS
           divertedTo: flight.diverted_airport
         });
       } else {
-        const scheduledTime = type === 'arrivals' ? flight.scheduled_in : flight.scheduled_out;
-        const estimatedTime = type === 'arrivals' ? flight.estimated_in : flight.estimated_out;
-        
-        if (scheduledTime && estimatedTime) {
-          const delay = new Date(estimatedTime).getTime() - new Date(scheduledTime).getTime();
-          if (delay > 20 * 60 * 1000) { // 20 minutes delay threshold
+        if (type === 'departures' && flight.departure_delay) {
+          // Ensure departure_delay is treated as a number
+          const delayMinutes = Math.floor(Number(flight.departure_delay) / 60);
+          if (delayMinutes > 20) {
             stats.delayed++;
             stats.affectedFlights.push({
               flightNumber: flight.ident,
               status: "DELAYED",
-              scheduledTime,
+              scheduledTime: flight.scheduled_out ?? new Date().toISOString(),
               airline: displayAirline,
               origin: displayAirport,
-              delayMinutes: Math.floor(delay / (1000 * 60)),
+              delayMinutes: delayMinutes,
+            });
+          }
+        } else if (type === 'arrivals' && flight.arrival_delay) {
+          // Ensure arrival_delay is treated as a number
+          const delayMinutes = Math.floor(Number(flight.arrival_delay) / 60);
+          if (delayMinutes > 20) {
+            stats.delayed++;
+            stats.affectedFlights.push({
+              flightNumber: flight.ident,
+              status: "DELAYED",
+              scheduledTime: flight.scheduled_in ?? new Date().toISOString(),
+              airline: displayAirline,
+              origin: displayAirport,
+              delayMinutes: delayMinutes,
             });
           }
         }
