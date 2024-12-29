@@ -326,7 +326,7 @@ const getWeatherDescription = (reasons: string[]): string => {
     return "⚠️ Poor weather";
   };
 
-  if (score >= 150) {
+  if (score >= 120) {
     return {
       level: 3,
       title: "Extremely high risk of disruptions",
@@ -335,7 +335,7 @@ const getWeatherDescription = (reasons: string[]): string => {
       color: "red"
     };
   }
-  else if (score >= 80) {
+  else if (score >= 70) {
     return {
       level: 3,
       title: "High risk of disruptions",

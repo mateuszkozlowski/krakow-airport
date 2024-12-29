@@ -141,6 +141,11 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@microsoft/clarity@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@microsoft/clarity/-/clarity-1.0.0.tgz"
+  integrity sha512-2QY6SmXnqRj6dWhNY8NYCN3e53j4zCFebH4wGnNhdGV1mqAsQwql2fT0w8TISxCvwwfVp8idsWLIdrRHOms1PQ==
+
 "@next/env@15.0.4":
   version "15.0.4"
   resolved "https://registry.npmjs.org/@next/env/-/env-15.0.4.tgz"
