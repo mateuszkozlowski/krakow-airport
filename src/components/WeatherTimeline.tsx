@@ -166,7 +166,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               {/* Timeline card */}
               <Card className="bg-slate-800/50 border-slate-700/50">
                 <CardContent className="p-4">
-                  <h3 className="text-l font-medium text-slate-200 mb-4">Expected Changes</h3>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-4">
+                    <h3 className="text-l font-medium text-slate-200">Expected Changes</h3>
+                    <span className="text-sm text-slate-400 whitespace-nowrap">
+                      Forecast issued at: {current.observed.split('T')[1].slice(0, 5)}
+                    </span>
+                  </div>
                   {forecast.length === 0 || forecast.every(p => p.riskLevel.level === 1 && p.conditions.phenomena.length === 0) ? (
                     <div className="text-center py-6 text-slate-400">
                       <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />

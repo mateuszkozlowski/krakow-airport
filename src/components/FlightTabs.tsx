@@ -12,7 +12,10 @@ interface FlightTabsProps {
 export function FlightTabs({ arrivalsStats, departuresStats }: FlightTabsProps) {
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white">Flights Insights</h2>
+            <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-white">Flights Insights</h2>
+                <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">Beta</span>
+            </div>
             <Card className="bg-white shadow-sm">
                 <CardContent className="p-6">
                     <Tabs defaultValue="arrivals" className="w-full">
