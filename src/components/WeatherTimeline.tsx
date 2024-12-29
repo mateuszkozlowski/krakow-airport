@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
 
 interface WeatherTimelineProps {
@@ -27,6 +27,18 @@ interface WeatherTimelineProps {
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
+
+  const calculateTimeUntilChange = () => {
+    if (forecast.length === 0) return 60; // Default to 60 minutes if no changes
+
+    const now = new Date();
+    const nextChange = forecast[0].from;
+    const diffMinutes = Math.round((nextChange.getTime() - now.getTime()) / (1000 * 60));
+    
+    return Math.max(1, Math.min(diffMinutes, 60)); // Clamp between 1 and 60 minutes
+  };
+
+  const timeUntilChange = calculateTimeUntilChange();
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const uniquePeriods = periods.reduce((acc, current) => {
@@ -104,7 +116,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
                 <CardContent className="p-6">
                   <div className="flex flex-col gap-6">
-                    {/* Header */}
+  {/* Header */}
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div className="flex items-start gap-3 w-full sm:w-auto">
                         <div className="mt-1">
@@ -116,6 +128,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           </div>
                           <div className="text-base text-slate-300 mt-1">
                             {current.riskLevel.message}
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-400 mt-2">
+                            <span className="text-sm">Valid for the next {timeUntilChange} minutes</span>
                           </div>
                                                 {/* Weather conditions */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -157,7 +172,21 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       )}
 
                     </div>
-
+                    {/* Warning banner for deteriorating conditions */}
+                    {current.riskLevel.level === 1 && forecast.some(p => {
+                      const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
+                      return withinNextHour && (p.riskLevel.level > 1 || p.conditions.phenomena.length > 0);
+                    }) && (
+                      <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
+                        <div className="flex items-top gap-2 text-orange-400">
+                          <AlertTriangle className="h-4 w-4 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium">Weather conditions expected to deteriorate soon</p>
+                            <p className="text-xs  mt-1">Check the timeline below for detailed changes</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                   </div>
                 </CardContent>
@@ -172,7 +201,11 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       Forecast issued at: {current.observed.split('T')[1].slice(0, 5)}
                     </span>
                   </div>
-                  {forecast.length === 0 || forecast.every(p => p.riskLevel.level === 1 && p.conditions.phenomena.length === 0) ? (
+                  {forecast.length === 0 || (forecast.every(p => p.riskLevel.level === 1 && p.conditions.phenomena.length === 0) && 
+                    !forecast.some(p => {
+                      const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
+                      return withinNextHour && (p.riskLevel.level > 1 || p.conditions.phenomena.length > 0);
+                    })) ? (
                     <div className="text-center py-6 text-slate-400">
                       <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
                       <p className="text-lg text-emerald-400">Perfect flying conditions</p>

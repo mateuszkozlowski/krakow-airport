@@ -357,7 +357,7 @@ const getWeatherDescription = (reasons: string[]): string => {
     return {
       level: 1,
       title: "No disruptions expected",
-      message: "Current weather is good for next 30 minutes. Pay attention to the weather forecast.",
+      message: "Current weather is good for flying.",
       explanation: getWeatherDescription(reasons),
       color: "green"
     };
