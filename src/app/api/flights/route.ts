@@ -34,19 +34,23 @@ export async function GET(request: Request) {
   
   try {
     const { data, fromCache } = await getCacheOrFetch(
-      `flights-${type}-${start}-${end}`,
+      `flights-${type}-${AIRPORT}`,
       async () => {
         const response = await fetchFlightData(type, start, end);
         if (!response || !Array.isArray(response[type])) {
           throw new Error('Invalid flight data structure');
         }
         return response;
+      },
+      {
+        staleDuration: 15 * 60,
+        cacheDuration: 30 * 60
       }
     );
 
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, max-age=1200',
+        'Cache-Control': 'public, max-age=900',
         ...(fromCache && { 'X-Served-From': 'cache' })
       }
     });
