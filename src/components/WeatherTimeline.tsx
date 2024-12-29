@@ -28,18 +28,6 @@ interface WeatherTimelineProps {
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
 
-  const calculateTimeUntilChange = () => {
-    if (forecast.length === 0) return 60; // Default to 60 minutes if no changes
-
-    const now = new Date();
-    const nextChange = forecast[0].from;
-    const diffMinutes = Math.round((nextChange.getTime() - now.getTime()) / (1000 * 60));
-    
-    return Math.max(1, Math.min(diffMinutes, 60)); // Clamp between 1 and 60 minutes
-  };
-
-  const timeUntilChange = calculateTimeUntilChange();
-
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const uniquePeriods = periods.reduce((acc, current) => {
       const key = `${current.from.getTime()}-${current.to.getTime()}`;
