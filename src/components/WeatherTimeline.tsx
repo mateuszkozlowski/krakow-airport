@@ -129,9 +129,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           <div className="text-base text-slate-300 mt-1">
                             {current.riskLevel.message}
                           </div>
-                          <div className="flex items-center gap-2 text-slate-400 mt-2">
-                            <span className="text-sm">Valid for the next {timeUntilChange} minutes</span>
-                          </div>
+
                                                 {/* Weather conditions */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {current.conditions.phenomena.length === 0 ? (
