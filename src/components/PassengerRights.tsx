@@ -179,7 +179,7 @@ export function PassengerRights() {
         <TabsContent value="rights" className="mt-4">
           <InfoSection title="Claim Your EU261 Rights" icon={Shield}>
             <p className="text-sm text-muted-foreground mb-4">
-              For flights departing Kraków Airport or EU airlines flying to Kraków, you're entitled to:
+              For flights departing Kraków Airport or EU airlines flying to Kraków, you&apos;re entitled to:
             </p>
             <ul className="ml-6 list-disc space-y-2 mb-4">
               <li>Up to €600 compensation for eligible delays over 3 hours</li>

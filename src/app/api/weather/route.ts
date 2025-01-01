@@ -7,7 +7,8 @@ import type {
   TransformedMetarResponse,
   TransformedTafResponse,
   TransformedCondition,
-  Cloud
+  Cloud,
+  ForecastLine
 } from './types';
 
 export const runtime = 'edge';
@@ -19,7 +20,7 @@ const AIRPORT = 'EPKK';
 async function fetchFromCheckWX<T>(endpoint: string) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
-      'X-API-Key': CHECKWX_API_KEY,
+      'X-API-Key': CHECKWX_API_KEY || '',
       'Accept': 'application/json',
     },
   });
@@ -32,18 +33,19 @@ async function fetchFromCheckWX<T>(endpoint: string) {
   return { data };
 }
 
-function parseConditions(conditionsStr: string | null): TransformedCondition[] {
+const parseConditions = (conditionsStr: string | null): TransformedCondition[] => {
   if (!conditionsStr) return [];
   
   return conditionsStr.split(' ').map(code => ({
     code
   }));
-}
+};
 
 // Update the type definitions to match CheckWX API response
 interface CheckWXMetarResponse {
   results: number;
   data: [{
+    conditions: any;
     icao: string;
     barometer: {
       hg: number;
@@ -142,7 +144,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
     data: [{
       airport_code: observation.icao,
       clouds,
-      conditions: observation.conditions?.map(c => ({
+      conditions: observation.conditions?.map((c: { code: any; }) => ({
         code: c.code
       })) || [],
       pressure: observation.barometer.mb,
@@ -150,9 +152,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       raw_text: observation.raw_text,
       temp_air: observation.temperature.celsius,
       temp_dewpoint: observation.dewpoint.celsius,
-      visibility: {
-        meters: observation.visibility.meters_float
-      },
+      visibility: observation.visibility.meters_float,
       visibility_units: 'meters',
       wind: {
         speed_kts: observation.wind.speed_kts,
@@ -200,7 +200,7 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
   return {
     data: [{
       airport_code: checkwxData.data[0].icao,
-      forecast,
+      forecast: forecast as ForecastLine[],
       raw_text: checkwxData.data[0].raw_text
     }]
   };
