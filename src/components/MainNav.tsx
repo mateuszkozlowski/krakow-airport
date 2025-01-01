@@ -18,12 +18,7 @@ export function MainNav() {
         <span className="text-lg sm:text-xl font-semibold">KRK.flights</span>
       </Link>
       <nav>
-        <Link 
-          href="/passengerrights" 
-          className="inline-flex h-8 sm:h-9 items-center justify-center rounded-md bg-white/10 px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium transition-colors hover:bg-white/20"
-        >
-          Passenger Rights
-        </Link>
+
       </nav>
     </div>
   )
