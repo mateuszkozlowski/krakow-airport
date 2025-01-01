@@ -12,20 +12,20 @@ import type {
 
 export const runtime = 'edge';
 
-const AERO_API_KEY = process.env.NEXT_PUBLIC_FLIGHTAWARE_API_KEY;
-const BASE_URL = 'https://aeroapi.flightaware.com/aeroapi';
+const BASE_URL = 'https://api.checkwx.com';
+const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
-async function fetchFromAeroAPI<T>(endpoint: string) {
+async function fetchFromCheckWX<T>(endpoint: string) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
-      'x-apikey': AERO_API_KEY ?? '',
+      'X-API-Key': CHECKWX_API_KEY,
       'Accept': 'application/json',
     },
   });
 
   if (!response.ok) {
-    throw new Error(`AeroAPI responded with status ${response.status}`);
+    throw new Error(`CheckWX API responded with status ${response.status}`);
   }
 
   const data = await response.json() as T;
@@ -40,87 +40,179 @@ function parseConditions(conditionsStr: string | null): TransformedCondition[] {
   }));
 }
 
-function transformMetarData(aeroData: AeroAPIObservationsResponse): TransformedMetarResponse | null {
-  if (!aeroData.observations?.length) return null;
+// Update the type definitions to match CheckWX API response
+interface CheckWXMetarResponse {
+  results: number;
+  data: [{
+    icao: string;
+    barometer: {
+      hg: number;
+      hpa: number;
+      kpa: number;
+      mb: number;
+    };
+    ceiling: {
+      feet: number;
+      meters: number;
+    };
+    clouds: Array<{
+      base_feet_agl: number;
+      base_meters_agl: number;
+      code: string;
+      text: string;
+      feet: number;
+      meters: number;
+    }>;
+    dewpoint: {
+      celsius: number;
+      fahrenheit: number;
+    };
+    temperature: {
+      celsius: number;
+      fahrenheit: number;
+    };
+    visibility: {
+      miles: string;
+      miles_float: number;
+      meters: string;
+      meters_float: number;
+    };
+    wind: {
+      degrees: number;
+      speed_kts: number;
+      gust_kts?: number;
+    };
+    raw_text: string;
+    observed: string;
+  }];
+}
+
+interface CheckWXTafResponse {
+  results: number;
+  data: [{
+    icao: string;
+    raw_text: string;
+    forecast: Array<{
+      clouds: Array<{
+        base_feet_agl: number;
+        base_meters_agl: number;
+        code: string;
+        text: string;
+        feet: number;
+        meters: number;
+      }>;
+      conditions?: Array<{
+        code: string;
+        text: string;
+      }>;
+      timestamp: {
+        from: string;
+        to: string;
+      };
+      visibility?: {
+        meters_float: number;
+      };
+      wind?: {
+        degrees: number;
+        speed_kts: number;
+        gust_kts?: number;
+      };
+      change?: {
+        indicator: {
+          code: string;
+          text: string;
+          desc: string;
+        };
+      };
+    }>;
+  }];
+}
+
+function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetarResponse | null {
+  if (!checkwxData.data?.length) return null;
   
-  const observation = aeroData.observations[0];
+  const observation = checkwxData.data[0];
   const clouds: Cloud[] = (observation.clouds || []).map(cloud => ({
-    altitude: cloud.altitude * 100, // Convert to feet
-    symbol: cloud.type + String(cloud.altitude).padStart(3, '0'),
-    type: cloud.type
+    altitude: cloud.feet,
+    symbol: cloud.code + String(cloud.base_feet_agl).padStart(3, '0'),
+    type: cloud.code
   }));
 
   return {
     data: [{
-      airport_code: observation.airport_code,
+      airport_code: observation.icao,
       clouds,
-      conditions: parseConditions(observation.conditions),
-      pressure: observation.pressure,
-      pressure_units: observation.pressure_units,
-      raw_text: observation.raw_data,
-      temp_air: observation.temp_air,
-      temp_dewpoint: observation.temp_dewpoint,
-      visibility: observation.visibility,
-      visibility_units: observation.visibility_units,
-      wind: {
-        speed_kts: observation.wind_speed,
-        direction: observation.wind_direction,
-        gust_kts: observation.wind_speed_gust || null
+      conditions: observation.conditions?.map(c => ({
+        code: c.code
+      })) || [],
+      pressure: observation.barometer.mb,
+      pressure_units: 'mb',
+      raw_text: observation.raw_text,
+      temp_air: observation.temperature.celsius,
+      temp_dewpoint: observation.dewpoint.celsius,
+      visibility: {
+        meters: observation.visibility.meters_float
       },
-      ceiling: clouds?.length ? {
-        feet: Math.min(...clouds.map(c => c.altitude))
+      visibility_units: 'meters',
+      wind: {
+        speed_kts: observation.wind.speed_kts,
+        direction: observation.wind.degrees,
+        gust_kts: observation.wind.gust_kts || null
+      },
+      ceiling: observation.ceiling ? {
+        feet: observation.ceiling.feet
       } : null,
-      observed: observation.time
+      observed: observation.observed
     }]
   };
 }
 
-function transformTafData(aeroData: AeroAPIForecastResponse): TransformedTafResponse | null {
-  if (!aeroData.decoded_forecast) return null;
+function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafResponse | null {
+  if (!checkwxData.data?.[0]?.forecast) return null;
 
-  const forecast = aeroData.decoded_forecast.lines.map(line => ({
-    timestamp: line.start && line.end ? {
-      from: line.start,
-      to: line.end
+  const forecast = checkwxData.data[0].forecast.map(period => ({
+    timestamp: period.timestamp ? {
+      from: period.timestamp.from,
+      to: period.timestamp.to
     } : null,
-    change: {
+    change: period.change ? {
       indicator: {
-        code: line.type.toUpperCase(),
-        probability: line.type === 'tempo' ? 30 : undefined
+        code: period.change.indicator.code,
+        probability: period.change.indicator.code === 'TEMPO' ? 30 : undefined
       }
-    },
-    conditions: parseConditions(line.significant_weather),
-    wind: line.winds ? {
-      speed_kts: line.winds.speed,
-      direction: parseInt(line.winds.direction),
-      gust_kts: line.winds.peak_gusts
+    } : undefined,
+    conditions: period.conditions?.map(c => ({
+      code: c.code
+    })) || [],
+    wind: period.wind ? {
+      speed_kts: period.wind.speed_kts,
+      direction: period.wind.degrees,
+      gust_kts: period.wind.gust_kts
     } : null,
-    visibility: line.visibility ? {
-      meters: line.visibility.visibility === 'unlimited' ? 9999 : 
-              typeof line.visibility.visibility === 'string' ? 
-                parseInt(line.visibility.visibility) : line.visibility.visibility
+    visibility: period.visibility ? {
+      meters: period.visibility.meters_float
     } : null,
-    ceiling: line.clouds?.length ? {
-      feet: Math.min(...line.clouds.map(cloud => parseInt(cloud.altitude)))
+    ceiling: period.clouds?.length ? {
+      feet: Math.min(...period.clouds.map(cloud => cloud.feet))
     } : null
   }));
 
   return {
     data: [{
-      airport_code: aeroData.airport_code,
+      airport_code: checkwxData.data[0].icao,
       forecast,
-      raw_text: aeroData.raw_forecast.join(' ')
+      raw_text: checkwxData.data[0].raw_text
     }]
   };
 }
 
 async function fetchWeatherData() {
   const [metarResponse, tafResponse] = await Promise.all([
-    fetchFromAeroAPI<AeroAPIObservationsResponse>(`/airports/${AIRPORT}/weather/observations`),
-    fetchFromAeroAPI<AeroAPIForecastResponse>(`/airports/${AIRPORT}/weather/forecast`)
+    fetchFromCheckWX<CheckWXMetarResponse>(`/metar/${AIRPORT}/decoded`),
+    fetchFromCheckWX<CheckWXTafResponse>(`/taf/${AIRPORT}/decoded`)
   ]);
 
-  if (!metarResponse.data?.observations?.length || !tafResponse.data) {
+  if (!metarResponse.data?.data?.length || !tafResponse.data?.data?.length) {
     throw new Error('Incomplete weather data received');
   }
 

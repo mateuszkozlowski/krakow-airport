@@ -91,8 +91,9 @@ body {
   }
 }
 
-.bg-[#1a1f36] {
-  min-height: 60vh;
-  position: relative;
-  overflow: hidden;
+@layer utilities {
+  .bg-\[\#1a1f36\] {
+    position: relative;
+    overflow: hidden;
+  }
 }

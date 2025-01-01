@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
+import Link from 'next/link';
 
 interface WeatherTimelineProps {
   current: {
@@ -104,7 +105,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
                 <CardContent className="p-6">
                   <div className="flex flex-col gap-6">
-  {/* Header */}
+                    {/* Header */}
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div className="flex items-start gap-3 w-full sm:w-auto">
                         <div className="mt-1">
@@ -118,46 +119,50 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             {current.riskLevel.message}
                           </div>
 
-                                                {/* Weather conditions */}
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      {current.conditions.phenomena.length === 0 ? (
-                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap">
-                          ☀️ Clear conditions
-                        </span>
-                      ) : (
-                        Array.from(new Set(current.conditions.phenomena)).map((phenomenon, index) => (
-                          <span
-                            key={index}
-                            className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
-                          >
-                            {phenomenon}
-                          </span>
-                        ))
-                      )}
-                      {current.wind?.speed_kts && current.wind.speed_kts >= 15 && (
-                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                          💨 Strong winds
-                        </span>
-                      )}
-                      {current.visibility?.meters && current.visibility.meters < 5000 && (
-                        <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                          👁️ Poor visibility
-                        </span>
-                      )}
-                    </div>
-                          
+                          {/* Weather conditions */}
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            {current.conditions.phenomena.map((phenomenon, index) => (
+                              <span
+                                key={index}
+                                className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                              >
+                                {phenomenon}
+                              </span>
+                            ))}
+                            {current.conditions.phenomena.length === 0 && (
+                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap">
+                                ☀️ No significant weather
+                              </span>
+                            )}
+                            {current.wind?.speed_kts && current.wind.speed_kts >= 15 && (
+                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                                💨 Strong winds
+                              </span>
+                            )}
+                            {current.visibility?.meters && current.visibility.meters < 5000 && (
+                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                                👁️ Poor visibility
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {current.riskLevel.level > 1 && (
-                        <div className="w-full sm:w-auto">
+                        <div className="w-full sm:w-auto flex flex-col gap-2">
                           <span className="animate-pulse px-3 py-1.5 rounded-full text-sm bg-red-400/10 text-red-400 flex items-center justify-center sm:justify-start gap-2">
                             <AlertTriangle className="h-4 w-4" />
                             Check flight status
                           </span>
+                          <Link 
+                            href="/passengerrights"
+                            className="px-3 py-1.5 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors duration-200 flex items-center justify-center sm:justify-start gap-2"
+                          >
+                            Know your rights
+                          </Link>
                         </div>
                       )}
-
                     </div>
+
                     {/* Warning banner for deteriorating conditions */}
                     {current.riskLevel.level === 1 && forecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
@@ -168,117 +173,110 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           <AlertTriangle className="h-4 w-4 mt-1" />
                           <div>
                             <p className="text-sm font-medium">Weather conditions expected to deteriorate soon</p>
-                            <p className="text-xs  mt-1">Check the timeline below for detailed changes</p>
+                            <p className="text-xs mt-1">Check the timeline below for detailed changes</p>
+                            <Link 
+                              href="/passengerrights"
+                              className="text-xs mt-2 inline-block hover:underline"
+                            >
+                              Learn about your passenger rights →
+                            </Link>
                           </div>
                         </div>
                       </div>
                     )}
-                    
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Timeline card */}
-              <Card className="bg-slate-800/50 border-slate-700/50">
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-4">
-                    <h3 className="text-l font-medium text-slate-200">Expected Changes</h3>
-                    <span className="text-sm text-slate-400 whitespace-nowrap">
-                      Forecast issued at: {current.observed.split('T')[1].slice(0, 5)}
-                    </span>
-                  </div>
-                  {forecast.length === 0 || (forecast.every(p => p.riskLevel.level === 1 && p.conditions.phenomena.length === 0) && 
-                    !forecast.some(p => {
-                      const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
-                      return withinNextHour && (p.riskLevel.level > 1 || p.conditions.phenomena.length > 0);
-                    })) ? (
-                    <div className="text-center py-6 text-slate-400">
-                      <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
-                      <p className="text-lg text-emerald-400">Perfect flying conditions</p>
-                      <p className="text-sm mt-2">No significant weather changes expected</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-4 divide-y divide-slate-700/50">
-                        {uniqueForecast.slice(0, showAll ? undefined : 3).map((period, index) => {
-                          const colors = getStatusColors(period.riskLevel.level);
+              {/* Timeline section */}
+              {uniqueForecast.length > 0 && (
+                <div className="space-y-4">
+                  {uniqueForecast.slice(0, showAll ? undefined : 3).map((period, index) => {
+                    const colors = getStatusColors(period.riskLevel.level);
 
-                          return (
-                            <div key={index} className="pt-4 first:pt-0">
-                              <div className="flex flex-col gap-3">
-                                {/* Time and status group */}
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                                    <span className="text-sm font-medium text-slate-200">
-                                      {period.from.toLocaleTimeString('en-GB', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        timeZone: 'Europe/Warsaw'
-                                      })} - {period.to.toLocaleTimeString('en-GB', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        timeZone: 'Europe/Warsaw'
-                                      })}
-                                    </span>
-                                    {period.isTemporary && (
-                                      <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
-                                        Temporary
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
-                                    {period.riskLevel.title}
-                                  </span>
-                                </div>
-
-                                {/* Weather conditions group */}
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
-                                    <span
-                                      key={idx}
-                                      role="status"
-                                      aria-label={`Weather condition: ${condition}`}
-                                      title={condition}
-                                      className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
-                                    >
-                                      {condition}
-                                    </span>
-                                  ))}
-                                  {period.visibility?.meters && period.visibility.meters < 2000 && (
-                                    <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                                      👁️ Poor visibility
-                                    </span>
-                                  )}
-                                  {period.wind?.speed_kts && period.wind.speed_kts >= 18 && (
-                                    <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                                      💨 Strong winds
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Probability if exists */}
-                                {period.probability && (
-                                  <span className="text-xs text-slate-400">
-                                    {period.probability}% chance of these conditions
+                    return (
+                      <Card 
+                        key={index} 
+                        className={`border-slate-700/50 ${period.riskLevel.level > 1 ? colors.bg : 'bg-slate-800/50'}`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex flex-col gap-3">
+                            {/* Time and status group */}
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                              <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <span className="text-sm font-medium text-slate-200">
+                                  {new Date(period.from.getTime() + 3600000).toLocaleTimeString('en-GB', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    timeZone: 'Europe/Warsaw'
+                                  })} - {new Date(period.to.getTime() + 3600000).toLocaleTimeString('en-GB', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    timeZone: 'Europe/Warsaw'
+                                  })}
+                                </span>
+                                {period.isTemporary && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
+                                    Temporary
                                   </span>
                                 )}
                               </div>
+                              <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
+                                  {period.riskLevel.title}
+                                </span>
+                                {colors.icon}
+                              </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                      {forecast.length > 3 && (
-                        <button
-                          onClick={() => setShowAll(!showAll)}
-                          className="mt-4 w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200"
-                        >
-                          {showAll ? 'Show less' : `Show ${forecast.length - 3} more periods`}
-                        </button>
-                      )}
-                    </>
+
+                            {/* Weather conditions group */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              
+                              {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
+                                <span
+                                  key={idx}
+                                  role="status"
+                                  aria-label={`Weather condition: ${condition}`}
+                                  title={condition}
+                                  className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                                >
+                                  {condition}
+                                </span>
+                              ))}
+                              {period.visibility?.meters && period.visibility.meters < 2000 && (
+                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
+                                  👁️ Poor visibility
+                                </span>
+                              )}
+                              {period.wind?.speed_kts && period.wind.speed_kts >= 18 && (
+                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
+                                  💨 Strong winds
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Probability if exists */}
+                            {period.probability && (
+                              <span className="text-xs text-slate-400">
+                                {period.probability}% chance of these conditions
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  
+                  {forecast.length > 3 && (
+                    <button
+                      onClick={() => setShowAll(!showAll)}
+                      className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
+                    >
+                      {showAll ? 'Show less' : `Show ${forecast.length - 3} more periods`}
+                    </button>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              )}
             </>
           )}
         </>
