@@ -33,19 +33,17 @@ async function fetchFromCheckWX<T>(endpoint: string) {
   return { data };
 }
 
-const parseConditions = (conditionsStr: string | null): TransformedCondition[] => {
-  if (!conditionsStr) return [];
-  
-  return conditionsStr.split(' ').map(code => ({
-    code
-  }));
-};
+// Fix the any types
+interface WeatherCondition {
+  code: string;
+  text?: string;
+}
 
 // Update the type definitions to match CheckWX API response
 interface CheckWXMetarResponse {
   results: number;
   data: [{
-    conditions: any;
+    conditions: WeatherCondition[];
     icao: string;
     barometer: {
       hg: number;
@@ -144,7 +142,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
     data: [{
       airport_code: observation.icao,
       clouds,
-      conditions: observation.conditions?.map((c: { code: any; }) => ({
+      conditions: observation.conditions?.map((c: WeatherCondition) => ({
         code: c.code
       })) || [],
       pressure: observation.barometer.mb,

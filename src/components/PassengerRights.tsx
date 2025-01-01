@@ -2,11 +2,10 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Clock, Hotel, Phone, Info, MapPin, Coffee, Shield, LucideIcon } from 'lucide-react';
+import { Clock, Hotel, Info, Coffee, Shield, LucideIcon } from 'lucide-react';
 
 interface InfoSectionProps {
   title: string;
