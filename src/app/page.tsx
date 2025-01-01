@@ -133,12 +133,12 @@ export default function Page() {
         if (!highRiskPeriods.length) return '';
         
         const firstPeriod = highRiskPeriods[0];
-        const startTime = new Date(firstPeriod.from).toLocaleTimeString('en-GB', {
+        const startTime = new Date(new Date(firstPeriod.from).getTime() + 3600000).toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Europe/Warsaw'
         });
-        const endTime = new Date(firstPeriod.to).toLocaleTimeString('en-GB', {
+        const endTime = new Date(new Date(firstPeriod.to).getTime() + 3600000).toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Europe/Warsaw'

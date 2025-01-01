@@ -6,21 +6,21 @@ import Image from "next/image"
 
 export function MainNav() {
   return (
-    <div className="flex items-center justify-between w-full gap-2">
-      <Link href="/" className="flex items-center gap-2">
+    <div className="flex items-center justify-between w-full gap-2 px-2 sm:px-0">
+      <Link href="/" className="flex items-center gap-1 sm:gap-2">
         <Image
           src="/logo.svg"
           alt="KRK.flights logo"
           width={16}
           height={16}
-          className="h-4 w-auto"
+          className="h-3 w-auto sm:h-4"
         />
-        <span className="text-xl font-semibold">KRK.flights</span>
+        <span className="text-lg sm:text-xl font-semibold">KRK.flights</span>
       </Link>
       <nav>
         <Link 
           href="/passengerrights" 
-          className="inline-flex h-9 items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20"
+          className="inline-flex h-8 sm:h-9 items-center justify-center rounded-md bg-white/10 px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium transition-colors hover:bg-white/20"
         >
           Passenger Rights
         </Link>

@@ -231,7 +231,14 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
                             {/* Weather conditions group */}
                             <div className="flex flex-wrap items-center gap-2">
-                              
+                              {period.wind && (
+                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                                  {period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
+                                   period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
+                                   period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
+                                   "💨 Light winds"}
+                                </span>
+                              )}
                               {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
                                 <span
                                   key={idx}
@@ -246,11 +253,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                               {period.visibility?.meters && period.visibility.meters < 2000 && (
                                 <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
                                   👁️ Poor visibility
-                                </span>
-                              )}
-                              {period.wind?.speed_kts && period.wind.speed_kts >= 18 && (
-                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                                  💨 Strong winds
                                 </span>
                               )}
                             </div>

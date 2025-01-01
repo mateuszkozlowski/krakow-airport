@@ -11,7 +11,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
           {forecast.map((period, index) => {
             const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
 
-            if (!hasWeatherPhenomena && period.riskLevel.level === 1) {
+            if (!hasWeatherPhenomena && !period.wind && period.riskLevel.level === 1) {
               return null;
             }
 
@@ -36,6 +36,14 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
                           {phenomenon}
                         </span>
                       ))}
+                      {period.wind && (
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                          {period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
+                           period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
+                           period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
+                           "💨 Light winds"}
+                        </span>
+                      )}
                     </div>
                   )}
                   <span

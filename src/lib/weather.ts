@@ -64,9 +64,9 @@ const RISK_WEIGHTS = {
   
   // Wind weights (unchanged as wind impacts are universal)
   WIND: {
-    STRONG_GUSTS: 80,    // Gusts >= 35kt
-    STRONG: 60,          // >= 25kt
-    MODERATE: 40         // >= 15kt
+    STRONG_GUSTS: 100,    // Gusts >= 35kt - increased from 80 to 100 for severe risk
+    STRONG: 70,          // >= 25kt - increased from 60 to 70
+    MODERATE: 40         // >= 15kt - unchanged
   }
 } as const;
 
@@ -250,13 +250,13 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
   if (weather.wind?.speed_kts) {
     if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
       totalScore += RISK_WEIGHTS.WIND.STRONG_GUSTS;
-      reasons.push(`Strong wind gusts (${weather.wind.gust_kts}kt)`);
-    } else if (weather.wind.speed_kts >= 25) {
+      reasons.push(`💨 Strong gusts`);
+    } else if (weather.wind.speed_kts >= 25 || (weather.wind.gust_kts && weather.wind.gust_kts >= 25)) {
       totalScore += RISK_WEIGHTS.WIND.STRONG;
-      reasons.push(`Strong winds (${weather.wind.speed_kts}kt)`);
+      reasons.push(`💨 Strong winds`);
     } else if (weather.wind.speed_kts >= 15) {
       totalScore += RISK_WEIGHTS.WIND.MODERATE;
-      reasons.push(`Moderate winds (${weather.wind.speed_kts}kt)`);
+      reasons.push(`💨 Moderate winds`);
     }
   }
 
@@ -363,3 +363,10 @@ const getWeatherDescription = (reasons: string[]): string => {
     };
   }
 }
+
+const getWindDescription = (speed: number, gusts?: number): string => {
+  if (gusts && gusts >= 35) return "💨 Strong gusts";
+  if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong winds";
+  if (speed >= 15) return "💨 Moderate winds";
+  return "💨 Light winds";
+};
