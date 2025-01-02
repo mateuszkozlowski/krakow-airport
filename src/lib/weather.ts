@@ -62,11 +62,11 @@ const RISK_WEIGHTS = {
     MODERATE: 20         // Below 1000ft (minimal impact)
   },
   
-  // Wind weights (unchanged as wind impacts are universal)
+  // Wind weights (adjusted to be more realistic)
   WIND: {
-    STRONG_GUSTS: 100,    // Gusts >= 35kt - increased from 80 to 100 for severe risk
-    STRONG: 70,          // >= 25kt - increased from 60 to 70
-    MODERATE: 40         // >= 15kt - unchanged
+    STRONG_GUSTS: 100,    // Gusts >= 35kt
+    STRONG: 70,           // >= 25kt
+    MODERATE: 20          // >= 20kt (increased from 15kt)
   }
 } as const;
 
@@ -132,7 +132,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
     return [];
   }
 
-  const changes: ForecastChange[] = [];
+  let changes: ForecastChange[] = [];
 
   taf.forecast.forEach((period) => {
     if (period.timestamp) {
@@ -178,7 +178,77 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
     }
   });
 
-  return changes;
+  // Before returning, split overlapping periods
+  const splitPeriods: ForecastChange[] = [];
+  
+  changes.forEach(mainPeriod => {
+    if (mainPeriod.isTemporary) {
+      // Add temporary periods as-is
+      splitPeriods.push({
+        ...mainPeriod,
+        timeDescription: formatTimeDescription(mainPeriod.from, mainPeriod.to)
+      });
+      return;
+    }
+
+    // Find all temporary periods that overlap with this main period
+    const overlapping = changes.filter(p => 
+      p.isTemporary && 
+      p.from.getTime() >= mainPeriod.from.getTime() && 
+      p.to.getTime() <= mainPeriod.to.getTime()
+    ).sort((a, b) => a.from.getTime() - b.from.getTime());
+
+    if (overlapping.length === 0) {
+      // If no overlapping temporary periods, add the main period as-is
+      splitPeriods.push({
+        ...mainPeriod,
+        timeDescription: formatTimeDescription(mainPeriod.from, mainPeriod.to)
+      });
+    } else {
+      // Split the main period into segments
+      
+      // Add segment before first temporary period if exists
+      if (overlapping[0].from.getTime() > mainPeriod.from.getTime()) {
+        splitPeriods.push({
+          ...mainPeriod,
+          to: overlapping[0].from,
+          timeDescription: formatTimeDescription(mainPeriod.from, overlapping[0].from)
+        });
+      }
+
+      // Add temporary periods and gaps between them
+      overlapping.forEach((temp, index) => {
+        splitPeriods.push({
+          ...temp,
+          timeDescription: formatTimeDescription(temp.from, temp.to)
+        });
+
+        // Add gap after temporary period if there is one
+        const nextTemp = overlapping[index + 1];
+        if (nextTemp && temp.to.getTime() < nextTemp.from.getTime()) {
+          splitPeriods.push({
+            ...mainPeriod,
+            from: temp.to,
+            to: nextTemp.from,
+            timeDescription: formatTimeDescription(temp.to, nextTemp.from)
+          });
+        }
+      });
+
+      // Add segment after last temporary period if exists
+      const lastTemp = overlapping[overlapping.length - 1];
+      if (lastTemp.to.getTime() < mainPeriod.to.getTime()) {
+        splitPeriods.push({
+          ...mainPeriod,
+          from: lastTemp.to,
+          to: mainPeriod.to,
+          timeDescription: formatTimeDescription(lastTemp.to, mainPeriod.to)
+        });
+      }
+    }
+  });
+
+  return splitPeriods.sort((a, b) => a.from.getTime() - b.from.getTime());
 }
 
 function formatTimeDescription(start: Date, end: Date): string {
@@ -201,11 +271,33 @@ function formatTimeDescription(start: Date, end: Date): string {
     return `Today ${startTime} - ${endTime}`;
   } else if (start.getDate() === today.getDate()) {
     return `Today ${startTime} - Tomorrow ${endTime}`;
-  } else if (start.getDate() === tomorrow.getDate()) {
+  } else if (start.getDate() === tomorrow.getDate() && end.getDate() === tomorrow.getDate()) {
     return `Tomorrow ${startTime} - ${endTime}`;
+  } else if (start.getDate() === tomorrow.getDate()) {
+    const endDay = end.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+    return `Tomorrow ${startTime} - ${endDay} ${endTime}`;
   }
 
-  return `${startTime} - ${endTime}`;
+  const startDay = start.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  });
+  const endDay = end.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  });
+  
+  if (startDay === endDay) {
+    return `${startDay} ${startTime} - ${endTime}`;
+  }
+  
+  return `${startDay} ${startTime} - ${endDay} ${endTime}`;
 }
 
 function calculateRiskScore(weather: WeatherData): { score: number; reasons: string[] } {
@@ -246,7 +338,7 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
     }
   }
 
-  // Check winds
+  // Check winds with adjusted thresholds
   if (weather.wind?.speed_kts) {
     if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
       totalScore += RISK_WEIGHTS.WIND.STRONG_GUSTS;
@@ -254,7 +346,7 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
     } else if (weather.wind.speed_kts >= 25 || (weather.wind.gust_kts && weather.wind.gust_kts >= 25)) {
       totalScore += RISK_WEIGHTS.WIND.STRONG;
       reasons.push(`💨 Strong winds`);
-    } else if (weather.wind.speed_kts >= 15) {
+    } else if (weather.wind.speed_kts >= 20) {  // Increased from 15
       totalScore += RISK_WEIGHTS.WIND.MODERATE;
       reasons.push(`💨 Moderate winds`);
     }
@@ -280,58 +372,31 @@ function calculateRiskScore(weather: WeatherData): { score: number; reasons: str
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   const { score, reasons } = calculateRiskScore(weather);
   
-// Map weather conditions to friendly descriptions with emojis
-  const weatherDescriptions = {
-    // Severe conditions
-    TS: "⛈️ Thunderstorm",
-    TSRA: "⛈️ Thunderstorm & rain",
-    FZRA: "🌨️ Freezing rain",
-    FZDZ: "🌨️ Freezing drizzle",
-    FZFG: "❄️ Freezing fog",
-    FC: "🌪️ Funnel cloud",
-    SS: "🌪️ Sandstorm",
+  const currentPhenomena = [
+    // Weather phenomena
+    ...(weather.conditions?.map(c => WEATHER_PHENOMENA[c.code]) || []),
     
-    // Moderate conditions
-    SN: "🌨️ Snowing",
-    SG: "🌨️ Snow grains",
-    BR: "🌫️ Misty",
-    FG: "🌫️ Foggy",
-    RA: "🌧️ Rainy",
-    GR: "🌧️ Hail",
-    GS: "🌧️ Small hail",
-    "+RA": "🌧️ Heavy rain",
-    "+SN": "🌨️ Heavy snow",
+    // Always include wind conditions
+    ...(weather.wind ? [
+      weather.wind.gust_kts && weather.wind.gust_kts >= 35 ? "💨 Strong gusts" :
+      weather.wind.gust_kts && weather.wind.gust_kts >= 25 || weather.wind.speed_kts >= 25 ? "💨 Strong winds" :
+      weather.wind.speed_kts >= 20 ? "💨 Moderate winds" :
+      "💨 Light winds"  // Always show wind condition
+    ] : []),
     
-    // Generic conditions
-    "Strong wind gusts": "💨 Very windy",
-    "Strong winds": "💨 Strong winds",
-    "Moderate winds": "💨 Windy",
-    "Very low visibility": "🌫️ Very low visibility",
-    "Low visibility": "🌫️ Poor visibility",
-    "Reduced visibility": "🌫️ Slightly reduced visibility",
-    "Very low ceiling": "☁️ Very low clouds",
-    "Low ceiling": "☁️ Low clouds",
-    "Moderate ceiling": "☁️ Some clouds"
-  };
+    // Visibility conditions
+    ...(weather.visibility?.meters && weather.visibility.meters < 5000 ? ["👁️ Poor visibility"] : []),
+  ].filter(Boolean);
 
-const getWeatherDescription = (reasons: string[]): string => {
-    if (!reasons.length) return "☀️ Perfect weather";
-    
-    const primaryReason = reasons[0];
-    for (const [condition, description] of Object.entries(weatherDescriptions)) {
-      if (primaryReason.includes(condition)) {
-        return description;
-      }
-    }
-    return "⚠️ Poor weather";
-  };
+  // No need for the "No significant weather" fallback anymore
+  const phenomena = currentPhenomena;
 
   if (score >= 120) {
     return {
       level: 3,
       title: "Extremely high risk of disruptions",
       message: "Contact your airline",
-      explanation: getWeatherDescription(reasons),
+      explanation: phenomena.join(", "),
       color: "red"
     };
   }
@@ -340,7 +405,7 @@ const getWeatherDescription = (reasons: string[]): string => {
       level: 3,
       title: "High risk of disruptions",
       message: "Check your flight status urgently with your airline or at the airport",
-      explanation: getWeatherDescription(reasons),
+      explanation: phenomena.join(", "),
       color: "red"
     };
   }
@@ -349,7 +414,7 @@ const getWeatherDescription = (reasons: string[]): string => {
       level: 2,
       title: "Some delays possible",
       message: "It is recommended to check flight status with your airline or at the airport",
-      explanation: getWeatherDescription(reasons),
+      explanation: phenomena.join(", "),
       color: "orange"
     };
   }
@@ -358,7 +423,7 @@ const getWeatherDescription = (reasons: string[]): string => {
       level: 1,
       title: "No disruptions expected",
       message: "Current weather is good for flying.",
-      explanation: getWeatherDescription(reasons),
+      explanation: phenomena.join(", "),
       color: "green"
     };
   }

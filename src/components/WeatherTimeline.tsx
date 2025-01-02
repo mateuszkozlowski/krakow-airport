@@ -84,6 +84,36 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     </div>
   );
 
+  const formatDateTime = (date: Date) => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+    
+    const time = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+
+    if (isToday) {
+      return `Today ${time}`;
+    } else if (isTomorrow) {
+      return `Tomorrow ${time}`;
+    } else {
+      return date.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Warsaw'
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {isError ? (
@@ -129,14 +159,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 {phenomenon}
                               </span>
                             ))}
-                            {current.conditions.phenomena.length === 0 && (
-                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap">
-                                ☀️ No significant weather
-                              </span>
-                            )}
-                            {current.wind?.speed_kts && current.wind.speed_kts >= 15 && (
+                            {current.wind?.speed_kts && (
                               <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                💨 Strong winds
+                                {current.wind.gust_kts && current.wind.gust_kts >= 35 ? "💨 Strong gusts" :
+                                 current.wind.gust_kts && current.wind.gust_kts >= 25 || current.wind.speed_kts >= 25 ? "💨 Strong winds" :
+                                 current.wind.speed_kts >= 20 ? "💨 Moderate winds" :
+                                 "💨 Light winds"}
                               </span>
                             )}
                             {current.visibility?.meters && current.visibility.meters < 5000 && (
@@ -153,12 +181,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             <AlertTriangle className="h-4 w-4" />
                             Check flight status
                           </span>
-                          <Link 
-                            href="/passengerrights"
-                            className="px-3 py-1.5 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors duration-200 flex items-center justify-center sm:justify-start gap-2"
-                          >
-                            Know your rights
-                          </Link>
+                          
                         </div>
                       )}
                     </div>
@@ -205,15 +228,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                               <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <span className="text-sm font-medium text-slate-200">
-                                  {new Date(period.from.getTime() + 3600000).toLocaleTimeString('en-GB', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZone: 'Europe/Warsaw'
-                                  })} - {new Date(period.to.getTime() + 3600000).toLocaleTimeString('en-GB', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZone: 'Europe/Warsaw'
-                                  })}
+                                  {formatDateTime(new Date(period.from.getTime() + 3600000))} - {formatDateTime(new Date(period.to.getTime() + 3600000)).split(' ').slice(-1)}
                                 </span>
                                 {period.isTemporary && (
                                   <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
