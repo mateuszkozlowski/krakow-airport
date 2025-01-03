@@ -7,15 +7,7 @@ import type { WeatherResponse } from '@/lib/types/weather';
 import { getAirportWeather } from "@/lib/weather";
 import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav"
-import { Database, BarChart, Plane, AlertTriangle, Info, Check, ArrowRight } from "lucide-react";
 
-export const DatabaseIcon = Database;
-export const ChartIcon = BarChart;
-export const AirlineIcon = Plane;
-export const AlertTriangleIcon = AlertTriangle;
-export const InfoIcon = Info;
-export const CheckIcon = Check;
-export const ArrowRightIcon = ArrowRight;
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
