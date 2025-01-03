@@ -30,7 +30,9 @@ const RISK_WEIGHTS = {
     FZDZ: 70,   // Freezing drizzle
     FZFG: 80,   // Freezing fog - increased due to impact on ground operations
     FC: 100,    // Funnel cloud - kept at maximum (tornado risk)
-    SS: 60      // Sandstorm - lowered as it's rare and less severe in Poland
+    SS: 60,      // Sandstorm - lowered as it's rare and less severe in Poland
+    '+SN': 60,   // Heavy snow - increased due to ground operations impact
+    '+SHSN': 70, // Heavy snow showers - increased due to ground operations impact 
   },
   
   // Moderate phenomena (adjusted for local conditions)
@@ -43,8 +45,7 @@ const RISK_WEIGHTS = {
     SHRA: 25,   // Shower rain
     GR: 80,     // Hail - increased due to potential aircraft damage
     GS: 45,     // Small hail - reduced as less damaging
-    '+RA': 35,  // Heavy rain
-    '+SN': 60   // Heavy snow - increased due to ground operations impact
+    '+RA': 35  // Heavy rain
   },
   
   // Visibility weights (adjusted for operational reality)
@@ -156,10 +157,17 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     }
 
     const data = await response.json();
+    console.log('=== Raw API Response ===');
+    console.log('METAR:', JSON.stringify(data.metar, null, 2));
+    console.log('TAF:', JSON.stringify(data.taf, null, 2));
+
     const { metar, taf } = data;
 
     const currentWeather: WeatherData = metar.data[0];
     const forecast: TAFData = taf.data[0];
+
+    console.log('\n=== Processed Current Weather ===');
+    console.log(JSON.stringify(currentWeather, null, 2));
 
     const currentAssessment = assessWeatherRisk(currentWeather);
     const forecastPeriods = processForecast(forecast);
@@ -170,24 +178,45 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
         conditions: {
           phenomena: [
             // Weather phenomena
-            ...(currentWeather.conditions?.map(c => 
-              WEATHER_PHENOMENA[c.code as WeatherPhenomenon]
-            ).filter((p): p is WeatherPhenomenonValue => p !== undefined) || []),
+            ...((() => {
+              const phenomena = currentWeather.conditions?.map(c => {
+                console.log('Processing current weather code:', {
+                  code: c.code,
+                  fullCode: c,
+                  mappedPhenomenon: WEATHER_PHENOMENA[c.code as WeatherPhenomenon]
+                });
+                return WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
+              }).filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
+              console.log('Current weather phenomena:', phenomena);
+              return phenomena;
+            })()),
             // Wind with severity-based description
-            ...(currentWeather.wind ? [
-              currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-              currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 25 || currentWeather.wind.speed_kts >= 25 ? "💨 Strong winds" :
-              currentWeather.wind.speed_kts >= 15 ? "💨 Moderate winds" :
-              null
-            ].filter((p): p is string => p !== null) : []),
+            ...((() => {
+              const windDesc = currentWeather.wind ? [
+                currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 35 ? "💨 Strong gusts" :
+                currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 25 || currentWeather.wind.speed_kts >= 25 ? "💨 Strong winds" :
+                currentWeather.wind.speed_kts >= 15 ? "💨 Moderate winds" :
+                null
+              ].filter((p): p is string => p !== null) : [];
+              console.log('Current wind phenomena:', windDesc);
+              return windDesc;
+            })()),
             // Visibility
-            ...(currentWeather.visibility?.meters && currentWeather.visibility.meters < 3000 ? 
-              [`👁️ Visibility ${currentWeather.visibility.meters}m${currentWeather.visibility.meters < MINIMUMS.VISIBILITY ? ' (below minimums)' : ''}`] : 
-              []),
+            ...((() => {
+              const visDesc = currentWeather.visibility?.meters && currentWeather.visibility.meters < 3000 ? 
+                [`👁️ Visibility ${currentWeather.visibility.meters}m${currentWeather.visibility.meters < MINIMUMS.VISIBILITY ? ' (below minimums)' : ''}`] : 
+                [];
+              console.log('Current visibility phenomena:', visDesc);
+              return visDesc;
+            })()),
             // Ceiling
-            ...(currentWeather.ceiling?.feet && currentWeather.ceiling.feet < 1000 ? 
-              [`☁️ Ceiling ${currentWeather.ceiling.feet}ft${currentWeather.ceiling.feet < MINIMUMS.CEILING ? ' (below minimums)' : ''}`] : 
-              [])
+            ...((() => {
+              const ceilingDesc = currentWeather.ceiling?.feet && currentWeather.ceiling.feet < 1000 ? 
+                [`☁️ Ceiling ${currentWeather.ceiling.feet}ft${currentWeather.ceiling.feet < MINIMUMS.CEILING ? ' (below minimums)' : ''}`] : 
+                [];
+              console.log('Current ceiling phenomena:', ceilingDesc);
+              return ceilingDesc;
+            })())
           ]
         },
         raw: currentWeather.raw_text,

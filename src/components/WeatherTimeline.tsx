@@ -34,6 +34,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     const validPeriods = periods
       .filter(period => 
         period.from.getTime() !== period.to.getTime() && // Remove zero-duration periods
+        period.from.getTime() < period.to.getTime() && // Ensure end time is after start time
         (period.conditions.phenomena.length > 0 || // Keep if has phenomena
          (period.wind?.speed_kts && period.wind.speed_kts >= 15) || // Keep if significant wind
          (period.visibility && period.visibility.meters < 5000) || // Keep if poor visibility
@@ -265,7 +266,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               {/* Timeline section */}
               {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
-                  {uniqueForecast.slice(0, showAll ? undefined : 3).map((period, index) => {
+                  {uniqueForecast.slice(0, showAll ? undefined : 4).map((period, index) => {
                     const colors = getStatusColors(period.riskLevel.level);
 
                     return (
@@ -336,12 +337,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     );
                   })}
                   
-                  {forecast.length > 4 && (
+                  {uniqueForecast.length > 4 && (
                     <button
                       onClick={() => setShowAll(!showAll)}
                       className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
                     >
-                      {showAll ? 'Show less' : `Show more periods`}
+                      {showAll ? 'Show less' : `Show ${uniqueForecast.length - 4} more periods`}
                     </button>
                   )}
                 </div>

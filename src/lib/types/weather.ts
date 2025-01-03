@@ -133,13 +133,13 @@ export const WEATHER_PHENOMENA = {
   FZ: '🌨️❄️ Freezing',
   
   // Snow conditions with intensity
-  SN: '🌨️ Snow',
+  'SN': '🌨️ Snow',
   '-SN': '🌨️ Light Snow',
   '+SN': '🌨️ Heavy Snow',
-  SHSN: '🌨️ Snow Showers',
+  'SHSN': '🌨️ Snow Showers',
   '-SHSN': '🌨️ Light Snow Showers',
   '+SHSN': '🌨️ Heavy Snow Showers',
-  BLSN: '🌨️ Blowing Snow',
+  'BLSN': '🌨️ Blowing Snow',
   '+SHSN BLSN': '🌨️ Heavy Snow Showers with Blowing Snow',
   'SHSN BLSN': '🌨️ Snow Showers with Blowing Snow',
   'SH': '🌨️ Showers',
