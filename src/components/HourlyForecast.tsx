@@ -34,16 +34,18 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
         
         if (!overlap) return false;
 
-        // Keep if this period has higher risk
+        // Keep if this period has higher risk (reversed the comparison)
         if (period.riskLevel.level > prevPeriod.riskLevel.level) return false;
         
-        // Keep if same risk but different phenomena
+        // Keep if same risk but DIFFERENT phenomena (reversed the logic)
         if (period.riskLevel.level === prevPeriod.riskLevel.level) {
           const currentPhenomena = period.conditions.phenomena.sort().join(',');
           const prevPhenomena = prevPeriod.conditions.phenomena.sort().join(',');
+          // Return false if phenomena are different (keep the period)
           return currentPhenomena === prevPhenomena;
         }
 
+        // Remove if lower risk level
         return true;
       });
 
