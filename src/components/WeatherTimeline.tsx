@@ -30,19 +30,75 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const [showAll, setShowAll] = useState(false);
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
-    const uniquePeriods = periods.reduce((acc, current) => {
-      const key = `${current.from.getTime()}-${current.to.getTime()}`;
-      const existing = acc.get(key);
+    // First, filter out empty periods and sort by time and risk
+    const validPeriods = periods
+      .filter(period => 
+        period.from.getTime() !== period.to.getTime() && // Remove zero-duration periods
+        (period.conditions.phenomena.length > 0 || // Keep if has phenomena
+         (period.wind?.speed_kts && period.wind.speed_kts >= 15) || // Keep if significant wind
+         (period.visibility && period.visibility.meters < 5000) || // Keep if poor visibility
+         (period.ceiling && period.ceiling.feet < 1000)) // Keep if low ceiling
+      )
+      .sort((a, b) => a.from.getTime() - b.from.getTime());
+
+    if (validPeriods.length === 0) return [];
+
+    const result: ForecastChange[] = [];
+    let currentPeriod = validPeriods[0];
+
+    for (let i = 1; i < validPeriods.length; i++) {
+      const nextPeriod = validPeriods[i];
+
+      // If periods overlap and have different conditions
+      if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
+        // If next period has higher risk, truncate current period
+        if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
+          currentPeriod.to = new Date(nextPeriod.from.getTime());
+          result.push(currentPeriod);
+          currentPeriod = nextPeriod;
+        }
+        // If next period has same or lower risk, skip it unless it has unique phenomena
+        else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
+          const currentSet = new Set(currentPeriod.conditions.phenomena);
+          const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
+          
+          if (hasUniqueConditions) {
+            currentPeriod.to = new Date(nextPeriod.from.getTime());
+            result.push(currentPeriod);
+            currentPeriod = nextPeriod;
+          }
+          // Otherwise, extend current period if needed
+          else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
+            currentPeriod.to = new Date(nextPeriod.to.getTime());
+          }
+        }
+      }
+      // If periods don't overlap
+      else {
+        result.push(currentPeriod);
+        currentPeriod = nextPeriod;
+      }
+    }
+
+    // Don't forget to push the last period
+    result.push(currentPeriod);
+
+    // Final pass to merge adjacent periods with identical conditions
+    return result.reduce((acc, period) => {
+      const lastPeriod = acc[acc.length - 1];
       
-      if (!existing || 
-          (existing.isTemporary && !current.isTemporary)) {
-        acc.set(key, current);
+      if (lastPeriod && 
+          period.from.getTime() <= lastPeriod.to.getTime() && 
+          period.riskLevel.level === lastPeriod.riskLevel.level &&
+          JSON.stringify(period.conditions.phenomena.sort()) === 
+          JSON.stringify(lastPeriod.conditions.phenomena.sort())) {
+        lastPeriod.to = new Date(Math.max(lastPeriod.to.getTime(), period.to.getTime()));
+      } else {
+        acc.push(period);
       }
       
       return acc;
-    }, new Map<string, ForecastChange>());
-
-    return Array.from(uniquePeriods.values());
+    }, [] as ForecastChange[]);
   };
 
   const uniqueForecast = deduplicateForecastPeriods(forecast);
@@ -85,14 +141,17 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   );
 
   const formatDateTime = (date: Date) => {
+    // Add 1 hour to the date
+    const adjustedDate = new Date(date.getTime() + 3600000); // Add 1 hour (3600000 milliseconds)
+    
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    const isToday = date.toDateString() === today.toDateString();
-    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+    const isToday = adjustedDate.toDateString() === today.toDateString();
+    const isTomorrow = adjustedDate.toDateString() === tomorrow.toDateString();
     
-    const time = date.toLocaleTimeString('en-GB', {
+    const time = adjustedDate.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Warsaw'
@@ -103,7 +162,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     } else if (isTomorrow) {
       return `Tomorrow ${time}`;
     } else {
-      return date.toLocaleDateString('en-GB', {
+      return adjustedDate.toLocaleDateString('en-GB', {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
@@ -159,12 +218,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 {phenomenon}
                               </span>
                             ))}
-                            {current.wind?.speed_kts && (
+                            {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
                               <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                {current.wind.gust_kts && current.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-                                 current.wind.gust_kts && current.wind.gust_kts >= 25 || current.wind.speed_kts >= 25 ? "💨 Strong winds" :
-                                 current.wind.speed_kts >= 20 ? "💨 Moderate winds" :
-                                 "💨 Light winds"}
+                                {`💨 Wind ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` gusting ${current.wind.gust_kts}kt` : ''}`}
                               </span>
                             )}
                             {current.visibility?.meters && current.visibility.meters < 5000 && (
@@ -193,16 +249,11 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     }) && (
                       <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
                         <div className="flex items-top gap-2 text-orange-400">
-                          <AlertTriangle className="h-4 w-4 mt-1" />
+                          <AlertTriangle className="h-4 w-4 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium">Weather conditions expected to deteriorate soon</p>
-                            <p className="text-xs mt-1">Check the timeline below for detailed changes</p>
-                            <Link 
-                              href="/passengerrights"
-                              className="text-xs mt-2 inline-block hover:underline"
-                            >
-                              Learn about your passenger rights →
-                            </Link>
+                            <p className="text-sm font-medium"><span className="font-bold">Weather conditions expected to deteriorate soon.</span> Check the timeline below for detailed changes</p>
+                         
+                        
                           </div>
                         </div>
                       </div>
@@ -228,7 +279,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                               <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <span className="text-sm font-medium text-slate-200">
-                                  {formatDateTime(new Date(period.from.getTime() + 3600000))} - {formatDateTime(new Date(period.to.getTime() + 3600000)).split(' ').slice(-1)}
+                                  {formatDateTime(period.from)} - {
+                                    // If the end time is on a different day than the start time
+                                    period.from.toDateString() !== period.to.toDateString() 
+                                      ? formatDateTime(period.to)  // Show full date/time
+                                      : period.to.toLocaleTimeString('en-GB', {  // Show only time
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          timeZone: 'Europe/Warsaw'
+                                        })
+                                  }
                                 </span>
                                 {period.isTemporary && (
                                   <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
@@ -243,17 +303,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 {colors.icon}
                               </div>
                             </div>
-
+                            <div className="mt-1.5 border-t border-white/10"> </div>
                             {/* Weather conditions group */}
                             <div className="flex flex-wrap items-center gap-2">
-                              {period.wind && (
-                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                  {period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-                                   period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
-                                   period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
-                                   "💨 Light winds"}
-                                </span>
-                              )}
                               {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
                                 <span
                                   key={idx}
@@ -265,9 +317,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   {condition}
                                 </span>
                               ))}
-                              {period.visibility?.meters && period.visibility.meters < 2000 && (
-                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white">
-                                  👁️ Poor visibility
+                              {period.wind && !period.conditions.phenomena.some(p => p.includes('Wind')) && (
+                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
+                                  {`💨 Wind ${period.wind.speed_kts}kt${period.wind.gust_kts ? ` gusting ${period.wind.gust_kts}kt` : ''}`}
                                 </span>
                               )}
                             </div>
@@ -284,12 +336,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     );
                   })}
                   
-                  {forecast.length > 3 && (
+                  {forecast.length > 4 && (
                     <button
                       onClick={() => setShowAll(!showAll)}
                       className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
                     >
-                      {showAll ? 'Show less' : `Show ${forecast.length - 3} more periods`}
+                      {showAll ? 'Show less' : `Show more periods`}
                     </button>
                   )}
                 </div>

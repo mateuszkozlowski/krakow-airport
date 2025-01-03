@@ -7,6 +7,15 @@ import type { WeatherResponse } from '@/lib/types/weather';
 import { getAirportWeather } from "@/lib/weather";
 import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav"
+import { Database, BarChart, Plane, AlertTriangle, Info, Check, ArrowRight } from "lucide-react";
+
+export const DatabaseIcon = Database;
+export const ChartIcon = BarChart;
+export const AirlineIcon = Plane;
+export const AlertTriangleIcon = AlertTriangle;
+export const InfoIcon = Info;
+export const CheckIcon = Check;
+export const ArrowRightIcon = ArrowRight;
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
@@ -172,15 +181,13 @@ export default function Page() {
                     </div>
                 </Alert>
 
-                {/* Add disclaimer in a new subtle footer */}
-
-                {highRiskPeriods.length > 0 && (
+                {highRiskPeriods.length > 0 && highRiskPeriods.some(period => period.riskLevel.level >= 3) && (
                     <Alert className="rounded-none border-0 bg-red-800 backdrop-blur text-white">
                         <div className="max-w-4xl mx-auto w-full">
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <p className="text-sm font-medium">
                                     ⚠️ Severe weather conditions expected {formatHighRiskTimes()}. 
-                                    {highRiskPeriods.length > 1 && " Additional severe weather periods possible later."}
+                                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 && " Additional severe weather periods possible later."}
                                     {" "}Check your flight status with your airline.
                                 </p>
                                 <a 
@@ -219,31 +226,12 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6 mt-16">
-                <div className="border border-slate-700/10 rounded-lg p-6">
-                    <h3 className="font-semibold mb-2 text-slate-900">How we get our data?</h3>
-                    <p className="text-slate mb-4 text-sm">We combine data from three reliable sources:</p>
-                    <ul className="text-slate space-y-2 text-sm">
-                        <li>• Official METAR reports (the stuff pilots actually use)</li>
-                        <li>• TAF forecasts (fancy airport weather predictions)</li>
-                        <li>• Flight status information provided by airlines</li>
-                    </ul>
-                </div>
-
-                <div className="border border-slate-700/10 rounded-lg p-6">
-                    <h3 className="font-semibold mb-2 text-slate-900">Important notice</h3>
-                    <p className="text-slate-900 mb-4 text-sm">
-                        While we try our best to provide accurate information, we are not meteorologists, air
-                        traffic controllers, or fortune tellers.
-                    </p>
-                    <p className="text-slate-900 text-sm">
-                        Always check with your airline for the final word on your flight status. They are the ones
-                        with the actual planes, after all!
-                    </p>
-                </div>
-            </div>
 
             <footer className="border-t border-slate-00 py-4">
+                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900"> <p>
+                        This application is not an official Krakow Airport service. It is intended for informational purposes only and should not be used as the sole source for flight planning or decision-making. Always check with official sources and your airline for the most accurate and up-to-date information.
+                    </p></div>
+                <div className="max-w-4xl mx-auto border-t border-slate-200 my-4"></div>
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
                     <div>Built by Mateusz Kozłowski</div>
                     <div className="flex gap-4">
@@ -258,6 +246,7 @@ export default function Page() {
                         </a>
                     </div>
                 </div>
+
             </footer>
         </div>
     );

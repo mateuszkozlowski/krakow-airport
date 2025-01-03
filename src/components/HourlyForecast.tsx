@@ -7,87 +7,48 @@ interface HourlyForecastProps {
 
 export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   const splitOverlappingPeriods = (periods: ForecastChange[]): ForecastChange[] => {
-    const result: ForecastChange[] = [];
-    
-    // Find base periods (non-temporary) and temporary periods
-    const basePeriods = periods.filter(p => !p.isTemporary);
-    const tempPeriods = periods.filter(p => p.isTemporary);
-
-    basePeriods.forEach(basePeriod => {
-      // Find temporary periods that overlap with this base period
-      const overlapping = tempPeriods.filter(temp => 
-        temp.from.getTime() >= basePeriod.from.getTime() && 
-        temp.to.getTime() <= basePeriod.to.getTime()
-      ).sort((a, b) => a.from.getTime() - b.from.getTime());
-
-      if (overlapping.length === 0) {
-        // If no temporary periods overlap, add the base period as is
-        result.push(basePeriod);
-      } else {
-        // Handle the period before the first temporary period
-        if (overlapping[0].from.getTime() > basePeriod.from.getTime()) {
-          result.push({
-            ...basePeriod,
-            from: basePeriod.from,
-            to: overlapping[0].from,
-            timeDescription: `${basePeriod.from.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Europe/Warsaw'
-            })} - ${overlapping[0].from.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Europe/Warsaw'
-            })}`
-          });
-        }
-
-        // Add each temporary period
-        overlapping.forEach((temp, index) => {
-          result.push(temp);
-
-          // Handle gaps between temporary periods
-          const nextTemp = overlapping[index + 1];
-          if (nextTemp) {
-            result.push({
-              ...basePeriod,
-              from: temp.to,
-              to: nextTemp.from,
-              timeDescription: `${temp.to.toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Europe/Warsaw'
-              })} - ${nextTemp.from.toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Europe/Warsaw'
-              })}`
-            });
-          }
-        });
-
-        // Handle the period after the last temporary period
-        const lastTemp = overlapping[overlapping.length - 1];
-        if (lastTemp.to.getTime() < basePeriod.to.getTime()) {
-          result.push({
-            ...basePeriod,
-            from: lastTemp.to,
-            to: basePeriod.to,
-            timeDescription: `${lastTemp.to.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Europe/Warsaw'
-            })} - ${basePeriod.to.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Europe/Warsaw'
-            })}`
-          });
-        }
+    // First, sort periods by start time, then by risk level (higher first)
+    const sortedPeriods = periods.sort((a, b) => {
+      const timeCompare = a.from.getTime() - b.from.getTime();
+      if (timeCompare === 0) {
+        return b.riskLevel.level - a.riskLevel.level;
       }
+      return timeCompare;
     });
 
-    return result.sort((a, b) => a.from.getTime() - b.from.getTime());
+    // Remove zero-duration periods and filter overlapping periods
+    return sortedPeriods.filter((period, index) => {
+      // Remove periods with zero duration
+      if (period.from.getTime() === period.to.getTime()) return false;
+      
+      // Always keep the first valid period
+      if (index === 0) return true;
+
+      // Check for overlaps with previous periods
+      const hasSignificantOverlap = sortedPeriods.slice(0, index).some(prevPeriod => {
+        // Skip zero-duration periods
+        if (prevPeriod.from.getTime() === prevPeriod.to.getTime()) return false;
+
+        const overlap = period.from.getTime() < prevPeriod.to.getTime() &&
+                       prevPeriod.from.getTime() < period.to.getTime();
+        
+        if (!overlap) return false;
+
+        // Keep if this period has higher risk
+        if (period.riskLevel.level > prevPeriod.riskLevel.level) return false;
+        
+        // Keep if same risk but different phenomena
+        if (period.riskLevel.level === prevPeriod.riskLevel.level) {
+          const currentPhenomena = period.conditions.phenomena.sort().join(',');
+          const prevPhenomena = prevPeriod.conditions.phenomena.sort().join(',');
+          return currentPhenomena === prevPhenomena;
+        }
+
+        return true;
+      });
+
+      return !hasSignificantOverlap;
+    });
   };
 
   const splitPeriods = splitOverlappingPeriods(forecast);
@@ -95,9 +56,8 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   return (
     <div className="divide-y divide-gray-200">
       {splitPeriods.map((period, index) => {
-        const hasWeatherPhenomena = period.conditions.phenomena?.length > 0;
-
-        if (!hasWeatherPhenomena && !period.wind && period.riskLevel.level === 1) {
+        // Show if there are any phenomena or wind conditions
+        if (period.conditions.phenomena.length === 0 && !period.wind && period.riskLevel.level === 1) {
           return null;
         }
 
@@ -108,30 +68,22 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
                 {period.timeDescription}
               </div>
               {period.isTemporary && (
-                <span className="text-xs text-gray-500">Temporary change</span>
+                <span className="text-xs text-gray-500">
+                  Temporary change{period.probability ? ` (${period.probability}% probability)` : ''}
+                </span>
               )}
             </div>
             <div className="flex flex-wrap md:flex-nowrap items-center space-x-4 md:space-x-2">
-              {hasWeatherPhenomena && (
-                <div className="flex gap-2">
-                  {period.conditions.phenomena.map((phenomenon, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-                    >
-                      {phenomenon}
-                    </span>
-                  ))}
-                  {period.wind && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                      {period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-                       period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
-                       period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
-                       "💨 Light winds"}
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="flex gap-2">
+                {period.conditions.phenomena.map((phenomenon, idx) => (
+                  <span
+                    key={idx}
+                    className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
+                  >
+                    {phenomenon}
+                  </span>
+                ))}
+              </div>
               <span
                 className={`text-xs px-2 py-1 rounded-full ${
                   period.riskLevel.level === 3

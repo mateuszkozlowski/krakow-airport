@@ -122,40 +122,59 @@ export interface WeatherResponse {
 }
 
 export const WEATHER_PHENOMENA = {
+  // Thunderstorm conditions
   TS: '⛈️ Thunderstorm',
-  TSRA: '⛈️🌧️ Thunderstorm with Heavy Rain',
-  FC: '🌪️ Tornado/Waterspout',
-  SQ: '💨 Violent Squall',
-  SS: '🏜️ Severe Sandstorm',
-
+  TSRA: '⛈️ Thunderstorm with Rain',
+  
+  // Freezing conditions
   FZRA: '🌧️❄️ Freezing Rain',
   FZDZ: '💧❄️ Freezing Drizzle',
   FZFG: '🌫️❄️ Freezing Fog',
-
+  FZ: '🌨️❄️ Freezing',
+  
+  // Snow conditions with intensity
+  SN: '🌨️ Snow',
+  '-SN': '🌨️ Light Snow',
+  '+SN': '🌨️ Heavy Snow',
+  SHSN: '🌨️ Snow Showers',
+  '-SHSN': '🌨️ Light Snow Showers',
+  '+SHSN': '🌨️ Heavy Snow Showers',
+  BLSN: '🌨️ Blowing Snow',
+  '+SHSN BLSN': '🌨️ Heavy Snow Showers with Blowing Snow',
+  'SHSN BLSN': '🌨️ Snow Showers with Blowing Snow',
+  'SH': '🌨️ Showers',
+  
+  // Rain conditions with intensity
   RA: '🌧️ Rain',
+  '-RA': '🌧️ Light Rain',
+  '+RA': '🌧️ Heavy Rain',
   SHRA: '🌧️ Rain Showers',
-  SN: '❄️ Snow',
+  '-SHRA': '🌧️ Light Rain Showers',
+  '+SHRA': '🌧️ Heavy Rain Showers',
+  
+  // Mixed precipitation
+  RASN: '🌨️ Rain and Snow',
+  '-RASN': '🌨️ Light Rain and Snow',
+  '+RASN': '🌨️ Heavy Rain and Snow',
+  
+  // Other precipitation types
   GR: '🌨️ Hail',
-  GS: '🌨️ Small Hail/Snow Pellets',
-  PL: '🧊 Ice Pellets',
-  IC: '❄️ Ice Crystals',
+  GS: '🌨️ Small Hail',
   SG: '🌨️ Snow Grains',
   DZ: '💧 Drizzle',
-  '-RA': '🌦️ Light Rain',
-  '-SN': '🌨️ Light Snow',
-  '+RA': '🌧️⚠️ Heavy Rain',
-  '+SN': '❄️⚠️ Heavy Snow',
-
-  FG: '🌫️ Dense Fog',
+  '-DZ': '💧 Light Drizzle',
+  '+DZ': '💧 Heavy Drizzle',
+  
+  // Visibility conditions
+  FG: '🌫️ Fog',
   BR: '🌫️ Mist',
   HZ: '🌫️ Haze',
-  FU: '🔥 Smoke',
-  VA: '🌋 Volcanic Ash',
-  DU: '💨 Dust',
-  SA: '🏜️ Blowing Sand',
-  PO: '💨 Dust/Sand Whirls',
-  DS: '🏜️ Duststorm',
-
+  
+  // Severe conditions
+  FC: '🌪️ Funnel Cloud',
+  SS: '🏜️ Sandstorm',
+  
+  // Cloud coverage
   SCT: '⛅ Scattered Clouds',
   BKN: '☁️ Broken Clouds',
   OVC: '☁️ Overcast'
