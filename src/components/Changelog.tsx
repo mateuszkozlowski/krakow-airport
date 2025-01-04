@@ -10,6 +10,17 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-01-04",
+    version: "0.2.0",
+    changes: [
+      "Added comprehensive passenger rights guide with detailed EU261 information",
+      "Improved airport information with detailed contact details and operational hours",
+      "Removed flight tabs to focus on weather and passenger rights",
+      "Added step-by-step guidance for delayed/cancelled flight situations",
+      "Enhanced mobile responsiveness and user experience"
+    ]
+  },
+  {
     date: "2024-12-24",
     version: "0.1.1",
     changes: [

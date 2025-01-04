@@ -1,21 +1,18 @@
 'use client';
 // src/app/page.tsx
 import { useEffect, useState } from 'react';
-import { Alert } from "@/components/ui/alert";
-import { FlightTabs } from "@/components/FlightTabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";  
 import WeatherTimeline from "@/components/WeatherTimeline";
-import { Loader2 } from "lucide-react";
 import type { WeatherResponse } from '@/lib/types/weather';
-import type { FlightStats } from '@/lib/types/flight';
 import { getAirportWeather } from "@/lib/weather";
-import { getFlightStats } from "@/lib/flights";
+import { cn } from "@/lib/utils";
+import { MainNav } from "@/components/MainNav"
+import Link from "next/link";
+import { Shield } from "lucide-react";
+
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
-    const [flightStats, setFlightStats] = useState<{
-        arrivals: FlightStats;
-        departures: FlightStats;
-    } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -26,17 +23,15 @@ export default function Page() {
             }
             setError(null);
 
-            const [weatherData, flightData] = await Promise.all([
+            const [weatherData] = await Promise.all([
                 getAirportWeather(),
-                getFlightStats()
             ]);
 
-            if (!weatherData || !flightData) {
+            if (!weatherData) {
                 throw new Error('Failed to fetch data');
             }
 
             setWeather(weatherData);
-            setFlightStats(flightData);
         } catch (err) {
             console.error('Error fetching data:', err);
             setError('Failed to load data. Please try again later.');
@@ -52,32 +47,125 @@ export default function Page() {
         return () => clearInterval(interval);
     }, []);
 
-    if (isLoading) {
+    function LoadingSkeleton() {
         return (
-            <div className="min-h-screen bg-[#1a1f36] flex items-center justify-center">
-                <div className="text-white flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Loading...</span>
+            <div className="min-h-screen">
+                <div className="bg-[#1a1f36] bg-cover bg-center" style={{ backgroundImage: "url('/background.png')" }}>
+                    <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
+                        <div className="max-w-4xl mx-auto w-full flex-wrap md:flex justify-between items-center">
+                            <div className="h-4 w-96 bg-white/20 animate-pulse rounded" />
+                            <div className="h-4 w-32 bg-white/20 animate-pulse rounded mt-2 md:mt-0" />
+                        </div>
+                    </Alert>
+
+                    <div className="max-w-4xl mx-auto px-6 pb-36">
+                        <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">
+                            Will I fly today from Krakow?
+                        </h1>
+
+                        <div className="h-8 w-2/3 bg-white/20 animate-pulse rounded mb-8" />
+
+                        {/* Weather Timeline Skeleton */}
+                        <div className="space-y-4">
+                            {/* Current Weather Card Skeleton */}
+                            <div className="bg-white/10 backdrop-blur p-6 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-2">
+                                        <div className="h-6 w-32 bg-white/20 animate-pulse rounded" />
+                                        <div className="h-4 w-48 bg-white/20 animate-pulse rounded" />
+                                    </div>
+                                    <div className="h-10 w-10 bg-white/20 animate-pulse rounded-full" />
+                                </div>
+                            </div>
+
+                            {/* Forecast Cards Skeleton */}
+                            {[1, 2, 3].map((i) => (
+                                <div 
+                                    key={i} 
+                                    className={cn(
+                                        "bg-white/5 backdrop-blur p-6 rounded-lg",
+                                        "animate-pulse"
+                                    )}
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div className="space-y-2">
+                                            <div className="h-5 w-24 bg-white/20 rounded" />
+                                            <div className="h-4 w-36 bg-white/20 rounded" />
+                                        </div>
+                                        <div className="h-8 w-8 bg-white/20 rounded-full" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
+
+                {/* Info Cards Skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6 mt-16">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="border border-slate-700/10 rounded-lg p-6">
+                            <div className="h-5 w-32 bg-slate-200 animate-pulse rounded mb-4" />
+                            <div className="space-y-2">
+                                <div className="h-4 w-full bg-slate-200 animate-pulse rounded" />
+                                <div className="h-4 w-3/4 bg-slate-200 animate-pulse rounded" />
+                                <div className="h-4 w-5/6 bg-slate-200 animate-pulse rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <footer className="border-t border-slate-200 py-4">
+                    <div className="max-w-4xl mx-auto px-6 flex justify-between items-center">
+                        <div className="h-4 w-40 bg-slate-200 animate-pulse rounded" />
+                        <div className="flex gap-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-4 w-16 bg-slate-200 animate-pulse rounded" />
+                            ))}
+                        </div>
+                    </div>
+                </footer>
             </div>
         );
     }
 
+    const highRiskPeriods = weather?.forecast?.filter(
+        period => period.riskLevel.level >= 3
+    ) || [];
+
+    const formatHighRiskTimes = () => {
+        if (!highRiskPeriods.length) return '';
+        
+        const firstPeriod = highRiskPeriods[0];
+        const startTime = new Date(new Date(firstPeriod.from).getTime() + 3600000).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Warsaw'
+        });
+        const endTime = new Date(new Date(firstPeriod.to).getTime() + 3600000).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Warsaw'
+        });
+
+        return `between ${startTime} and ${endTime}`;
+    };
+
+    if (isLoading) {
+        return <LoadingSkeleton />;
+    }
+
     return (
         <div className="min-h-screen">
-            <div className="bg-[#1a1f36]">
+            <div className="bg-[#1a1f36] bg-cover bg-center" style={{ backgroundImage: "url('/background.png')" }}>
                 <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
-                    <div className="max-w-4xl mx-auto w-full flex-wrap md:flex justify-between items-center">
-                        <p className="text-sm">
-                            This is not an official Kraków Airport page. For official information, visit{" "}
-                            <a href="https://krakowairport.pl" className="underline">
-                                krakowairport.pl
-                            </a>
-                        </p>
+                    <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
+                        <div className="flex items-center gap-6">
+                            <MainNav />
+                        </div>
                         {weather?.current && (
                             <p className="text-sm text-white/60">
                                 Last update:{" "}
-                                {new Date(weather.current.observed).toLocaleTimeString("en-GB", {
+                                {new Date(new Date(weather.current.observed).getTime() + 3600000).toLocaleTimeString("en-GB", {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                     timeZone: "Europe/Warsaw"
@@ -86,6 +174,26 @@ export default function Page() {
                         )}
                     </div>
                 </Alert>
+
+                {highRiskPeriods.length > 0 && highRiskPeriods.some(period => period.riskLevel.level >= 3) && (
+                    <Alert className="rounded-none border-0 bg-red-800 backdrop-blur text-white">
+                        <div className="max-w-4xl mx-auto w-full">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <p className="text-sm font-medium">
+                                    ⚠️ Severe weather conditions expected {formatHighRiskTimes()}. 
+                                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 && " Additional severe weather periods possible later."}
+                                    {" "}Check your flight status with your airline.
+                                </p>
+                                <Link 
+                                    href="/passengerrights" 
+                                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-red-600 hover:bg-white/90 h-7 rounded-md px-2"
+                                >
+                                    Know Your Rights
+                                </Link>
+                            </div>
+                        </div>
+                    </Alert>
+                )}
 
                 <div className="max-w-4xl mx-auto px-6 pb-36">
                     <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">Will I fly today from Krakow?</h1>
@@ -109,43 +217,29 @@ export default function Page() {
                             />
                         </>
                     )}
+                    <Alert className="mb-6 mt-4 bg-white/10 backdrop-blur text-white flex items-center justify-between border-white/10">
+                        <div className="flex items-center gap-3">
+                            <Shield style={{ width: '24px', height: '24px' }} />
+                            <AlertDescription>
+                                Even in case of severe weather, you have the right to be informed about your flight status and to be compensated for any delays or cancellations.
+                            </AlertDescription>
+                        </div>
+                        <Link 
+                            href="/passengerrights" 
+                            className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-900 hover:bg-white/90 h-7 rounded-md px-2 ml-4"
+                        >
+                            Know Your Rights
+                        </Link>
+                    </Alert>
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto -mt-16 px-6 pb-8">
-                {flightStats && (
-                    <FlightTabs
-                        arrivalsStats={flightStats.arrivals}
-                        departuresStats={flightStats.departures}
-                    />
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 max-w-4xl mx-auto px-6">
-                <div className="border border-slate-700/10 rounded-lg p-6">
-                    <h3 className="font-semibold mb-2 text-slate-900">How we get our data?</h3>
-                    <p className="text-slate mb-4 text-sm">We combine data from three reliable sources:</p>
-                    <ul className="text-slate space-y-2 text-sm">
-                        <li>• Official METAR reports (the stuff pilots actually use)</li>
-                        <li>• TAF forecasts (fancy airport weather predictions)</li>
-                        <li>• Flight status information provided by airlines</li>
-                    </ul>
-                </div>
-
-                <div className="border border-slate-700/10 rounded-lg p-6">
-                    <h3 className="font-semibold mb-2 text-slate-900">Important notice</h3>
-                    <p className="text-slate-900 mb-4 text-sm">
-                        While we try our best to provide accurate information, we are not meteorologists, air
-                        traffic controllers, or fortune tellers.
-                    </p>
-                    <p className="text-slate-900 text-sm">
-                        Always check with your airline for the final word on your flight status. They are the ones
-                        with the actual planes, after all!
-                    </p>
-                </div>
-            </div>
 
             <footer className="border-t border-slate-00 py-4">
+                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900"> <p>
+                        This application is not an official Krakow Airport service. It is intended for informational purposes only and should not be used as the sole source for flight planning or decision-making. Always check with official sources and your airline for the most accurate and up-to-date information.
+                    </p></div>
+                <div className="max-w-4xl mx-auto border-t border-slate-200 my-4"></div>
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
                     <div>Built by Mateusz Kozłowski</div>
                     <div className="flex gap-4">
@@ -160,6 +254,7 @@ export default function Page() {
                         </a>
                     </div>
                 </div>
+
             </footer>
         </div>
     );
