@@ -217,16 +217,16 @@ export default function Page() {
                             />
                         </>
                     )}
-                    <Alert className="mb-6 mt-4 bg-white/10 backdrop-blur text-white flex items-center justify-between border-white/10">
+                    <Alert className="mb-6 mt-4 bg-white/10 backdrop-blur text-white flex flex-col md:flex-row md:items-center md:justify-between border-white/10 gap-4 md:gap-3">
                         <div className="flex items-center gap-3">
-                            <Shield style={{ width: '24px', height: '24px' }} />
+                            <Shield className="w-12 h-12 md:w-6 md:h-6" />
                             <AlertDescription>
                                 Even in case of severe weather, you have the right to be informed about your flight status and to be compensated for any delays or cancellations.
                             </AlertDescription>
                         </div>
                         <Link 
                             href="/passengerrights" 
-                            className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-900 hover:bg-white/90 h-7 rounded-md px-2 ml-4"
+                            className="w-full md:w-auto inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-900 hover:bg-white/90 h-7 rounded-md px-2 md:ml-4"
                         >
                             Know Your Rights
                         </Link>

@@ -250,7 +250,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     }) && (
                       <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
                         <div className="flex items-top gap-2 text-orange-400">
-                          <AlertTriangle className="h-4 w-4 mt-0.5" />
+                          <AlertTriangle className="w-12 h-12 md:w-6 md:h-6 mt-0.5" />
                           <div>
                             <p className="text-sm font-medium"><span className="font-bold">Weather conditions expected to deteriorate soon.</span> Check the timeline below for detailed changes</p>
                          
