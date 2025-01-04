@@ -3,11 +3,21 @@ import '@/app/globals.css';
 import { Inter } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Clarity from '@microsoft/clarity';
+import { Metadata } from 'next';
+import Script from 'next/script';
 
 const projectId = "ploo7g9ey8"
 
 const inter = Inter({ subsets: ['latin'] });
 Clarity.init(projectId);
+
+export const metadata: Metadata = {
+  title: 'KRK.flights',
+  description: 'Information on the status of flights from Krakow Airport, including delays and cancellations related to weather conditions.',
+  keywords: 'Krakow, airport, app, flights, delays, cancellations, weather',
+  authors: [{ name: 'Mateusz Kozlowski' }],
+  viewport: 'width=device-width, initial-scale=1.0',
+};
 
 export default function RootLayout({
   children,
@@ -23,13 +33,11 @@ export default function RootLayout({
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
         <meta name="google-adsense-account" content="ca-pub-2158235492134914" />
-        
-  <title>KRK.flights</title>
-  <meta name="description" content="Information on the status of flights from Krakow Airport, including delays and cancellations related to weather conditions." />
-  <meta name="keywords" content="Krakow, airport, app, flights, delays, cancellations, weather" />
-  <meta name="author" content="Mateusz Kozlowski" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+        <Script
+          id="cookieyes"
+          src="https://cdn-cookieyes.com/client_data/5b7fbeaf30a93710701352a2/script.js"
+          strategy="afterInteractive"
+        />
       </head>
       <body className={inter.className}>
         {children}
