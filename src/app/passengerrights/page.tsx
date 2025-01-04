@@ -7,7 +7,10 @@ import { PassengerRights } from "@/components/PassengerRights";
 const PassengerRightsPage = () => {
     return (
         <div className="min-h-screen">
-            <div className="bg-[#1a1f36]">
+            <div 
+                className="bg-[#1a1f36] bg-cover bg-center" 
+                style={{ backgroundImage: "url('/background.png')" }}
+            >
                 <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
                     <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
                         <Link
@@ -19,9 +22,11 @@ const PassengerRightsPage = () => {
                     </div>
                 </Alert>
 
-                <div className="max-w-4xl mx-auto px-6">
-                    <h1 className="text-3xl font-bold mt-16 mb-4 text-white">Delayed Flight? We're Here to Help</h1>
-                    <div className="text-xl mb-16 text-white/80">
+                <div className="max-w-4xl mx-auto px-6 pb-16">
+                    <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">
+                        Delayed Flight? We're Here to Help
+                    </h1>
+                    <div className="text-xl md:text-3xl mb-8 text-white/80">
                         Find out what support is available and where to get immediate assistance at Kraków Airport
                     </div>
                 </div>
@@ -31,7 +36,13 @@ const PassengerRightsPage = () => {
                 <PassengerRights />
             </div>
 
-            <footer className="border-t border-slate-00 py-4">
+            <footer className="border-t border-slate-200 py-4">
+                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
+                    <p>
+                        This application is not an official Krakow Airport service. It is intended for informational purposes only and should not be used as the sole source for flight planning or decision-making. Always check with official sources and your airline for the most accurate and up-to-date information.
+                    </p>
+                </div>
+                <div className="max-w-4xl mx-auto border-t border-slate-200 my-4"></div>
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
                     <div>Built by Mateusz Kozłowski</div>
                     <div className="flex gap-4">

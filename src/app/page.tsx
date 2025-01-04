@@ -1,12 +1,14 @@
 'use client';
 // src/app/page.tsx
 import { useEffect, useState } from 'react';
-import { Alert } from "@/components/ui/alert";  
+import { Alert, AlertDescription } from "@/components/ui/alert";  
 import WeatherTimeline from "@/components/WeatherTimeline";
 import type { WeatherResponse } from '@/lib/types/weather';
 import { getAirportWeather } from "@/lib/weather";
 import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav"
+import Link from "next/link";
+import { Shield } from "lucide-react";
 
 
 export default function Page() {
@@ -182,12 +184,12 @@ export default function Page() {
                                     {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 && " Additional severe weather periods possible later."}
                                     {" "}Check your flight status with your airline.
                                 </p>
-                                <a 
+                                <Link 
                                     href="/passengerrights" 
                                     className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-red-600 hover:bg-white/90 h-7 rounded-md px-2"
                                 >
                                     Know Your Rights
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </Alert>
@@ -215,6 +217,20 @@ export default function Page() {
                             />
                         </>
                     )}
+                    <Alert className="mb-6 mt-4 bg-white/10 backdrop-blur text-white flex items-center justify-between border-white/10">
+                        <div className="flex items-center gap-3">
+                            <Shield style={{ width: '24px', height: '24px' }} />
+                            <AlertDescription>
+                                Even in case of severe weather, you have the right to be informed about your flight status and to be compensated for any delays or cancellations.
+                            </AlertDescription>
+                        </div>
+                        <Link 
+                            href="/passengerrights" 
+                            className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-900 hover:bg-white/90 h-7 rounded-md px-2 ml-4"
+                        >
+                            Know Your Rights
+                        </Link>
+                    </Alert>
                 </div>
             </div>
 
