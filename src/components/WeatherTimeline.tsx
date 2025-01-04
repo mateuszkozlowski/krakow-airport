@@ -266,7 +266,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               {/* Timeline section */}
               {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
-                  {uniqueForecast.slice(0, showAll ? undefined : 4).map((period, index) => {
+                  {uniqueForecast.slice(0, showAll ? uniqueForecast.length : 4).map((period, index) => {
                     const colors = getStatusColors(period.riskLevel.level);
 
                     return (
@@ -344,7 +344,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       onClick={() => setShowAll(!showAll)}
                       className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
                     >
-                      {showAll ? 'Show less' : `Show ${uniqueForecast.length - 4} more periods`}
+                      {showAll 
+                        ? 'Show less' 
+                        : `Show ${uniqueForecast.length - 4} more ${uniqueForecast.length - 4 === 1 ? 'period' : 'periods'}`}
                     </button>
                   )}
                 </div>
