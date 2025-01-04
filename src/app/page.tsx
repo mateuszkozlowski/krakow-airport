@@ -136,7 +136,20 @@ export default function Page() {
         if (!highRiskPeriods.length) return '';
         
         const firstPeriod = highRiskPeriods[0];
-        const startTime = new Date(new Date(firstPeriod.from).getTime() + 3600000).toLocaleTimeString('en-GB', {
+        const periodDate = new Date(new Date(firstPeriod.from).getTime() + 3600000);
+        
+        // Determine if the period is today or tomorrow
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const dayLabel = periodDate.toDateString() === today.toDateString() 
+            ? 'today' 
+            : periodDate.toDateString() === tomorrow.toDateString() 
+                ? 'tomorrow' 
+                : periodDate.toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });
+
+        const startTime = periodDate.toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Europe/Warsaw'
@@ -147,7 +160,7 @@ export default function Page() {
             timeZone: 'Europe/Warsaw'
         });
 
-        return `between ${startTime} and ${endTime}`;
+        return `${dayLabel} between ${startTime} and ${endTime}`;
     };
 
     if (isLoading) {

@@ -250,7 +250,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     }) && (
                       <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
                         <div className="flex items-top gap-2 text-orange-400">
-                          <AlertTriangle className="w-12 h-12 md:w-6 md:h-6 mt-0.5" />
+                          <AlertTriangle className="w-12 h-12 md:w-4 md:h-4 mt-0.5" />
                           <div>
                             <p className="text-sm font-medium"><span className="font-bold">Weather conditions expected to deteriorate soon.</span> Check the timeline below for detailed changes</p>
                          
@@ -304,7 +304,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 {colors.icon}
                               </div>
                             </div>
-                            <div className="mt-1.5 border-t border-white/10"> </div>
+                            {(period.conditions.phenomena.length > 0 || period.wind) && (
+                              <div className="mt-1.5 border-t border-white/10"> </div>
+                            )}
                             {/* Weather conditions group */}
                             <div className="flex flex-wrap items-center gap-2">
                               {Array.from(new Set(period.conditions.phenomena)).map((condition, idx) => (
