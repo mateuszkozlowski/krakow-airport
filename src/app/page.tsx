@@ -189,13 +189,25 @@ export default function Page() {
                 </Alert>
 
                 {highRiskPeriods.length > 0 && highRiskPeriods.some(period => period.riskLevel.level >= 3) && (
-                    <Alert className="rounded-none border-0 bg-red-800 backdrop-blur text-white">
+                    <Alert className={cn(
+                        "rounded-none border-0 backdrop-blur text-white",
+                        highRiskPeriods.some(p => p.riskLevel.level === 4) 
+                            ? "bg-red-900" 
+                            : "bg-red-800"
+                    )}>
                         <div className="max-w-4xl mx-auto w-full">
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <p className="text-sm font-medium">
-                                    ⚠️ Severe weather conditions expected {formatHighRiskTimes()}. 
-                                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 && " Additional severe weather periods possible later."}
-                                    {" "}Check your flight status with your airline.
+                                    {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                                        ? "🚫 Airport operations may be suspended "
+                                        : "⚠️ Severe weather conditions expected "}
+                                    {formatHighRiskTimes()}. 
+                                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
+                                        && " Additional severe weather periods possible later."}
+                                    {" "}
+                                    {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                                        ? "Contact your airline immediately."
+                                        : "Check your flight status with your airline."}
                                 </p>
                                 <Link 
                                     href="/passengerrights" 
@@ -214,11 +226,13 @@ export default function Page() {
                     {weather?.current && (
                         <>
                             <p className="text-xl md:text-3xl mb-8 text-white/80">
-                                {weather.current.riskLevel.level === 3
-                                    ? "It does not look promising. Your flight might be canceled or seriously delayed."
-                                    : weather.current.riskLevel.level === 2
-                                      ? "There is a chance, but be ready for possible delays."
-                                      : "Yes, it looks like you are good to go!"}
+                                {weather.current.riskLevel.level === 4
+                                    ? "Airport operations may be suspended. Contact your airline immediately."
+                                    : weather.current.riskLevel.level === 3
+                                        ? "Significant disruptions are likely. Check your flight status."
+                                        : weather.current.riskLevel.level === 2
+                                            ? "Minor delays are possible. Check flight status before leaving."
+                                            : "Weather conditions are favorable for normal operations."}
                             </p>
 
                             <WeatherTimeline 

@@ -7,10 +7,11 @@ import Link from 'next/link';
 interface WeatherTimelineProps {
   current: {
     riskLevel: {
-      level: 1 | 2 | 3;
+      level: 1 | 2 | 3 | 4;
       title: string;
       message: string;
       explanation?: string;
+      color: 'red' | 'orange' | 'yellow' | 'green';
     };
     conditions: {
       phenomena: string[];
@@ -20,10 +21,10 @@ interface WeatherTimelineProps {
     visibility?: { meters: number };
     ceiling?: { feet: number };
   };
-  forecast: ForecastChange[]; // Matches the corrected ForecastChange type
+  forecast: ForecastChange[];
   isLoading: boolean;
   isError: boolean;
-  retry: () => Promise<void>; // Ensure retry matches this signature
+  retry: () => Promise<void>;
 }
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
@@ -104,13 +105,20 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
   const uniqueForecast = deduplicateForecastPeriods(forecast);
 
-  const getStatusColors = (level: 1 | 2 | 3) => {
+  const getStatusColors = (level: 1 | 2 | 3 | 4) => {
     switch (level) {
+      case 4:
+        return {
+          bg: "bg-red-900/30",
+          text: "text-red-500",
+          icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+          pill: "bg-red-500/10 text-red-500"
+        };
       case 3:
         return {
           bg: "bg-red-900/20",
           text: "text-red-400",
-          icon: <AlertTriangle className="h-4 w-4 text-red-400" />, 
+          icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
           pill: "bg-red-400/10 text-red-400"
         };
       case 2:

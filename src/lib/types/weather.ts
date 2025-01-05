@@ -7,7 +7,7 @@ export interface WindInfo {
 }
 
 export interface CloudInfo {
-  code: 'SCT' | 'BKN' | 'OVC' | 'FEW' | 'CLR';
+  coverage: 'SKC' | 'FEW' | 'SCT' | 'BKN' | 'OVC';
   base_feet_agl: number;
 }
 
@@ -63,11 +63,17 @@ export interface TAFData {
 }
 
 export interface RiskAssessment {
-  level: 1 | 2 | 3;
+  level: 1 | 2 | 3 | 4;
   title: string;
   message: string;
   explanation?: string;
-  color: 'red' | 'orange' | 'green';
+  color: 'red' | 'orange' | 'yellow' | 'green';
+  operationalImpacts?: string[];
+  warning?: {
+    message: string;
+    time: Date;
+    severity: number;
+  };
 }
 
 export interface ProcessedConditions {
@@ -100,14 +106,6 @@ export interface ForecastChange {
 export interface ProcessedConditions {
   phenomena: string[]; // List of weather phenomena
   description?: string; // Optional description of conditions
-}
-
-// Example for RiskAssessment
-export interface RiskAssessment {
-  level: 1 | 2 | 3; 
-  title: string;
-  message: string; // Make this required
-  explanation?: string;
 }
 
 export interface WeatherResponse {
