@@ -142,17 +142,14 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   );
 
   const formatDateTime = (date: Date) => {
-    // Add 1 hour to the date
-    const adjustedDate = new Date(date.getTime() + 3600000); // Add 1 hour (3600000 milliseconds)
-    
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    const isToday = adjustedDate.toDateString() === today.toDateString();
-    const isTomorrow = adjustedDate.toDateString() === tomorrow.toDateString();
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
     
-    const time = adjustedDate.toLocaleTimeString('en-GB', {
+    const time = date.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Warsaw'
@@ -163,7 +160,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     } else if (isTomorrow) {
       return `Tomorrow ${time}`;
     } else {
-      return adjustedDate.toLocaleDateString('en-GB', {
+      return date.toLocaleDateString('en-GB', {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
