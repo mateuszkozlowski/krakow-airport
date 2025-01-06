@@ -3,6 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
 import Link from 'next/link';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { RiskLegendDialog } from "./RiskLegend";
 
 interface WeatherTimelineProps {
   current: {
@@ -29,6 +37,7 @@ interface WeatherTimelineProps {
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     // First, filter out empty periods and sort by time and risk
@@ -149,7 +158,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     </div>
   );
 
-  const formatDateTime = (date: Date) => {
+  const formatDateTime = (date: Date, isEndTime: boolean = false) => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -162,6 +171,23 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
       minute: '2-digit',
       timeZone: 'Europe/Warsaw'
     });
+
+    if (isEndTime) {
+      if (isToday) {
+        return `Until ${time}`;
+      } else if (isTomorrow) {
+        return `Until Tomorrow ${time}`;
+      } else {
+        return `Until ${date.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Europe/Warsaw'
+        })}`;
+      }
+    }
 
     if (isToday) {
       return `Today ${time}`;
@@ -268,6 +294,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                 </CardContent>
               </Card>
 
+              {/* Replace the existing legend button with this drawer */}
+              <RiskLegendDialog />
+
               {/* Timeline section */}
               {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
@@ -285,15 +314,18 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                               <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <span className="text-sm font-medium text-slate-200">
-                                  {formatDateTime(period.from)} - {
-                                    // If the end time is on a different day than the start time
-                                    period.from.toDateString() !== period.to.toDateString() 
-                                      ? formatDateTime(period.to)  // Show full date/time
-                                      : period.to.toLocaleTimeString('en-GB', {  // Show only time
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                          timeZone: 'Europe/Warsaw'
-                                        })
+                                  {period.from.getTime() < new Date().getTime()
+                                    ? formatDateTime(period.to, true)  // Show "until X" format for current period
+                                    : `${formatDateTime(period.from)} - ${
+                                        // If the end time is on a different day than the start time
+                                        period.from.toDateString() !== period.to.toDateString() 
+                                          ? formatDateTime(period.to)  // Show full date/time
+                                          : period.to.toLocaleTimeString('en-GB', {  // Show only time
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                              timeZone: 'Europe/Warsaw'
+                                            })
+                                      }`
                                   }
                                 </span>
                                 {period.isTemporary && (
