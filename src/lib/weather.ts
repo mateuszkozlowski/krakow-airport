@@ -10,6 +10,7 @@ import type {
 
 // Import WEATHER_PHENOMENA as a value, not a type
 import { WEATHER_PHENOMENA } from './types/weather';
+import { adjustToWarsawTime } from '@/lib/utils/time';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 type WeatherPhenomenon = keyof typeof WEATHER_PHENOMENA;
@@ -465,9 +466,13 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
   taf.forecast.forEach((period, index) => {
     if (period.timestamp) {
-      // Add one hour for winter time
-      const from = new Date(new Date(period.timestamp.from).getTime() + 3600000);
-      const to = new Date(new Date(period.timestamp.to).getTime() + 3600000);
+      // Create Date objects from the timestamps
+      const fromDate = new Date(period.timestamp.from);
+      const toDate = new Date(period.timestamp.to);
+      
+      // Adjust times considering the specific timestamps for DST calculation
+      const from = adjustToWarsawTime(fromDate);
+      const to = adjustToWarsawTime(toDate);
       
       const periodTime = formatTimeDescription(from, to);
       const assessment = assessWeatherRisk(period);

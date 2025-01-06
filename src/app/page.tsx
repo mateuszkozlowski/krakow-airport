@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav"
 import Link from "next/link";
 import { Shield } from "lucide-react";
+import { adjustToWarsawTime } from '@/lib/utils/time';
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
@@ -192,7 +193,7 @@ export default function Page() {
                         {weather?.current && (
                             <p className="text-sm text-white/60">
                                 Last update:{" "}
-                                {new Date(new Date(weather.current.observed).getTime() + 3600000).toLocaleTimeString("en-GB", {
+                                {adjustToWarsawTime(new Date(weather.current.observed)).toLocaleTimeString("en-GB", {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                     timeZone: "Europe/Warsaw"
