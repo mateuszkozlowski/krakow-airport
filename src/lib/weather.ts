@@ -465,108 +465,52 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
   taf.forecast.forEach((period, index) => {
     if (period.timestamp) {
-      const periodTime = formatTimeDescription(new Date(period.timestamp.from), new Date(period.timestamp.to));
+      // Add one hour for winter time
+      const from = new Date(new Date(period.timestamp.from).getTime() + 3600000);
+      const to = new Date(new Date(period.timestamp.to).getTime() + 3600000);
       
-      console.log(`\n=== Processing Period ${index + 1}: ${periodTime} ===`);
-      console.log('Raw period data:', {
-        from: period.timestamp.from,
-        to: period.timestamp.to,
-        wind: period.wind,
-        change: period.change,
-        conditions: period.conditions,
-        visibility: period.visibility,
-        ceiling: period.ceiling,
-        raw_text: period.raw_text
-      });
-
-      const periodStart = new Date(period.timestamp.from);
-      const periodEnd = new Date(period.timestamp.to);
-      
-      const timeDescription = formatTimeDescription(periodStart, periodEnd);
+      const periodTime = formatTimeDescription(from, to);
       const assessment = assessWeatherRisk(period);
       
-      // Process weather phenomena first
+      console.log(`\n=== Processing Period ${index + 1}: ${periodTime} ===`);
+
+      // Process weather phenomena
       const weatherPhenomena = period.conditions?.map(c => {
         if (c.code === 'NSW' as WeatherPhenomenon) return undefined;
-        
-        // First try to find combined phenomena
-        if (period.conditions && period.conditions.length > 1) {
-          const combinedCode = period.conditions
-            .map(cond => cond.code)
-            .sort()
-            .join(' ') as WeatherPhenomenon;
-          
-          const combinedPhenomenon = WEATHER_PHENOMENA[combinedCode];
-          if (combinedPhenomenon) {
-            return combinedPhenomenon;
-          }
-        }
-        
-        // If no combined match, try individual code
         return WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
       }).filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
-      console.log('Weather phenomena:', weatherPhenomena);
 
-      // Process wind separately
+      // Process wind phenomena
       const windPhenomena = period.wind ? [
-        // Only show one wind description based on severity
         period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
         period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
         period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
         null
       ].filter(Boolean) : [];
-      console.log('Wind phenomena:', windPhenomena);
-
-      // Process visibility
-      const visibilityPhenomena = period.visibility?.meters ? [
-        period.visibility.meters < MINIMUMS.VISIBILITY ? "👁️ Visibility below minimums" :
-        period.visibility.meters < 1000 ? "👁️ Very poor visibility" :
-        period.visibility.meters < 1500 ? "👁️ Poor visibility" :
-        []
-      ].filter(Boolean) : [];
-      console.log('Visibility phenomena:', visibilityPhenomena);
-
-      // Process ceiling
-      const ceilingPhenomena = period.ceiling?.feet ? [
-        period.ceiling.feet < MINIMUMS.CEILING ? "☁️ Ceiling below minimums" :
-        period.ceiling.feet < 300 ? "☁️ Very low ceiling" :
-        period.ceiling.feet < 500 ? "☁️ Low ceiling" :
-        []
-      ].filter(Boolean) : [];
-      console.log('Ceiling phenomena:', ceilingPhenomena);
 
       // Combine all phenomena
       const allPhenomena = [
         ...weatherPhenomena,
-        ...windPhenomena,
-        ...visibilityPhenomena,
-        ...ceilingPhenomena
-      ];
-
-      console.log('Final phenomena for period:', allPhenomena);
+        ...windPhenomena
+      ].filter((p): p is string => p !== null);
 
       changes.push({
-        timeDescription,
-        from: periodStart,
-        to: periodEnd,
+        timeDescription: formatTimeDescription(from, to),
+        from,
+        to,
         conditions: {
-          phenomena: allPhenomena.filter((p): p is string => p !== null && !Array.isArray(p))
+          phenomena: allPhenomena
         },
         riskLevel: assessment,
         changeType: period.change?.indicator?.code || 'PERSISTENT',
         visibility: period.visibility,
         ceiling: period.ceiling,
         isTemporary: period.change?.indicator?.code === 'TEMPO',
-        probability: period.change?.probability
+        probability: period.change?.probability,
+        wind: period.wind
       });
     }
   });
-
-  console.log('\nFinal changes array:', changes.map(c => ({
-    time: c.timeDescription,
-    isTemporary: c.isTemporary,
-    phenomena: c.conditions.phenomena
-  })));
 
   return changes;
 }

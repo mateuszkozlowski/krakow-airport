@@ -163,14 +163,24 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    const isToday = date.toDateString() === today.toDateString();
-    const isTomorrow = date.toDateString() === tomorrow.toDateString();
-    
     const time = date.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Warsaw'
     });
+
+    // Convert the input date to Warsaw time for day comparison
+    const warsawDate = new Date(date.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+    const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+    const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+
+    const isToday = warsawDate.getDate() === warsawToday.getDate() &&
+                    warsawDate.getMonth() === warsawToday.getMonth() &&
+                    warsawDate.getFullYear() === warsawToday.getFullYear();
+                    
+    const isTomorrow = warsawDate.getDate() === warsawTomorrow.getDate() &&
+                       warsawDate.getMonth() === warsawTomorrow.getMonth() &&
+                       warsawDate.getFullYear() === warsawTomorrow.getFullYear();
 
     if (isEndTime) {
       if (isToday) {

@@ -8,13 +8,14 @@ interface HourlyForecastProps {
 export const HourlyForecast: React.FC<HourlyForecastProps> = ({ forecast }) => {
   const splitOverlappingPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     // First, sort periods by start time, then by risk level (higher first)
-    const sortedPeriods = periods.sort((a, b) => {
-      const timeCompare = a.from.getTime() - b.from.getTime();
-      if (timeCompare === 0) {
-        return b.riskLevel.level - a.riskLevel.level;
-      }
-      return timeCompare;
-    });
+    const sortedPeriods = periods
+      .sort((a, b) => {
+        const timeCompare = a.from.getTime() - b.from.getTime();
+        if (timeCompare === 0) {
+          return b.riskLevel.level - a.riskLevel.level;
+        }
+        return timeCompare;
+      });
 
     // Remove zero-duration periods and filter overlapping periods
     return sortedPeriods.filter((period, index) => {
