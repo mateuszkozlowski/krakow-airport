@@ -3,6 +3,11 @@ import { Alert } from "@/components/ui/alert";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PassengerRights } from "@/components/PassengerRights";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Passenger Rights & Flight Delay Support',
+};
 
 const PassengerRightsPage = () => {
     return (

@@ -9,7 +9,11 @@ import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav"
 import Link from "next/link";
 import { Shield } from "lucide-react";
+import { Metadata } from 'next';
 
+export const metadata: Metadata = {
+  title: 'Will I Fly Today? Live Weather Status',
+};
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);

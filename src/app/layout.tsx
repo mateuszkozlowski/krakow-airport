@@ -12,7 +12,10 @@ const inter = Inter({ subsets: ['latin'] });
 Clarity.init(projectId);
 
 export const metadata: Metadata = {
-  title: 'KRK.flights',
+  title: {
+    template: 'KRK.flights | %s',
+    default: 'KRK.flights - Live Krakow Airport Weather & Flight Status',
+  },
   description: 'Information on the status of flights from Krakow Airport, including delays and cancellations related to weather conditions.',
   keywords: 'Krakow, airport, app, flights, delays, cancellations, weather',
   authors: [{ name: 'Mateusz Kozlowski' }],

@@ -3,6 +3,11 @@ import { Alert } from "@/components/ui/alert";
 import { Changelog } from "@/components/Changelog";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Changelog & Updates',
+};
 
 export default function Page() {
     return (
