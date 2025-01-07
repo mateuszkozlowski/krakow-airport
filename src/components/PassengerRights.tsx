@@ -15,13 +15,32 @@ interface InfoSectionProps {
 export function PassengerRights() {
   return (
     <div className="py-8">
-      <Alert className="mb-6">
-        <Shield className="h-4 w-4" />
+      <Alert variant="default" className="mb-8">
+        <Info className="h-4 w-4" />
         <AlertDescription>
-          Important: This is an unofficial guide to help you understand your EU261 rights. 
-          We are not affiliated with any airline or Kraków Airport.
+          Pro tip: Join forces with other passengers - airlines are more responsive to group requests. 
+          Document everything and get all promises in writing.
         </AlertDescription>
       </Alert>
+      
+      <Alert variant="default" className="mb-8 bg-green-50 border-green-200">
+        <Shield className="h-4 w-4 text-green-600" />
+        <AlertDescription className="flex items-center justify-between">
+          <span className="text-green-900 mt-0.5">
+            Need help claiming compensation? Get professional support with your claim.
+          </span>
+          <a 
+            href="https://www.airhelp.com/pl/?utm_medium=affiliate&utm_source=pap&utm_campaign=aff-krkflights&utm_content=&a_aid=krkflights&a_bid=2f59c947"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-700 hover:text-green-800 font-medium flex items-center gap-1 mt-0.5"
+          >
+            Check eligibility
+            <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </AlertDescription>
+      </Alert>
+      
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
@@ -324,13 +343,27 @@ export function PassengerRights() {
         </div>
       </div>
 
-      <Alert variant="default" className="mt-6">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Pro tip: Join forces with other passengers - airlines are more responsive to group requests. 
-          Document everything and get all promises in writing.
-        </AlertDescription>
-      </Alert>
+      <div className="mt-8 mb-8">
+        <div className="rounded-lg border bg-gradient-to-br from-green-50 to-white p-6">
+          <h2 className="text-xl font-bold mb-3 text-slate-900 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-green-600" />
+            Need Help with Your Claim?
+          </h2>
+          <p className="text-slate-600 mb-4">
+            Don't want to handle the claim process yourself? Professional services can help you get the compensation you deserve, even for flights from up to 3 years ago.
+          </p>
+          <a 
+            href="https://www.airhelp.com/pl/?utm_medium=affiliate&utm_source=pap&utm_campaign=aff-krkflights&utm_content=&a_aid=krkflights&a_bid=2f59c947"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Check Your Eligibility
+            <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+
     </div>
   );
 }
