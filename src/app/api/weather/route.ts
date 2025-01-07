@@ -150,9 +150,9 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       visibility: observation.visibility.meters_float,
       visibility_units: 'meters',
       wind: {
-        speed_kts: observation.wind.speed_kts,
-        direction: observation.wind.degrees,
-        gust_kts: observation.wind.gust_kts || null
+        speed_kts: observation.wind?.speed_kts || 0,
+        direction: observation.wind?.degrees || 0,
+        gust_kts: observation.wind?.gust_kts || null
       },
       ceiling: observation.ceiling ? {
         feet: observation.ceiling.feet
