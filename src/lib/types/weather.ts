@@ -7,6 +7,7 @@ export interface WindInfo {
 }
 
 export interface CloudInfo {
+  code: string;
   coverage: 'SKC' | 'FEW' | 'SCT' | 'BKN' | 'OVC';
   base_feet_agl: number;
 }

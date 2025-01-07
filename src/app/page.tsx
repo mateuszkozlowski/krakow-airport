@@ -230,10 +230,8 @@ export default function Page() {
                                     {formatHighRiskTimes()}. 
                                     {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
                                         && " Additional severe weather periods possible later."}
-                                    {" "}
-                                    {highRiskPeriods.some(p => p.riskLevel.level === 4)
-                                        ? "Contact your airline immediately."
-                                        : "Check your flight status with your airline."}
+                                    {" Check your flight status"}
+                                    {!highRiskPeriods.some(p => p.riskLevel.level === 4) && " with your airline"}.
                                 </p>
                                 <Link 
                                     href="/passengerrights" 
@@ -255,7 +253,7 @@ export default function Page() {
                         <>
                             <p className="text-xl md:text-3xl mb-8 text-white/80">
                                 {weather.current.riskLevel.level === 4
-                                    ? "Airport operations may be suspended. Contact your airline immediately."
+                                    ? "Airport operations may be suspended. Check your flight status."
                                     : weather.current.riskLevel.level === 3
                                         ? "Significant disruptions are likely. Check your flight status."
                                         : weather.current.riskLevel.level === 2

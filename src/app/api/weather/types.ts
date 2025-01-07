@@ -56,15 +56,40 @@ export interface Visibility {
   meters: number;
 }
 
+export interface WeatherCondition {
+  code: string;
+  text?: string;
+}
+
 export interface ForecastLine {
-  timestamp: ForecastTimestamp | null;
-  change: {
-    indicator: ChangeIndicator;
+  timestamp: {
+    from: string;
+    to: string;
+  } | null;
+  change?: {
+    indicator: {
+      code: string;
+      text?: string;
+      desc?: string;
+      probability?: number;
+    };
   };
-  conditions: TransformedCondition[];
-  wind: Wind | null;
-  visibility: Visibility | null;
-  ceiling: Ceiling | null;
+  conditions: WeatherCondition[];
+  clouds?: {
+    code: string;
+    base_feet_agl: number;
+  }[];
+  wind: {
+    speed_kts: number;
+    direction: number;
+    gust_kts?: number;
+  } | null;
+  visibility?: {
+    meters: number;
+  };
+  ceiling?: {
+    feet: number;
+  };
 }
 
 export interface TransformedTaf {
