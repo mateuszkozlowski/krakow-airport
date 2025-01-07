@@ -247,7 +247,9 @@ export default function Page() {
                 )}
 
                 <div className="max-w-4xl mx-auto px-6 pb-36">
-                    <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">Will I fly today from Krakow?</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">
+                        Will I fly today from Krakow?
+                    </h1>
 
                     {weather?.current && (
                         <>
