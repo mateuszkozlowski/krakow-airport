@@ -26,11 +26,6 @@ const MINIMUMS = {
   CROSSWIND: 20      // knots
 } as const;
 
-// Add NO_FLY_PHENOMENA
-const NO_FLY_PHENOMENA = new Set([
-  '+TSRA', 'TSGR', '+SHSN', '+SN', 'FC', 'DS', 'SS'
-]);
-
 // Risk weights for different conditions tailored to Kraków's usual conditions
 const RISK_WEIGHTS = {
   // Severe phenomena (immediate impact)
@@ -358,8 +353,15 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
 
 // Add this function to combine forecasts
 function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
-  let combined: ForecastChange[] = [...tafForecast];
+  console.log('\n=== Starting Forecast Combination ===');
+  console.log('TAF Forecast periods:', tafForecast.map(f => ({
+    time: f.timeDescription,
+    phenomena: f.conditions.phenomena,
+    risk: f.riskLevel.level
+  })));
 
+  const combined: ForecastChange[] = [...tafForecast];
+  
   // First pass: collect hourly conditions
   const hourlyConditions = new Map<number, {
     conditions: string[];
@@ -416,8 +418,14 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
   // Rest of the hourly conditions collection remains the same...
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
     const time = new Date(openMeteoData.hourly.time[i]);
-    const timeKey = time.getTime();
-    
+    console.log(`\nProcessing OpenMeteo hour ${time.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' })}:`, {
+      temperature: openMeteoData.hourly.temperature_2m[i] + '°C',
+      weather: WMO_WEATHER_CODES[openMeteoData.hourly.weather_code[i]],
+      visibility: (openMeteoData.hourly.visibility[i] / 1000).toFixed(1) + 'km',
+      wind: `${openMeteoData.hourly.wind_speed_10m[i]}kt${openMeteoData.hourly.wind_gusts_10m[i] ? ` (gusts ${openMeteoData.hourly.wind_gusts_10m[i]}kt)` : ''}`,
+      precipitation: `${openMeteoData.hourly.precipitation_probability[i]}% chance${openMeteoData.hourly.rain[i] > 0 ? `, rain ${openMeteoData.hourly.rain[i]}mm` : ''}${openMeteoData.hourly.snowfall[i] > 0 ? `, snow ${openMeteoData.hourly.snowfall[i]}cm` : ''}`
+    });
+
     const weatherCode = openMeteoData.hourly.weather_code[i];
     const visibility = openMeteoData.hourly.visibility[i];
     const windSpeed = openMeteoData.hourly.wind_speed_10m[i];
@@ -446,7 +454,7 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
       snow
     });
 
-    hourlyConditions.set(timeKey, {
+    hourlyConditions.set(time.getTime(), {
       conditions,
       risk,
       visibility,
@@ -455,9 +463,11 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
   }
 
   // Second pass: split periods based on significant changes
+  console.log('\n=== Processing Combined Forecast ===');
   const newPeriods: ForecastChange[] = [];
 
   for (const period of combined) {
+    console.log(`\nProcessing period: ${period.timeDescription}`);
     let currentStart = period.from;
     let currentConditions = new Set<string>();
     let currentRisk = period.riskLevel.level;
@@ -499,10 +509,26 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
 
         const shouldSplit = 
           Math.abs(hourData.risk - currentRisk) >= 1 || // Risk level changed significantly
-          (hourData.visibility && hourData.visibility < 3000 && !Array.from(currentConditions).some(c => c.includes('Visibility'))) || // Visibility became poor
-          (hourData.wind?.gusts && hourData.wind.gusts >= 25 && !Array.from(currentConditions).some(c => c.includes('wind'))); // Wind became strong
+          (hourData.visibility && hourData.visibility < 3000 && 
+            !Array.from(currentConditions).some(c => c.includes('Visibility'))) || // Only split if visibility newly became poor
+          (hourData.wind?.gusts && hourData.wind.gusts >= 25 && 
+            !Array.from(currentConditions).some(c => c.includes('Strong'))); // Only split if wind newly became strong
 
         if (shouldSplit && hourToCheck > currentStart) {
+          console.log('\nSplitting period at:', hourToCheck.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+          console.log('Previous conditions:', Array.from(currentConditions));
+          console.log('Previous risk:', currentRisk);
+          console.log('New conditions:', Array.from(mergedConditions));
+          console.log('Hour data risk:', hourData.risk);
+          console.log('Wind data:', hourData.wind);
+          console.log('Visibility:', hourData.visibility);
+          console.log('Split reason:', {
+            riskChange: Math.abs(hourData.risk - currentRisk) >= 1,
+            newPoorVisibility: hourData.visibility && hourData.visibility < 3000 && 
+              !Array.from(currentConditions).some(c => c.includes('Visibility')),
+            newStrongWind: hourData.wind?.gusts && hourData.wind.gusts >= 25 && 
+              !Array.from(currentConditions).some(c => c.includes('Strong'))
+          });
           // Create new period with merged conditions
           newPeriods.push({
             ...period,
@@ -524,7 +550,7 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
           // Start new period
           currentStart = hourToCheck;
           currentConditions = mergedConditions;
-          currentRisk = hourData.risk;
+          currentRisk = (hourData.risk >= 4 ? 4 : hourData.risk >= 3 ? 3 : hourData.risk >= 2 ? 2 : 1) as 1 | 2 | 3 | 4;
         } else {
           // Update current conditions
           currentConditions = mergedConditions;
@@ -558,6 +584,12 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
     }
   }
 
+  console.log('\nFinal combined forecast:', newPeriods.map(f => ({
+    time: f.timeDescription,
+    phenomena: f.conditions.phenomena,
+    risk: f.riskLevel.level
+  })));
+
   return newPeriods;
 }
 
@@ -580,18 +612,7 @@ function calculateOpenMeteoRisk({
 }): 1 | 2 | 3 | 4 {
   let totalScore = 0;
 
-  // Assess visibility using existing EPKK weights
-  if (visibility < MINIMUMS.VISIBILITY) {
-    totalScore += RISK_WEIGHTS.VISIBILITY.BELOW_MINIMUM;
-  } else if (visibility < 800) {
-    totalScore += RISK_WEIGHTS.VISIBILITY.VERY_LOW;
-  } else if (visibility < 1500) {
-    totalScore += RISK_WEIGHTS.VISIBILITY.LOW;
-  } else if (visibility < 3000) {
-    totalScore += RISK_WEIGHTS.VISIBILITY.MODERATE;
-  }
-
-  // Assess winds using EPKK parameters
+  // Assess winds
   if (windGusts >= 35 || windSpeed >= MINIMUMS.MAX_WIND) {
     totalScore += 100; // Critical - exceeds limits
   } else if (windGusts >= 25 || windSpeed >= 25) {
@@ -600,34 +621,41 @@ function calculateOpenMeteoRisk({
     totalScore += 40; // Moderate wind conditions
   }
 
-  // Map WMO codes to EPKK risk weights
-  const getWeatherScore = (code: number): number => {
-    // Thunderstorm conditions
-    if ([95, 96, 99].includes(code)) return RISK_WEIGHTS.PHENOMENA_SEVERE.TS;
-    
-    // Snow conditions
-    if (code === 75) return RISK_WEIGHTS.PHENOMENA_SEVERE['+SN'];
-    if (code === 73) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN;
-    if (code === 71) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN * 0.7;
-    
-    // Rain conditions
-    if (code === 65) return RISK_WEIGHTS.PHENOMENA_MODERATE['+RA'];
-    if (code === 63) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA;
-    if (code === 61) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.7;
-    
-    // Drizzle (treat as light rain)
-    if ([51, 53, 55].includes(code)) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.5;
-    
-    // Fog conditions
-    if (code === 45) return RISK_WEIGHTS.PHENOMENA_MODERATE.FG;
-    if (code === 48) return RISK_WEIGHTS.PHENOMENA_SEVERE.FZFG;
+  // Assess precipitation with probability and intensity
+  const precipScore = getWeatherScore(weatherCode);
+  if (precipScore > 0) {
+    // Adjust score based on precipitation probability
+    if (precipProb > 75) {
+      totalScore += precipScore; // Full score for high probability
+    } else if (precipProb > 50) {
+      totalScore += precipScore * 0.7; // Reduced score for medium probability
+    } else if (precipProb > 25) {
+      totalScore += precipScore * 0.4; // Further reduced for low probability
+    }
 
-    return 0;
-  };
+    // Additional adjustment based on precipitation intensity
+    if (rain > 3 || snow > 1) {
+      totalScore *= 1.2; // 20% increase for heavy precipitation
+    }
+  }
 
-  totalScore += getWeatherScore(weatherCode);
+  // Combined conditions multiplier
+  if (windSpeed >= 25 && precipScore > 0 && precipProb > 50) {
+    totalScore *= 1.2; // 20% increase for strong winds + likely precipitation
+  }
 
-  // Convert score to risk level using EPKK thresholds
+  // Visibility assessment
+  if (visibility < MINIMUMS.VISIBILITY) {
+    totalScore += 100;
+  } else if (visibility < 800) {
+    totalScore += 90;
+  } else if (visibility < 1500) {
+    totalScore += 60;
+  } else if (visibility < 3000) {
+    totalScore += 40;
+  }
+
+  // Convert score to risk level
   const riskLevel = 
     totalScore >= 100 ? 4 :
     totalScore >= 80 ? 3 :
@@ -912,7 +940,7 @@ function formatTimeDescription(start: Date, end: Date): string {
   return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
 }
 
-function calculateRiskScore(weather: WeatherData, isEPKK: boolean = true): { score: number; reasons: string[] } {
+function calculateRiskScore(weather: WeatherData): { score: number; reasons: string[] } {
   let totalScore = 0;
   const reasons: string[] = [];
   
@@ -1020,7 +1048,7 @@ function calculateRiskScore(weather: WeatherData, isEPKK: boolean = true): { sco
 }
 
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
-  const { score, reasons } = calculateRiskScore(weather, true);
+  const { score, reasons } = calculateRiskScore(weather);
   const operationalImpacts = assessOperationalImpacts(weather);
   
   const getWeatherDescription = (reasonList: string[], impacts: string[]): string => {
@@ -1107,4 +1135,29 @@ function getVisibilityTrendDescription(current: number, previous: number): strin
   } else {
     return '📈 Visibility improving';
   }
+}
+
+// Add this helper function to get weather score based on WMO code
+function getWeatherScore(code: number): number {
+  // Thunderstorm conditions
+  if ([95, 96, 99].includes(code)) return RISK_WEIGHTS.PHENOMENA_SEVERE.TS;
+  
+  // Snow conditions
+  if (code === 75) return RISK_WEIGHTS.PHENOMENA_SEVERE['+SN'];
+  if (code === 73) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN;
+  if (code === 71) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN * 0.7;
+  
+  // Rain conditions
+  if (code === 65) return RISK_WEIGHTS.PHENOMENA_MODERATE['+RA'];
+  if (code === 63) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA;
+  if (code === 61) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.7;
+  
+  // Drizzle (treat as light rain)
+  if ([51, 53, 55].includes(code)) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.5;
+  
+  // Fog conditions
+  if (code === 45) return RISK_WEIGHTS.PHENOMENA_MODERATE.FG;
+  if (code === 48) return RISK_WEIGHTS.PHENOMENA_SEVERE.FZFG;
+
+  return 0;
 }

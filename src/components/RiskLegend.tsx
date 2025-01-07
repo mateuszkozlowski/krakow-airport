@@ -1,10 +1,17 @@
 "use client"
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerTitle, 
+  DrawerTrigger,
+  DrawerClose 
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Info, HelpCircle, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 

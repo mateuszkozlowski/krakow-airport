@@ -2,14 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
-import Link from 'next/link';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { RiskLegendDialog } from "./RiskLegend";
 
 interface WeatherTimelineProps {
@@ -49,7 +41,6 @@ function hasVisiblePhenomena(period: ForecastChange | { conditions: { phenomena:
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
-  const [showLegend, setShowLegend] = useState(false);
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     // First, filter out empty periods and sort by time and risk
@@ -227,6 +218,71 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     }
   };
 
+  function getDetailedDescription(condition: string): string {
+    if (condition.includes('Strong Winds') || condition.includes('Strong Wind Gusts')) {
+      return 'Strong winds may cause turbulence and affect aircraft handling. Possible delays or operational changes.';
+    }
+    if (condition.includes('Rain') && condition.includes('Strong')) {
+      return 'Combined rain and strong winds. High risk of turbulence and reduced visibility. Expect operational impacts.';
+    }
+    if (condition.includes('Snow')) {
+      return 'Snow conditions may require de-icing and runway clearing. Expect delays.';
+    }
+    // Add more detailed descriptions...
+    return condition;
+  }
+
+  function getImpactsList(phenomena: string[], riskLevel: number): string[] {
+    const impacts = new Set<string>(); // Use Set to avoid duplicates
+    
+    // Flight schedule impacts
+    if (phenomena.some(p => p.includes('Strong Wind Gusts'))) {
+      impacts.add('Possible flight delays due to strong winds');
+    } else if (phenomena.some(p => p.includes('Strong Winds'))) {
+      impacts.add('Some flights may experience turbulence');
+    }
+
+    // Rain conditions - handle different intensities
+    if (phenomena.some(p => p.includes('Heavy Rain') || p.includes('Heavy Drizzle'))) {
+      impacts.add('Expect slower operations and possible short delays');
+    } else if (phenomena.some(p => p.includes('Rain') || p.includes('Drizzle'))) {
+      // Only add this if no higher impact is present
+      if (!impacts.has('Expect slower operations and possible short delays')) {
+        impacts.add('Minor impact on flight schedules');
+      }
+    }
+
+    // Winter conditions
+    if (phenomena.some(p => p.includes('Heavy Snow'))) {
+      impacts.add('Significant delays due to de-icing and snow clearing');
+    } else if (phenomena.some(p => p.includes('Snow'))) {
+      impacts.add('Allow extra time for de-icing procedures');
+    }
+    if (phenomena.some(p => p.includes('Freezing'))) {
+      impacts.add('Extended waiting times due to necessary de-icing');
+    }
+
+    // Visibility-based advice
+    if (phenomena.some(p => p.includes('Visibility below minimums'))) {
+      impacts.add('High chance of flight diversions or cancellations');
+    } else if (phenomena.some(p => p.includes('Poor visibility'))) {
+      impacts.add('Possible delays due to reduced visibility');
+    }
+
+    // Only add risk-level based message if we don't have more specific impacts
+    if (impacts.size === 0) {
+      if (riskLevel >= 4) {
+        impacts.add('Consider checking with your airline for flight status');
+      } else if (riskLevel >= 3) {
+        impacts.add('Plan for potential schedule changes');
+      } else if (riskLevel >= 2) {
+        impacts.add('Minor impact on flight schedules possible');
+      }
+    }
+    
+    return Array.from(impacts);
+  }
+
   return (
     <div className="space-y-4">
       {isError ? (
@@ -294,6 +350,32 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       )}
                     </div>
 
+                    {/* Add impact summary for current conditions */}
+                    {current.riskLevel.level > 1 && (
+                      <div className="text-xs space-y-2 border-t border-white/10 pt-3">
+                        <p className="font-medium text-slate-300">What to expect:</p>
+                        <ul className="space-y-1.5">
+                          {getImpactsList(current.conditions.phenomena, current.riskLevel.level)
+                            .map((impact, idx) => (
+                              <li key={idx} className="text-slate-400 flex items-start gap-2">
+                                <span className="text-slate-500 shrink-0">
+                                  {impact.includes('turbulence') ? '✈️' :
+                                   impact.includes('delays') ? '⏳' :
+                                   impact.includes('de-icing') ? '❄️' :
+                                   impact.includes('snow clearing') ? '🚜' :
+                                   impact.includes('diversions') ? '🔄' :
+                                   impact.includes('cancellations') ? '✋' :
+                                   impact.includes('schedule') ? '📱' :
+                                   impact.includes('extra time') ? '⌚' :
+                                   '💡'}
+                                </span>
+                                <span>{impact}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* Warning banner for deteriorating conditions */}
                     {current.riskLevel.level === 1 && forecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
@@ -356,7 +438,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
                                   {period.riskLevel.title}
                                 </span>
-                                {colors.icon}
+                                
                               </div>
                             </div>
                             {hasVisiblePhenomena(period) && (
@@ -369,8 +451,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   key={idx}
                                   role="status"
                                   aria-label={`Weather condition: ${condition}`}
-                                  title={condition}
-                                  className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                                  title={getDetailedDescription(condition)}
+                                  className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
                                 >
                                   {condition}
                                 </span>
@@ -385,6 +467,32 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                               <span className="text-xs text-slate-400">
                                 {period.probability}% chance of these conditions
                               </span>
+                            )}
+
+                            {/* Add this impact summary */}
+                            {period.riskLevel.level > 1 && (
+                              <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
+                                <p className="font-medium text-slate-300">What to expect:</p>
+                                <ul className="space-y-1.5">
+                                  {getImpactsList(period.conditions.phenomena, period.riskLevel.level)
+                                    .map((impact, idx) => (
+                                      <li key={idx} className="text-slate-400 flex items-start gap-2">
+                                        <span className="text-slate-500 shrink-0">
+                                          {impact.includes('turbulence') ? '✈️' :
+                                           impact.includes('delays') ? '⏳' :
+                                           impact.includes('de-icing') ? '❄️' :
+                                           impact.includes('snow clearing') ? '🚜' :
+                                           impact.includes('diversions') ? '🔄' :
+                                           impact.includes('cancellations') ? '✋' :
+                                           impact.includes('schedule') ? '📱' :
+                                           impact.includes('extra time') ? '⌚' :
+                                           '💡'}
+                                        </span>
+                                        <span>{impact}</span>
+                                      </li>
+                                    ))}
+                                </ul>
+                              </div>
                             )}
                           </div>
                         </CardContent>

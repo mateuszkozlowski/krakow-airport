@@ -43,7 +43,6 @@ const DrawerContent = React.forwardRef<
 DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = ({
-  className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
@@ -56,7 +55,7 @@ DrawerHeader.displayName = "DrawerHeader"
 const DrawerTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+>(({ ...props }, ref) => (
   <DrawerPrimitive.Title
     ref={ref}
     className="text-lg font-semibold text-slate-50"
