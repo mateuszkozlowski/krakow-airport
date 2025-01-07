@@ -203,10 +203,7 @@ const DEICING_CONDITIONS = {
 } as const;
 
 // Add a visibility trend tracker
-let previousVisibilityReading: {
-  visibility: number;
-  timestamp: number;
-} | null = null;
+const previousVisibilityReading = readings[i - 1]?.visibility;
 
 // Add operational impact assessment
 function assessOperationalImpacts(weather: WeatherData): string[] {
