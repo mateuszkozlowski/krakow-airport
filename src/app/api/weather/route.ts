@@ -165,32 +165,50 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
 function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafResponse | null {
   if (!checkwxData.data?.[0]?.forecast) return null;
 
-  const forecast = checkwxData.data[0].forecast.map(period => ({
-    timestamp: period.timestamp ? {
-      from: period.timestamp.from,
-      to: period.timestamp.to
-    } : null,
-    change: period.change ? {
-      indicator: {
-        code: period.change.indicator.code,
-        probability: period.change.indicator.code === 'TEMPO' ? 30 : undefined
-      }
-    } : undefined,
-    conditions: period.conditions?.map(c => ({
-      code: c.code
-    })) || [],
-    wind: period.wind ? {
-      speed_kts: period.wind.speed_kts,
-      direction: period.wind.degrees,
-      gust_kts: period.wind.gust_kts
-    } : null,
-    visibility: period.visibility ? {
-      meters: period.visibility.meters_float
-    } : null,
-    ceiling: period.clouds?.length ? {
-      feet: Math.min(...period.clouds.map(cloud => cloud.feet))
-    } : null
-  }));
+  const forecast = checkwxData.data[0].forecast.map(period => {
+    // Log the raw period data
+    console.log('Transforming TAF period:', {
+      type: period.change?.indicator?.code || 'BASE',
+      conditions: period.conditions,
+      visibility: period.visibility,
+      clouds: period.clouds
+    });
+
+    return {
+      timestamp: period.timestamp ? {
+        from: period.timestamp.from,
+        to: period.timestamp.to
+      } : null,
+      change: period.change ? {
+        indicator: {
+          code: period.change.indicator.code,
+          text: period.change.indicator.text,
+          desc: period.change.indicator.desc,
+          probability: period.change.indicator.code === 'TEMPO' ? 30 : undefined
+        }
+      } : undefined,
+      conditions: period.conditions?.map(c => ({
+        code: c.code,
+        text: c.text  // Keep the text for debugging
+      })) || [],
+      clouds: period.clouds?.map(c => ({
+        code: c.code,
+        base_feet_agl: c.base_feet_agl,
+        feet: c.feet
+      })) || [],
+      wind: period.wind ? {
+        speed_kts: period.wind.speed_kts,
+        direction: period.wind.degrees,
+        gust_kts: period.wind.gust_kts
+      } : null,
+      visibility: period.visibility ? {
+        meters: period.visibility.meters_float
+      } : null,
+      ceiling: period.clouds?.length ? {
+        feet: Math.min(...period.clouds.map(cloud => cloud.feet))
+      } : null
+    };
+  });
 
   return {
     data: [{
