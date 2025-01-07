@@ -25,17 +25,24 @@ const DrawerContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DrawerPrimitive.Portal>
-    <DrawerPrimitive.Overlay className="fixed inset-0 bg-black/40" />
+    <DrawerPrimitive.Overlay 
+      className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" 
+    />
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 mt-24 flex flex-col rounded-t-[10px] border-t border-slate-700",
-        "h-[85vh] bg-slate-900",
+        "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[10px]",
+        "bg-slate-900 border-t border-slate-800",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "duration-300 ease-in-out",
+        "max-h-[96vh] min-h-[320px]",
         className
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-1.5 w-[100px] rounded-full bg-slate-700" />
+      <div className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-slate-700/50" />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPrimitive.Portal>
@@ -43,7 +50,6 @@ const DrawerContent = React.forwardRef<
 DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = ({
-  className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
@@ -59,7 +65,7 @@ const DrawerTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Title
     ref={ref}
-    className="text-lg font-semibold text-slate-50"
+    className={cn("text-lg font-semibold text-slate-50", className)}
     {...props}
   />
 ))

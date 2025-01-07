@@ -2,11 +2,8 @@
 import { NextResponse } from 'next/server';
 import { getCacheOrFetch } from '@/lib/cache';
 import type {
-  AeroAPIObservationsResponse,
-  AeroAPIForecastResponse,
   TransformedMetarResponse,
   TransformedTafResponse,
-  TransformedCondition,
   Cloud,
   ForecastLine
 } from './types';

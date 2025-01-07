@@ -2,38 +2,15 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Clock, Hotel, Info, Coffee, Shield, LucideIcon, MapPin, Phone, Mail, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { Clock, Hotel, Info, Coffee, Shield, LucideIcon, MapPin, ArrowUpRight } from 'lucide-react';
 
 interface InfoSectionProps {
   title: string;
   children: ReactNode;
   icon: LucideIcon;
 }
-
-const InfoSection = ({ title, children, icon: Icon }: InfoSectionProps) => (
-  <div className="rounded-lg border bg-card p-4 mb-4">
-    <div className="flex items-center gap-2 mb-3">
-      <Icon className="h-5 w-5 text-blue-500" />
-      <h3 className="font-semibold">{title}</h3>
-    </div>
-    {children}
-  </div>
-);
-
-interface ContactItemProps {
-  label: string;
-  value: string;
-}
-
-const ContactItem = ({ label, value }: ContactItemProps) => (
-  <div className="flex items-center justify-between rounded-md bg-muted p-3">
-    <span className="text-sm font-medium">{label}</span>
-    <span className="font-mono text-sm">{value}</span>
-  </div>
-);
 
 export function PassengerRights() {
   return (

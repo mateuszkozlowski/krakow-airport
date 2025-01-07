@@ -10,6 +10,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-01-07",
+    version: "0.3.1",
+    changes: [
+      "Integrated OpenMeteo as a secondary weather data source with intelligent data fusion. The system now combines TAF and OpenMeteo forecasts with weighted impact (0.8) to provide more comprehensive and accurate weather predictions.",
+
+      "Standardized wind condition descriptions across all displays. Introduced consistent terminology for wind reporting: 'Strong Wind Gusts' (≥35kt), 'Strong Winds' (≥25kt), and 'Moderate Winds' (≥15kt). Enhanced weather risk assessment with more sophisticated precipitation analysis.",
+     
+      "Added detailed 'What to expect' sections throughout the interface to help passengers understand weather impacts. Implemented context-aware impact descriptions that explain how different weather conditions affect flight operations. Enhanced the visibility of operational impacts with intuitive icons and clear explanations.",
+      
+    ] 
+  },
+  {
     date: "2024-01-06",
     version: "0.3.0",
     changes: [

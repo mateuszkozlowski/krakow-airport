@@ -1,10 +1,17 @@
 "use client"
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerTitle, 
+  DrawerTrigger,
+  DrawerClose 
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Info, HelpCircle, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
@@ -54,15 +61,17 @@ const RiskLevel: React.FC<RiskLevelProps> = ({ icon, color, title, description, 
 );
 
 const RiskLegendContent = () => (
-  <div className="space-y-4">
-    <div className="space-y-1">
-      <h2 className="font-semibold text-base text-slate-200">Understanding Weather Impact</h2>
-      <p className="text-xs text-slate-400">
+  <div className="space-y-6">
+    <div className="space-y-2">
+      <h2 className="font-semibold text-lg text-slate-200">
+        Understanding Weather Impact
+      </h2>
+      <p className="text-sm text-slate-400">
         This guide helps you understand how weather conditions might affect your flight and what actions to take.
       </p>
     </div>
 
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       <RiskLevel
         icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
         color="text-emerald-400"
@@ -143,15 +152,24 @@ const RiskLegendContent = () => (
       />
     </div>
 
-    <div className="rounded-lg bg-slate-800/50 p-3 text-xs">
-      <div className="flex gap-2">
-        <Info className="h-3 w-3 text-blue-400 shrink-0 mt-0.5" />
-        <div className="space-y-1">
+    <div className="rounded-lg bg-slate-800/50 p-4 text-sm">
+      <div className="flex gap-3">
+        <Info className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+        <div className="space-y-2">
           <p className="font-medium text-slate-200">Pro Tips</p>
-          <ul className="space-y-0.5 text-slate-400">
-            <li>• Download your airline's mobile app for instant updates</li>
-            <li>• Save airline contact numbers in your phone</li>
-            <li>• Take a screenshot of your booking details</li>
+          <ul className="space-y-1.5 text-slate-400">
+            <li className="flex items-center gap-2">
+              <span className="block w-1 h-1 rounded-full bg-slate-600" />
+              Download your airline's mobile app for instant updates
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="block w-1 h-1 rounded-full bg-slate-600" />
+              Save airline contact numbers in your phone
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="block w-1 h-1 rounded-full bg-slate-600" />
+              Take a screenshot of your booking details
+            </li>
           </ul>
         </div>
       </div>
@@ -168,17 +186,17 @@ export function RiskLegendDialog() {
         <DialogTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800 hover:text-slate-200 text-slate-300"
+            className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800/80 hover:text-slate-200 text-slate-300 transition-colors"
           >
             <HelpCircle className="w-4 h-4 mr-2" />
             Understanding weather impact
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[85vh] bg-slate-900 border border-slate-800 shadow-xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] bg-slate-900 border border-slate-800 shadow-xl">
           <DialogHeader className="border-b border-slate-800 pb-4">
-            <DialogTitle className="text-slate-200">Weather Impact Guide</DialogTitle>
+            <DialogTitle className="text-slate-200 px-1">Weather Impact Guide</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto pr-6" style={{ maxHeight: "calc(85vh - 120px)" }}>
+          <div className="overflow-y-auto px-2 custom-scrollbar" style={{ maxHeight: "calc(90vh - 120px)" }}>
             <RiskLegendContent />
           </div>
         </DialogContent>
@@ -191,18 +209,18 @@ export function RiskLegendDialog() {
       <DrawerTrigger asChild>
         <Button 
           variant="outline" 
-          className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800 hover:text-slate-200 text-slate-300"
+          className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800/80 hover:text-slate-200 text-slate-300 transition-colors"
         >
           <HelpCircle className="w-4 h-4 mr-2" />
           Understanding weather impact
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="bg-slate-900 border-t border-slate-800 max-h-[85vh]">
+      <DrawerContent className="flex flex-col h-[85vh]">
         <DrawerHeader className="border-b border-slate-800">
-          <DrawerTitle className="text-slate-200">Weather Impact Guide</DrawerTitle>
+          <DrawerTitle className="text-slate-200 px-1 pl-7">Weather Impact Guide</DrawerTitle>
         </DrawerHeader>
-        <div className="overflow-y-auto">
-          <div className="px-4 pb-8 pt-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="px-6 py-6">
             <RiskLegendContent />
           </div>
         </div>
@@ -210,7 +228,7 @@ export function RiskLegendDialog() {
           <DrawerClose asChild>
             <Button 
               variant="outline" 
-              className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300"
+              className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700/80 text-slate-300 transition-colors"
             >
               Close
             </Button>
