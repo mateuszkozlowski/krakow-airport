@@ -287,15 +287,13 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     {/* Warning banner for deteriorating conditions */}
                     {current.riskLevel.level === 1 && forecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
-                      return withinNextHour && (p.riskLevel.level > 1 || p.conditions.phenomena.length > 0);
+                      return withinNextHour && p.riskLevel.level > 1;
                     }) && (
                       <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
                         <div className="flex items-top gap-2 text-orange-400">
                           <AlertTriangle className="w-12 h-12 md:w-4 md:h-4 mt-0.5" />
                           <div>
                             <p className="text-sm font-medium"><span className="font-bold">Weather conditions expected to deteriorate soon.</span> Check the timeline below for detailed changes</p>
-                         
-                        
                           </div>
                         </div>
                       </div>
