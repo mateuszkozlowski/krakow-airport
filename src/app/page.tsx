@@ -136,40 +136,51 @@ export default function Page() {
         if (!highRiskPeriods.length) return '';
         
         const firstPeriod = highRiskPeriods[0];
-        const periodDate = new Date(firstPeriod.from);
+        const periodStart = new Date(firstPeriod.from);
+        const periodEnd = new Date(firstPeriod.to);
+        const now = new Date();
         
+        // If the period has already started
+        if (periodStart <= now && periodEnd > now) {
+            return `until ${periodEnd.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Warsaw'
+            })}`;
+        }
+        
+        // Original logic for future periods
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         
-        // Convert to Warsaw time for comparison
-        const warsawDate = new Date(periodDate.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+        const warsawDate = new Date(periodStart.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
         const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
         const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
         
         const isSameDay = (d1: Date, d2: Date) => 
-          d1.getDate() === d2.getDate() &&
-          d1.getMonth() === d2.getMonth() &&
-          d1.getFullYear() === d2.getFullYear();
+            d1.getDate() === d2.getDate() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getFullYear() === d2.getFullYear();
         
         const dayLabel = isSameDay(warsawDate, warsawToday)
             ? 'today'
             : isSameDay(warsawDate, warsawTomorrow)
                 ? 'tomorrow'
-                : periodDate.toLocaleDateString('en-GB', {
+                : periodStart.toLocaleDateString('en-GB', {
                     weekday: 'long',
                     month: 'long',
                     day: 'numeric',
                     timeZone: 'Europe/Warsaw'
                 });
 
-        const startTime = periodDate.toLocaleTimeString('en-GB', {
+        const startTime = periodStart.toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Europe/Warsaw'
         });
         
-        const endTime = new Date(firstPeriod.to).toLocaleTimeString('en-GB', {
+        const endTime = periodEnd.toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Europe/Warsaw'
