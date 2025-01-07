@@ -757,11 +757,11 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     // Fetch both TAF and Open-Meteo data
     const [weatherResponse, openMeteoData] = await Promise.all([
       fetch('/api/weather', {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        },
-        cache: 'no-store'
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
       }),
       fetchOpenMeteoForecast()
     ]);
@@ -779,7 +779,7 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     const currentAssessment = assessWeatherRisk(currentWeather);
     const allForecastPeriods = processForecast(forecast);
     const filteredForecast = filterForecastPeriods(allForecastPeriods);
-
+    
     // Combine forecasts if Open-Meteo data is available
     const combinedForecast = openMeteoData 
       ? combineForecasts(filteredForecast, openMeteoData)
