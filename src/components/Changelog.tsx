@@ -10,6 +10,21 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-01-07",
+    version: "0.3.1",
+    changes: [
+      "Integrated OpenMeteo as a secondary weather data source with intelligent data fusion. The system now combines TAF and OpenMeteo forecasts with weighted impact (0.8) to provide more comprehensive and accurate weather predictions.",
+
+      "Refined weather condition display with smarter filtering and standardized formatting. The system now only shows operationally significant wind conditions (≥15kt) and visibility issues (<1000m), reducing clutter and focusing on what matters for flight operations.",
+      
+      "Implemented intelligent weather phenomena deduplication to prevent redundant information. Multiple similar conditions are now combined and displayed using standardized terminology, making weather reports clearer and more concise.",
+      
+      "Enhanced period splitting logic to better reflect significant weather changes. The timeline now creates new periods when conditions change meaningfully, providing a more accurate representation of weather evolution.",
+      
+      "Standardized wind condition descriptions across all displays. Introduced consistent terminology for wind reporting: 'Strong Wind Gusts' (≥35kt), 'Strong Winds' (≥25kt), and 'Moderate Winds' (≥15kt)."
+    ]
+  },
+  {
     date: "2024-01-06",
     version: "0.3.0",
     changes: [

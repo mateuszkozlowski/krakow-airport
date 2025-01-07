@@ -124,19 +124,23 @@ export const WEATHER_PHENOMENA = {
   TS: '⛈️ Thunderstorm',
   TSRA: '⛈️ Thunderstorm with Rain',
   
-  // Freezing conditions
-  FZRA: '🌧️❄️ Freezing Rain',
-  FZDZ: '💧❄️ Freezing Drizzle',
-  FZFG: '🌫️❄️ Freezing Fog',
-  FZ: '🌨️❄️ Freezing',
+  // Freezing conditions (with de-icing indicators)
+  FZRA: '🌧️❄️ Freezing Rain (De-icing Required)',
+  FZDZ: '💧❄️ Freezing Drizzle (De-icing Required)',
+  FZFG: '🌫️❄️ Freezing Fog (De-icing Possible)',
+  FZ: '🌨️❄️ Freezing Conditions (De-icing Required)',
+  
+  // Add combined freezing conditions
+  'FZRA FZFG': '🌧️❄️ Freezing Rain with Fog (De-icing Required)',
+  'FZDZ FZFG': '💧❄️ Freezing Drizzle with Fog (De-icing Required)',
   
   // Snow conditions with intensity
   'SN': '🌨️ Snow',
   '-SN': '🌨️ Light Snow',
-  '+SN': '🌨️ Heavy Snow',
-  'SHSN': '🌨️ Snow Showers',
+  '+SN': '🌨️ Heavy Snow (De-icing Required)',
+  'SHSN': '🌨️ Snow Showers (De-icing Possible)',
   '-SHSN': '🌨️ Light Snow Showers',
-  '+SHSN': '🌨️ Heavy Snow Showers',
+  '+SHSN': '🌨️ Heavy Snow Showers (De-icing Required)',
   'BLSN': '🌨️ Blowing Snow',
   '+SHSN BLSN': '🌨️ Heavy Snow Showers with Blowing Snow',
   'SHSN BLSN': '🌨️ Snow Showers with Blowing Snow',
@@ -177,3 +181,47 @@ export const WEATHER_PHENOMENA = {
   BKN: '☁️ Broken Clouds',
   OVC: '☁️ Overcast'
 } as const;
+
+export interface OpenMeteoHourlyData {
+  time: string[];
+  temperature_2m: number[];
+  dew_point_2m: number[];
+  precipitation_probability: number[];
+  precipitation: number[];
+  rain: number[];
+  showers: number[];
+  snowfall: number[];
+  snow_depth: number[];
+  weather_code: number[];
+  cloud_cover: number[];
+  visibility: number[];
+  wind_speed_10m: number[];
+  wind_direction_10m: number[];
+  wind_gusts_10m: number[];
+}
+
+export interface OpenMeteoForecast {
+  hourly: OpenMeteoHourlyData;
+  hourly_units: Record<string, string>;
+}
+
+export const WMO_WEATHER_CODES: Record<number, string> = {
+  0: "Clear sky",
+  1: "Mainly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Foggy",
+  48: "Depositing rime fog",
+  51: "Light drizzle",
+  53: "Moderate drizzle",
+  55: "Dense drizzle",
+  61: "Slight rain",
+  63: "Moderate rain",
+  65: "Heavy rain",
+  71: "Slight snow",
+  73: "Moderate snow",
+  75: "Heavy snow",
+  95: "Thunderstorm",
+  96: "Thunderstorm with slight hail",
+  99: "Thunderstorm with heavy hail"
+};

@@ -35,6 +35,18 @@ interface WeatherTimelineProps {
   retry: () => Promise<void>;
 }
 
+function getStandardizedWindDescription(speed: number, gusts?: number): string {
+  if (gusts && gusts >= 35) return "💨 Strong Wind Gusts";
+  if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong Winds";
+  if (speed >= 15) return "💨 Moderate Winds";
+  return ""; // Don't show light winds
+}
+
+function hasVisiblePhenomena(period: ForecastChange | { conditions: { phenomena: string[] }, wind?: { speed_kts: number; gust_kts?: number } }): boolean {
+  const hasSignificantWind = !!(period.wind?.speed_kts && period.wind.speed_kts >= 15);
+  return period.conditions.phenomena.length > 0 || hasSignificantWind;
+}
+
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
@@ -261,9 +273,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                               </span>
                             ))}
                             {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
-                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                {`💨 Wind ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` gusting ${current.wind.gust_kts}kt` : ''}`}
-                              </span>
+                              getStandardizedWindDescription(current.wind.speed_kts, current.wind.gust_kts)
                             )}
                             {current.visibility?.meters && current.visibility.meters < 5000 && (
                               <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
@@ -349,7 +359,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 {colors.icon}
                               </div>
                             </div>
-                            {(period.conditions.phenomena.length > 0 || period.wind) && (
+                            {hasVisiblePhenomena(period) && (
                               <div className="mt-1.5 border-t border-white/10"> </div>
                             )}
                             {/* Weather conditions group */}
@@ -365,10 +375,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   {condition}
                                 </span>
                               ))}
-                              {period.wind && !period.conditions.phenomena.some(p => p.includes('Wind')) && (
-                                <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                  {`💨 Wind ${period.wind.speed_kts}kt${period.wind.gust_kts ? ` gusting ${period.wind.gust_kts}kt` : ''}`}
-                                </span>
+                              {period.wind?.speed_kts && !period.conditions.phenomena.some(p => p.includes('Wind')) && (
+                                getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts)
                               )}
                             </div>
 

@@ -6,10 +6,11 @@ import type {
   RiskAssessment,
   ForecastChange,
   WeatherResponse,
+  OpenMeteoForecast,
 } from './types/weather';
 
-// Import WEATHER_PHENOMENA as a value, not a type
-import { WEATHER_PHENOMENA } from './types/weather';
+// Import WEATHER_PHENOMENA and WMO_WEATHER_CODES as values
+import { WEATHER_PHENOMENA, WMO_WEATHER_CODES } from './types/weather';
 import { adjustToWarsawTime } from '@/lib/utils/time';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
@@ -199,16 +200,17 @@ const weatherDescriptions: Record<string, string> = {
 // Add de-icing conditions check
 const DEICING_CONDITIONS = {
   TEMPERATURE: {
-    BELOW_ZERO: 0,     // Celsius
-    HIGH_RISK: -3,     // High risk of frost/ice formation
-    SEVERE: -8         // Severe icing conditions
+    BELOW_ZERO: 3,      // Temperature threshold in Celsius
+    HIGH_RISK: 0,       // High risk threshold
+    SEVERE: -5         // Severe conditions threshold
   },
   PHENOMENA: new Set([
-    'FZRA', 'FZDZ',    // Freezing precipitation
-    'SN', '+SN',       // Any snow
-    'SHSN', '+SHSN',   // Snow showers
-    'RASN',            // Rain and snow mix
-    'FZFG'             // Freezing fog
+    'FZRA',    // Freezing rain
+    'FZDZ',    // Freezing drizzle
+    'FZFG',    // Freezing fog
+    '+SN',     // Heavy snow
+    'SN',      // Snow
+    'SHSN'     // Snow showers
   ])
 } as const;
 
@@ -336,58 +338,427 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
     });
 }
 
-// Update getAirportWeather to use filtered forecast
-export async function getAirportWeather(): Promise<WeatherResponse | null> {
+// Add this function to fetch Open-Meteo data
+async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   try {
-    const response = await fetch('/api/weather', {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      },
-      cache: 'no-store'
-    });
+    const response = await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=50.07778&longitude=19.78472&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&forecast_days=3'
+    );
 
     if (!response.ok) {
+      throw new Error('Failed to fetch Open-Meteo data');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching Open-Meteo data:', error);
+    return null;
+  }
+}
+
+// Add this function to combine forecasts
+function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
+  let combined: ForecastChange[] = [...tafForecast];
+
+  // First pass: collect hourly conditions
+  const hourlyConditions = new Map<number, {
+    conditions: string[];
+    risk: number;
+    visibility?: number;
+    wind?: { speed: number; gusts?: number };
+  }>();
+
+  // Helper function to get the most severe precipitation from a set of conditions
+  const getMostSeverePrecipitation = (conditions: string[]): string | null => {
+    const precipOrder = [
+      '⛈️ Severe Thunderstorm',
+      '⛈️ Thunderstorm with Hail',
+      '⛈️ Thunderstorm',
+      '🌨️ Heavy Snow',
+      '🌨️ Snow',
+      '🌨️ Light Snow',
+      '🌧️ Heavy Rain',
+      '🌧️ Rain',
+      '🌧️ Light Rain',
+      '🌧️ Heavy Drizzle',
+      '🌧️ Drizzle',
+      '🌧️ Light Drizzle'
+    ];
+
+    const precipConditions = conditions.filter(c => 
+      c.includes('🌧️') || c.includes('🌨️') || c.includes('⛈️')
+    );
+
+    if (precipConditions.length === 0) return null;
+
+    return precipConditions.sort((a, b) => 
+      precipOrder.indexOf(a) - precipOrder.indexOf(b)
+    )[0];
+  };
+
+  // Helper function to get the most severe wind condition
+  const getMostSevereWind = (conditions: string[]): string | null => {
+    const windOrder = [
+      '💨 Strong Wind Gusts',
+      '💨 Strong Winds',
+      '💨 Moderate Winds',
+      '💨 Light Winds'
+    ];
+
+    const windConditions = conditions.filter(c => c.includes('💨'));
+    if (windConditions.length === 0) return null;
+
+    return windConditions.sort((a, b) => 
+      windOrder.indexOf(a) - windOrder.indexOf(b)
+    )[0];
+  };
+
+  // Rest of the hourly conditions collection remains the same...
+  for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
+    const time = new Date(openMeteoData.hourly.time[i]);
+    const timeKey = time.getTime();
+    
+    const weatherCode = openMeteoData.hourly.weather_code[i];
+    const visibility = openMeteoData.hourly.visibility[i];
+    const windSpeed = openMeteoData.hourly.wind_speed_10m[i];
+    const windGusts = openMeteoData.hourly.wind_gusts_10m[i];
+    const precipProb = openMeteoData.hourly.precipitation_probability[i];
+    const rain = openMeteoData.hourly.rain[i];
+    const snow = openMeteoData.hourly.snowfall[i];
+
+    const risk = calculateOpenMeteoRisk({
+      weatherCode,
+      visibility,
+      windSpeed,
+      windGusts,
+      precipProb,
+      rain,
+      snow
+    });
+
+    const conditions = getOpenMeteoConditions({
+      weatherCode,
+      visibility,
+      windSpeed,
+      windGusts,
+      precipProb,
+      rain,
+      snow
+    });
+
+    hourlyConditions.set(timeKey, {
+      conditions,
+      risk,
+      visibility,
+      wind: { speed: windSpeed, gusts: windGusts }
+    });
+  }
+
+  // Second pass: split periods based on significant changes
+  const newPeriods: ForecastChange[] = [];
+
+  for (const period of combined) {
+    let currentStart = period.from;
+    let currentConditions = new Set<string>();
+    let currentRisk = period.riskLevel.level;
+    
+    const periodEnd = period.to;
+    let hourToCheck = new Date(currentStart);
+
+    while (hourToCheck <= periodEnd) {
+      const timeKey = hourToCheck.getTime();
+      const hourData = hourlyConditions.get(timeKey);
+
+      if (hourData) {
+        // Merge conditions intelligently
+        const allConditions = new Set([...currentConditions, ...hourData.conditions]);
+        const mergedConditions = new Set<string>();
+
+        // Add the most severe precipitation if any
+        const severePrecip = getMostSeverePrecipitation(Array.from(allConditions));
+        if (severePrecip) mergedConditions.add(severePrecip);
+
+        // Add the most severe wind if any
+        const severeWind = getMostSevereWind(Array.from(allConditions));
+        if (severeWind) mergedConditions.add(severeWind);
+
+        // Add visibility if present
+        const visibilityCondition = Array.from(allConditions).find(c => c.includes('👁️'));
+        if (visibilityCondition) mergedConditions.add(visibilityCondition);
+
+        // Add any other non-precipitation, non-wind conditions
+        allConditions.forEach(condition => {
+          if (!condition.includes('🌧️') && 
+              !condition.includes('🌨️') && 
+              !condition.includes('⛈️') && 
+              !condition.includes('💨') && 
+              !condition.includes('👁️')) {
+            mergedConditions.add(condition);
+          }
+        });
+
+        const shouldSplit = 
+          Math.abs(hourData.risk - currentRisk) >= 1 || // Risk level changed significantly
+          (hourData.visibility && hourData.visibility < 3000 && !Array.from(currentConditions).some(c => c.includes('Visibility'))) || // Visibility became poor
+          (hourData.wind?.gusts && hourData.wind.gusts >= 25 && !Array.from(currentConditions).some(c => c.includes('wind'))); // Wind became strong
+
+        if (shouldSplit && hourToCheck > currentStart) {
+          // Create new period with merged conditions
+          newPeriods.push({
+            ...period,
+            from: currentStart,
+            to: hourToCheck,
+            conditions: {
+              phenomena: Array.from(mergedConditions)
+            },
+            riskLevel: {
+              ...period.riskLevel,
+              level: currentRisk as 1 | 2 | 3 | 4,
+              color: currentRisk > 2 ? 'red' : currentRisk > 1 ? 'orange' : 'green',
+              title: currentRisk > 2 ? 'Major Weather Impact' : 
+                     currentRisk > 1 ? 'Minor Weather Impact' : 
+                     'Good Flying Conditions'
+            }
+          });
+
+          // Start new period
+          currentStart = hourToCheck;
+          currentConditions = mergedConditions;
+          currentRisk = hourData.risk;
+        } else {
+          // Update current conditions
+          currentConditions = mergedConditions;
+          const newRisk = Math.max(currentRisk, hourData.risk);
+          currentRisk = (newRisk >= 4 ? 4 : newRisk >= 3 ? 3 : newRisk >= 2 ? 2 : 1) as 1 | 2 | 3 | 4;
+        }
+      }
+
+      // Move to next hour
+      hourToCheck = new Date(hourToCheck.getTime() + 60 * 60 * 1000);
+    }
+
+    // Add final period with merged conditions
+    if (currentStart < periodEnd) {
+      newPeriods.push({
+        ...period,
+        from: currentStart,
+        to: periodEnd,
+        conditions: {
+          phenomena: Array.from(currentConditions)
+        },
+        riskLevel: {
+          ...period.riskLevel,
+          level: currentRisk as 1 | 2 | 3 | 4,
+          color: currentRisk > 2 ? 'red' : currentRisk > 1 ? 'orange' : 'green',
+          title: currentRisk > 2 ? 'Major Weather Impact' : 
+                 currentRisk > 1 ? 'Minor Weather Impact' : 
+                 'Good Flying Conditions'
+        }
+      });
+    }
+  }
+
+  return newPeriods;
+}
+
+function calculateOpenMeteoRisk({
+  weatherCode,
+  visibility,
+  windSpeed,
+  windGusts,
+  precipProb,
+  rain,
+  snow
+}: {
+  weatherCode: number;
+  visibility: number;
+  windSpeed: number;
+  windGusts: number;
+  precipProb: number;
+  rain: number;
+  snow: number;
+}): 1 | 2 | 3 | 4 {
+  let totalScore = 0;
+
+  // Assess visibility using existing EPKK weights
+  if (visibility < MINIMUMS.VISIBILITY) {
+    totalScore += RISK_WEIGHTS.VISIBILITY.BELOW_MINIMUM;
+  } else if (visibility < 800) {
+    totalScore += RISK_WEIGHTS.VISIBILITY.VERY_LOW;
+  } else if (visibility < 1500) {
+    totalScore += RISK_WEIGHTS.VISIBILITY.LOW;
+  } else if (visibility < 3000) {
+    totalScore += RISK_WEIGHTS.VISIBILITY.MODERATE;
+  }
+
+  // Assess winds using EPKK parameters
+  if (windGusts >= 35 || windSpeed >= MINIMUMS.MAX_WIND) {
+    totalScore += 100; // Critical - exceeds limits
+  } else if (windGusts >= 25 || windSpeed >= 25) {
+    totalScore += 80; // Severe wind conditions
+  } else if (windSpeed >= 15) {
+    totalScore += 40; // Moderate wind conditions
+  }
+
+  // Map WMO codes to EPKK risk weights
+  const getWeatherScore = (code: number): number => {
+    // Thunderstorm conditions
+    if ([95, 96, 99].includes(code)) return RISK_WEIGHTS.PHENOMENA_SEVERE.TS;
+    
+    // Snow conditions
+    if (code === 75) return RISK_WEIGHTS.PHENOMENA_SEVERE['+SN'];
+    if (code === 73) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN;
+    if (code === 71) return RISK_WEIGHTS.PHENOMENA_MODERATE.SN * 0.7;
+    
+    // Rain conditions
+    if (code === 65) return RISK_WEIGHTS.PHENOMENA_MODERATE['+RA'];
+    if (code === 63) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA;
+    if (code === 61) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.7;
+    
+    // Drizzle (treat as light rain)
+    if ([51, 53, 55].includes(code)) return RISK_WEIGHTS.PHENOMENA_MODERATE.RA * 0.5;
+    
+    // Fog conditions
+    if (code === 45) return RISK_WEIGHTS.PHENOMENA_MODERATE.FG;
+    if (code === 48) return RISK_WEIGHTS.PHENOMENA_SEVERE.FZFG;
+
+    return 0;
+  };
+
+  totalScore += getWeatherScore(weatherCode);
+
+  // Convert score to risk level using EPKK thresholds
+  const riskLevel = 
+    totalScore >= 100 ? 4 :
+    totalScore >= 80 ? 3 :
+    totalScore >= 40 ? 2 :
+    1;
+    
+  return riskLevel as 1 | 2 | 3 | 4;
+}
+
+// Helper function to get standardized visibility description
+function getStandardizedVisibilityDescription(meters: number): string {
+  if (meters < MINIMUMS.VISIBILITY) return `👁️ Visibility ${meters}m (below minimums)`;
+  if (meters < 1000) return `👁️ Visibility ${meters}m`;
+  return "";
+}
+
+function getOpenMeteoConditions({
+  weatherCode,
+  visibility,
+  windSpeed,
+  windGusts,
+  precipProb,
+  rain,
+  snow
+}: {
+  weatherCode: number;
+  visibility: number;
+  windSpeed: number;
+  windGusts: number;
+  precipProb: number;
+  rain: number;
+  snow: number;
+}): string[] {
+  const conditions: string[] = [];
+
+  // Standardize precipitation descriptions
+  const getPrecipitationDescription = (code: number): string | null => {
+    const precipMap: Record<number, string> = {
+      51: '🌧️ Light Drizzle',
+      53: '🌧️ Drizzle',
+      55: '🌧️ Heavy Drizzle',
+      61: '🌧️ Light Rain',
+      63: '🌧️ Rain',
+      65: '🌧️ Heavy Rain',
+      71: '🌨️ Light Snow',
+      73: '🌨️ Snow',
+      75: '🌨️ Heavy Snow',
+      95: '⛈️ Thunderstorm',
+      96: '⛈️ Thunderstorm with Hail',
+      99: '⛈️ Severe Thunderstorm'
+    };
+    return precipMap[code] || null;
+  };
+
+  // Add weather condition with standardized description
+  if (weatherCode >= 45) {
+    const precipDescription = getPrecipitationDescription(weatherCode);
+    if (precipDescription) {
+      conditions.push(precipDescription);
+    } else if (WMO_WEATHER_CODES[weatherCode]) {
+      conditions.push(WMO_WEATHER_CODES[weatherCode]
+        .replace(/slight|moderate|dense/i, '')
+        .replace(/mainly|partly/i, '')
+        .trim()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+      );
+    }
+  }
+
+  // Add visibility condition using standardized description
+  const visibilityDesc = getStandardizedVisibilityDescription(visibility);
+  if (visibilityDesc) {
+    conditions.push(visibilityDesc);
+  }
+
+  // Add standardized wind condition
+  const windDesc = getStandardizedWindDescription(windSpeed, windGusts);
+  if (windDesc) {
+    conditions.push(windDesc);
+  }
+
+  return conditions;
+}
+
+// Helper function to get standardized wind description
+function getStandardizedWindDescription(speed: number, gusts?: number): string {
+  if (gusts && gusts >= 35) return "💨 Strong Wind Gusts";
+  if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong Winds";
+  if (speed >= 15) return "💨 Moderate Winds";
+  // Remove light and very light wind descriptions
+  return "";
+}
+
+// Update the getAirportWeather function
+export async function getAirportWeather(): Promise<WeatherResponse | null> {
+  try {
+    // Fetch both TAF and Open-Meteo data
+    const [weatherResponse, openMeteoData] = await Promise.all([
+      fetch('/api/weather', {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+      }),
+      fetchOpenMeteoForecast()
+    ]);
+
+    if (!weatherResponse.ok) {
       throw new Error('Weather data fetch failed');
     }
 
-    const data = await response.json();
-    console.log('=== Raw API Response ===');
-    console.log('METAR:', JSON.stringify(data.metar, null, 2));
-    console.log('TAF:', JSON.stringify(data.taf, null, 2));
-
+    const data = await weatherResponse.json();
     const { metar, taf } = data;
 
     const currentWeather: WeatherData = metar.data[0];
     const forecast: TAFData = taf.data[0];
 
-    console.log('\n=== Processed Current Weather ===');
-    console.log(JSON.stringify(currentWeather, null, 2));
-
     const currentAssessment = assessWeatherRisk(currentWeather);
     const allForecastPeriods = processForecast(forecast);
-    
-    // Filter out past periods
     const filteredForecast = filterForecastPeriods(allForecastPeriods);
-    
-    // Analyze only upcoming conditions
-    const upcomingConditions = analyzeUpcomingConditions(filteredForecast);
 
-    // Add deterioration warning if needed
-    if (currentAssessment.level === 1 && upcomingConditions.isDeterioration && upcomingConditions.nextSignificantChange) {
-      const warningTime = upcomingConditions.nextSignificantChange.time;
-      // Only add warning if we have a valid time
-      if (warningTime) {
-        currentAssessment.warning = {
-          message: `Weather conditions expected to deteriorate ${formatTimeDescription(warningTime, warningTime)}. ${
-            upcomingConditions.nextSignificantChange.conditions.join(", ")
-          }`,
-          time: warningTime,
-          severity: upcomingConditions.nextSignificantChange.riskLevel || 2
-        };
-      }
-    }
+    // Combine forecasts if Open-Meteo data is available
+    const combinedForecast = openMeteoData 
+      ? combineForecasts(filteredForecast, openMeteoData)
+      : filteredForecast;
 
+    // Rest of the function remains the same...
+    // Return the combined forecast instead of filtered forecast
     return {
       current: {
         riskLevel: currentAssessment,
@@ -396,34 +767,30 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
             // Weather phenomena
             ...((() => {
               const phenomena = currentWeather.conditions?.map(c => {
-                console.log('Processing current weather code:', {
-                  code: c.code,
-                  fullCode: c,
-                  mappedPhenomenon: WEATHER_PHENOMENA[c.code as WeatherPhenomenon]
-                });
                 return WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
               }).filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
-              console.log('Current weather phenomena:', phenomena);
               return phenomena;
             })()),
-            // Wind with severity-based description
+            // Wind with standardized description
             ...((() => {
-              const windDesc = currentWeather.wind ? [
-                currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-                currentWeather.wind.gust_kts && currentWeather.wind.gust_kts >= 25 || currentWeather.wind.speed_kts >= 25 ? "💨 Strong winds" :
-                currentWeather.wind.speed_kts >= 15 ? "💨 Moderate winds" :
-                null
-              ].filter((p): p is string => p !== null) : [];
-              console.log('Current wind phenomena:', windDesc);
-              return windDesc;
+              if (currentWeather.wind) {
+                const windDesc = getStandardizedWindDescription(
+                  currentWeather.wind.speed_kts,
+                  currentWeather.wind.gust_kts
+                );
+                return windDesc ? [windDesc] : [];
+              }
+              return [];
             })()),
-            // Visibility
+            // Visibility with standardized description
             ...((() => {
-              const visDesc = currentWeather.visibility?.meters && currentWeather.visibility.meters < 3000 ? 
-                [`👁️ Visibility ${currentWeather.visibility.meters}m${currentWeather.visibility.meters < MINIMUMS.VISIBILITY ? ' (below minimums)' : ''}`] : 
-                [];
-              console.log('Current visibility phenomena:', visDesc);
-              return visDesc;
+              if (currentWeather.visibility?.meters) {
+                const visDesc = getStandardizedVisibilityDescription(
+                  currentWeather.visibility.meters
+                );
+                return visDesc ? [visDesc] : [];
+              }
+              return [];
             })()),
             // Ceiling
             ...((() => {
@@ -446,7 +813,7 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
       },
-      forecast: filteredForecast,  // Use filtered forecast
+      forecast: combinedForecast,
       raw_taf: forecast.raw_text
     };
   } catch (error) {
@@ -485,12 +852,9 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         return WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
       }).filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
 
-      // Process wind phenomena
+      // Process wind phenomena using standardized description
       const windPhenomena = period.wind ? [
-        period.wind.gust_kts && period.wind.gust_kts >= 35 ? "💨 Strong gusts" :
-        period.wind.gust_kts && period.wind.gust_kts >= 25 || period.wind.speed_kts >= 25 ? "💨 Strong winds" :
-        period.wind.speed_kts >= 15 ? "💨 Moderate winds" :
-        null
+        getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts)
       ].filter(Boolean) : [];
 
       // Combine all phenomena
