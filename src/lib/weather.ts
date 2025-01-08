@@ -263,15 +263,21 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
   };
 } {
   const now = new Date();
-  const next6Hours = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
   
-  // Filter for upcoming periods only
+  // Filter for upcoming periods only, using same logic as filterForecastPeriods
   const upcomingPeriods = forecast
     .filter(period => {
-      const periodStart = new Date(period.from);
       const periodEnd = new Date(period.to);
-      // Only include periods that haven't ended yet
-      return periodEnd > now;
+      const periodStart = new Date(period.from);
+      
+      // Only include future periods that:
+      // 1. Haven't ended yet
+      // 2. Have valid duration
+      // 3. End more than 5 minutes from now
+      return periodStart < periodEnd && 
+             periodEnd.getTime() - now.getTime() > MINIMUM_DURATION &&
+             periodStart.getTime() > now.getTime(); // Only include future periods
     })
     .sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
 
@@ -282,15 +288,18 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
   // Find the next significant change
   const nextChange = upcomingPeriods.find(period => {
     // Consider a period significant if:
-    // 1. Risk level increases
-    // 2. Has severe weather phenomena
-    // 3. Visibility drops significantly
-    // 4. Ceiling drops significantly
+    // 1. Has severe weather phenomena
+    // 2. Visibility below or near minimums
+    // 3. Ceiling below or near minimums
     return (
-      period.riskLevel.level > 1 ||
-      period.conditions.phenomena.some(p => p.includes("FG") || p.includes("FZRA") || p.includes("SN")) ||
-      (period.visibility?.meters && period.visibility.meters < 1500) ||
-      (period.ceiling?.feet && period.ceiling.feet < 500)
+      period.conditions.phenomena.some(p => 
+        p.includes("⛈️") || // Thunderstorm
+        p.includes("❄️") || // Freezing conditions
+        p.includes("🌨️") || // Snow
+        p.includes("👁️ Visibility Below Minimums") // Poor visibility
+      ) ||
+      (period.visibility?.meters && period.visibility.meters < NEAR_MINIMUMS.VISIBILITY) ||
+      (period.ceiling?.feet && period.ceiling.feet < NEAR_MINIMUMS.CEILING)
     );
   });
 
@@ -454,6 +463,41 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
   // Second pass: split periods based on significant changes
   const newPeriods: ForecastChange[] = [];
 
+  // When creating new periods, ensure risk level matches conditions
+  const createPeriod = (
+    basePeriod: ForecastChange,
+    start: Date,
+    end: Date,
+    conditions: Set<string>,
+    risk: number,
+    visibility?: number
+  ) => {
+    // Don't create periods with inconsistent state
+    if (conditions.size === 0 && risk > 1) {
+      risk = 1; // If no phenomena, force good conditions
+    }
+
+    return {
+      ...basePeriod,
+      from: start,
+      to: end,
+      conditions: {
+        phenomena: Array.from(conditions)
+      },
+      visibility: visibility ? { meters: visibility } : undefined,
+      riskLevel: {
+        level: risk as 1 | 2 | 3 | 4,
+        title: risk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
+        message: visibility && visibility < 5000 
+          ? visibility < 1500 
+            ? "Reduced visibility may cause delays"
+            : "Reduced visibility, operations may be affected"
+          : "Weather conditions are favorable for normal operations",
+        color: risk > 1 ? "orange" : "green"
+      }
+    };
+  };
+
   for (const period of combined) {
     if (period.isTemporary) {
       newPeriods.push(period);
@@ -537,27 +581,14 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
            hourData.ceiling && hourData.ceiling.feet >= MINIMUMS.CEILING);
 
         if (shouldSplit && hourToCheck > currentStart) {
-          // Create new period
-          newPeriods.push({
-            ...period,
-            from: currentStart,
-            to: hourToCheck,
-            conditions: {
-              phenomena: Array.from(currentConditions)
-            },
-            visibility: currentVisibility ? { meters: currentVisibility } : undefined,
-            riskLevel: {
-              level: currentRisk as 1 | 2 | 3 | 4,
-              title: currentRisk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
-              message: currentVisibility && currentVisibility < 5000 
-                ? currentVisibility < 1500 
-                  ? "Reduced visibility may cause delays"
-                  : "Reduced visibility, operations may be affected"
-                : "Weather conditions are favorable for normal operations",
-              color: currentRisk > 1 ? "orange" : "green"
-            }
-          });
-
+          newPeriods.push(createPeriod(
+            period,
+            currentStart,
+            hourToCheck,
+            currentConditions,
+            currentRisk,
+            currentVisibility
+          ));
           // Start new period
           currentStart = hourToCheck;
           currentConditions = newConditions;
@@ -578,25 +609,14 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
 
     // Add final period
     if (currentStart < periodEnd) {
-      newPeriods.push({
-        ...period,
-        from: currentStart,
-        to: periodEnd,
-        conditions: {
-          phenomena: Array.from(currentConditions)
-        },
-        visibility: currentVisibility ? { meters: currentVisibility } : undefined,
-        riskLevel: {
-          level: currentRisk as 1 | 2 | 3 | 4,
-          title: currentRisk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
-          message: currentVisibility && currentVisibility < 5000 
-            ? currentVisibility < 1500 
-              ? "Reduced visibility may cause delays"
-              : "Reduced visibility, operations may be affected"
-            : "Weather conditions are favorable for normal operations",
-          color: currentRisk > 1 ? "orange" : "green"
-        }
-      });
+      newPeriods.push(createPeriod(
+        period,
+        currentStart,
+        periodEnd,
+        currentConditions,
+        currentRisk,
+        currentVisibility
+      ));
     }
   }
 
