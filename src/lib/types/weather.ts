@@ -101,6 +101,7 @@ export interface ForecastChange {
   };
   isTemporary?: boolean;
   probability?: number;
+  operationalImpacts?: string[];
 }
 
 // Example for ProcessedConditions

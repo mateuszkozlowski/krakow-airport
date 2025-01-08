@@ -21,7 +21,7 @@ interface WeatherTimelineProps {
     visibility?: { meters: number };
     ceiling?: { feet: number };
   };
-  forecast: ForecastChange[];
+  forecast: (ForecastChange & { operationalImpacts?: string[] })[];
   isLoading: boolean;
   isError: boolean;
   retry: () => Promise<void>;
@@ -522,19 +522,11 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
                                   <p className="font-medium text-slate-300">What to expect:</p>
                                   <ul className="space-y-1.5">
-                                    {getImpactsList(period.conditions.phenomena, period.riskLevel.level)
-                                      .map((impact, idx) => (
-                                        <li key={idx} className="text-slate-400 flex items-start gap-2">
-                                          <span className="text-slate-500 shrink-0">
-                                            {impact.includes('turbulence') ? '✈️' :
-                                             impact.includes('delays') ? '⏳' :
-                                             impact.includes('de-icing') ? '❄️' :
-                                             impact.includes('diversions') ? '🔄' :
-                                             '💡'}
-                                          </span>
-                                          <span>{impact}</span>
-                                        </li>
-                                      ))}
+                                    {period.operationalImpacts?.map((impact, idx) => (
+                                      <li key={idx} className="text-slate-400">
+                                        {impact}
+                                      </li>
+                                    ))}
                                   </ul>
                                 </div>
                               )}

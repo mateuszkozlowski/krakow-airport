@@ -380,254 +380,97 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
 
 // Add this function to combine forecasts
 function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
-  console.log('\n=== Starting Forecast Combination ===');
-  console.log('TAF Forecast periods:', tafForecast.map(f => ({
-    time: f.timeDescription,
-    phenomena: f.conditions.phenomena,
-    isTemporary: f.isTemporary,
-    risk: f.riskLevel.level
-  })));
+  const TAF_WEIGHT = 0.7;  // TAF is more authoritative
+  const OPENMETEO_WEIGHT = 0.3;
 
-  const combined: ForecastChange[] = [...tafForecast];
-  
-  // First pass: collect hourly conditions
-  const hourlyConditions = new Map<number, {
-    conditions: string[];
-    risk: number;
-    visibility?: number;
-    wind?: { 
-      speed: number; 
-      gusts?: number 
-    };
-    ceiling?: {
-      feet: number;
-    };
+  // First, process OpenMeteo data into hourly conditions
+  const hourlyConditions = new Map<string, {
+    visibility: number;
+    weatherCode: number;
+    precipProb: number;
+    windSpeed: number;
+    windGusts: number;
+    rain: number;
+    snow: number;
+    trend?: 'improving' | 'deteriorating' | 'stable';
   }>();
 
-  // Process each hour from OpenMeteo
+  // Process OpenMeteo data and calculate trends
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    const time = new Date(openMeteoData.hourly.time[i]);
-    const weatherCode = openMeteoData.hourly.weather_code[i];
-    const visibility = openMeteoData.hourly.visibility[i];
-    const windSpeed = openMeteoData.hourly.wind_speed_10m[i];
-    const windGusts = openMeteoData.hourly.wind_gusts_10m[i];
-    const precipProb = openMeteoData.hourly.precipitation_probability[i];
-    const rain = openMeteoData.hourly.rain[i];
-    const snow = openMeteoData.hourly.snowfall[i];
-    const cloudCover = openMeteoData.hourly.cloud_cover[i];
-
-    console.log(`Processing OpenMeteo hour ${time.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' })}:`, {
-      visibility: `${visibility}m`,
-      belowMinimums: visibility < MINIMUMS.VISIBILITY,
-      weatherCode,
-      precipProb,
-      conditions: getOpenMeteoConditions({
-        weatherCode,
-        visibility,
-        windSpeed,
-        windGusts,
-        precipProb,
-        rain,
-        snow
-      })
-    });
-
-    const risk = calculateOpenMeteoRisk({
-      weatherCode,
-      visibility,
-      windSpeed,
-      windGusts,
-      precipProb,
-      rain,
-      snow
-    });
-
-    const conditions = getOpenMeteoConditions({
-      weatherCode,
-      visibility,
-      windSpeed,
-      windGusts,
-      precipProb,
-      rain,
-      snow
-    });
-
-    // Estimate ceiling based on cloud cover
-    // This is a rough estimation - in reality ceiling would come from METAR/TAF
-    const ceiling = cloudCover > 80 ? {
-      feet: Math.round(1000 + (100 - cloudCover) * 50)
-    } : undefined;
-
-    hourlyConditions.set(time.getTime(), {
-      conditions,
-      risk,
-      visibility,
-      wind: { speed: windSpeed, gusts: windGusts },
-      ceiling
-    });
-  }
-
-  // Second pass: split periods based on significant changes
-  const newPeriods: ForecastChange[] = [];
-
-  // When creating new periods, ensure risk level matches conditions
-  const createPeriod = (
-    basePeriod: ForecastChange,
-    start: Date,
-    end: Date,
-    conditions: Set<string>,
-    risk: number,
-    visibility?: number
-  ) => {
-    // Don't create periods with inconsistent state
-    if (conditions.size === 0 && risk > 1) {
-      risk = 1; // If no phenomena, force good conditions
-    }
-
-    return {
-      ...basePeriod,
-      from: start,
-      to: end,
-      conditions: {
-        phenomena: Array.from(conditions)
-      },
-      visibility: visibility ? { meters: visibility } : undefined,
-      riskLevel: {
-        level: risk as 1 | 2 | 3 | 4,
-        title: risk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
-        message: visibility && visibility < 5000 
-          ? visibility < 1500 
-            ? "Reduced visibility may cause delays"
-            : "Reduced visibility, operations may be affected"
-          : "Weather conditions are favorable for normal operations",
-        color: (risk >= 4 ? "red" : risk > 1 ? "orange" : "green") as "red" | "orange" | "yellow" | "green"
-      }
-    };
-  };
-
-  for (const period of combined) {
-    if (period.isTemporary) {
-      newPeriods.push(period);
-      continue;
-    }
-
-    let currentStart = period.from;
-    let currentConditions = new Set<string>();
-    let currentRisk = period.riskLevel.level;
-    let currentVisibility = period.visibility?.meters;
+    const time = openMeteoData.hourly.time[i];
+    const prevHour = i > 0 ? {
+      visibility: openMeteoData.hourly.visibility[i-1],
+      windSpeed: openMeteoData.hourly.wind_speed_10m[i-1]
+    } : null;
     
-    const periodEnd = period.to;
-    let hourToCheck = new Date(currentStart);
+    const currentHour = {
+      visibility: openMeteoData.hourly.visibility[i],
+      weatherCode: openMeteoData.hourly.weather_code[i],
+      precipProb: openMeteoData.hourly.precipitation_probability[i],
+      windSpeed: openMeteoData.hourly.wind_speed_10m[i],
+      windGusts: openMeteoData.hourly.wind_gusts_10m[i],
+      rain: openMeteoData.hourly.rain[i],
+      snow: openMeteoData.hourly.snowfall[i]
+    };
 
-    while (hourToCheck <= periodEnd) {
-      const timeKey = hourToCheck.getTime();
-      const hourData = hourlyConditions.get(timeKey);
-
-      if (hourData) {
-        // Merge conditions intelligently
-        const newConditions = new Set<string>();
-        
-        // Add visibility condition first (only the most severe one)
-        if (hourData.visibility && hourData.visibility < MINIMUMS.VISIBILITY) {
-          newConditions.add("👁️ Visibility Below Minimums");
-        } else if (hourData.visibility && hourData.visibility < 1000) {
-          newConditions.add("👁️ Poor Visibility");
-        } else if (hourData.visibility && hourData.visibility < 3000) {
-          newConditions.add("👁️ Reduced Visibility");
-        }
-
-        // Add precipitation (only the most severe one)
-        const precipConditions = [...currentConditions, ...hourData.conditions]
-          .filter(c => c.includes('🌧️') || c.includes('🌨️') || c.includes('⛈️'));
-        if (precipConditions.length > 0) {
-          // Order by severity
-          const severityOrder = [
-            '⛈️', // Thunderstorm first
-            '🌨️ Heavy', // Heavy snow
-            '🌨️', // Snow
-            '🌧️ Heavy', // Heavy rain/drizzle
-            '🌧️', // Rain/drizzle
-            '🌧️ Light', // Light rain/drizzle
-          ];
-          const mostSevere = precipConditions.sort((a, b) => {
-            const aIndex = severityOrder.findIndex(s => a.includes(s));
-            const bIndex = severityOrder.findIndex(s => b.includes(s));
-            return aIndex - bIndex;
-          })[0];
-          newConditions.add(mostSevere);
-        }
-
-        // Add wind condition (only the most severe one)
-        const windConditions = [...currentConditions, ...hourData.conditions]
-          .filter(c => c.includes('💨'));
-        if (windConditions.length > 0) {
-          const severityOrder = [
-            '💨 Strong Wind Gusts',
-            '💨 Strong Winds',
-            '💨 Moderate Winds'
-          ];
-          const mostSevere = windConditions.sort((a, b) => {
-            const aIndex = severityOrder.indexOf(a);
-            const bIndex = severityOrder.indexOf(b);
-            return aIndex - bIndex;
-          })[0];
-          newConditions.add(mostSevere);
-        }
-
-        // Check if we need to split the period
-        const shouldSplit = 
-          Math.abs(hourData.risk - currentRisk) >= 1 || 
-          (hourData.visibility && hourData.visibility < MINIMUMS.VISIBILITY && 
-           (!currentVisibility || currentVisibility >= MINIMUMS.VISIBILITY)) ||
-          (currentVisibility && currentVisibility < MINIMUMS.VISIBILITY && 
-           hourData.visibility && hourData.visibility >= MINIMUMS.VISIBILITY) ||
-          // Add ceiling checks
-          (hourData.ceiling && hourData.ceiling.feet < MINIMUMS.CEILING &&
-           (!period.ceiling || period.ceiling.feet >= MINIMUMS.CEILING)) ||
-          (period.ceiling && period.ceiling.feet < MINIMUMS.CEILING &&
-           hourData.ceiling && hourData.ceiling.feet >= MINIMUMS.CEILING);
-
-        if (shouldSplit && hourToCheck > currentStart) {
-          newPeriods.push(createPeriod(
-            period,
-            currentStart,
-            hourToCheck,
-            currentConditions,
-            currentRisk,
-            currentVisibility
-          ));
-          // Start new period
-          currentStart = hourToCheck;
-          currentConditions = newConditions;
-          currentRisk = hourData.risk as 1 | 2 | 3 | 4;
-          currentVisibility = hourData.visibility;
-        } else {
-          // Update current conditions
-          currentConditions = newConditions;
-          currentRisk = Math.max(currentRisk, hourData.risk) as 1 | 2 | 3 | 4;
-          if (hourData.visibility && hourData.visibility < (currentVisibility || Infinity)) {
-            currentVisibility = hourData.visibility;
-          }
-        }
+    // Calculate trend for internal use
+    let trend: 'improving' | 'deteriorating' | 'stable' | undefined;
+    if (prevHour) {
+      const visibilityChange = currentHour.visibility - prevHour.visibility;
+      const windChange = currentHour.windSpeed - prevHour.windSpeed;
+      
+      if (visibilityChange > 1000 || windChange < -5) {
+        trend = 'improving';
+      } else if (visibilityChange < -1000 || windChange > 5) {
+        trend = 'deteriorating';
+      } else {
+        trend = 'stable';
       }
-
-      hourToCheck = new Date(hourToCheck.getTime() + 60 * 60 * 1000);
     }
 
-    // Add final period
-    if (currentStart < periodEnd) {
-      newPeriods.push(createPeriod(
-        period,
-        currentStart,
-        periodEnd,
-        currentConditions,
-        currentRisk,
-        currentVisibility
-      ));
-    }
+    hourlyConditions.set(time, { ...currentHour, trend });
   }
 
-  return newPeriods;
+  // Process each TAF period
+  return tafForecast.map(period => {
+    // For TEMPO periods, just return as is
+    if (period.isTemporary) return period;
+
+    // Get OpenMeteo data for this period's timeframe
+    const periodStart = period.from.toISOString().split('.')[0];
+    const openMeteoHour = hourlyConditions.get(periodStart);
+
+    if (!openMeteoHour) return period;
+
+    // Calculate weighted risk level
+    const tafRisk = period.riskLevel.level;
+    const openMeteoRisk = calculateOpenMeteoRisk(openMeteoHour);
+    
+    // Calculate combined risk level
+    const weightedRisk = Math.round(
+      (tafRisk * TAF_WEIGHT + openMeteoRisk * OPENMETEO_WEIGHT) as 1 | 2 | 3 | 4
+    );
+
+    // Only update risk level if OpenMeteo suggests significantly worse conditions
+    if (weightedRisk > tafRisk) {
+      // Update the risk level but keep the original messages
+      period.riskLevel = {
+        ...period.riskLevel,
+        level: weightedRisk as 1 | 2 | 3 | 4,
+        title: weightedRisk === 4 ? "Major Weather Impact" :
+               weightedRisk === 3 ? "Weather Advisory" :
+               weightedRisk === 2 ? "Minor Weather Impact" :
+               "Good Flying Conditions"
+      };
+    }
+
+    // Use trend to adjust risk level but don't show it in UI
+    if (openMeteoHour.trend === 'deteriorating' && period.riskLevel.level < 4) {
+      period.riskLevel.level = Math.min(4, period.riskLevel.level + 1) as 1 | 2 | 3 | 4;
+    }
+
+    return period;
+  });
 }
 
 function calculateOpenMeteoRisk({
@@ -805,11 +648,11 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     // Fetch both TAF and Open-Meteo data
     const [weatherResponse, openMeteoData] = await Promise.all([
       fetch('/api/weather', {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      },
-      cache: 'no-store'
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       }),
       fetchOpenMeteoForecast()
     ]);
@@ -824,67 +667,42 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     const currentWeather: WeatherData = metar.data[0];
     const forecast: TAFData = taf.data[0];
 
-    const currentAssessment = assessWeatherRisk(currentWeather);
-    const allForecastPeriods = processForecast(forecast);
-    const filteredForecast = filterForecastPeriods(allForecastPeriods);
-    
-    // Combine forecasts if Open-Meteo data is available
-    const combinedForecast = openMeteoData 
-      ? combineForecasts(filteredForecast, openMeteoData)
-      : filteredForecast;
+    // First process TAF data
+    const tafPeriods = processForecast(forecast);
 
-    // Rest of the function remains the same...
-    // Return the combined forecast instead of filtered forecast
+    // Then combine with OpenMeteo if available
+    const combinedForecast = openMeteoData 
+      ? combineForecasts(tafPeriods, openMeteoData)
+      : tafPeriods;
+
+    const currentAssessment = assessWeatherRisk(currentWeather);
+
+    // Return the combined forecast
     return {
       current: {
         riskLevel: currentAssessment,
         conditions: {
           phenomena: [
-            // Weather phenomena
-            ...((() => {
-              const phenomena = currentWeather.conditions?.map(c => {
-                return WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
-              }).filter((p): p is WeatherPhenomenonValue => p !== undefined) || [];
-              return phenomena;
-            })()),
-            // Wind with standardized description
-            ...((() => {
-              if (currentWeather.wind) {
-                const windDesc = getStandardizedWindDescription(
-                  currentWeather.wind.speed_kts,
-                  currentWeather.wind.gust_kts
-                );
-                return windDesc ? [windDesc] : [];
-              }
-              return [];
-            })()),
-            // Visibility with standardized description
-            ...((() => {
-              if (currentWeather.visibility?.meters) {
-                const visDesc = getStandardizedVisibilityDescription(
-                  currentWeather.visibility.meters
-                );
-                return visDesc ? [visDesc] : [];
-              }
-              return [];
-            })()),
-            // Ceiling
-            ...((() => {
-              const ceilingDesc = currentWeather.ceiling?.feet && currentWeather.ceiling.feet < 1000 ? 
-                [`☁️ Ceiling ${currentWeather.ceiling.feet}ft${currentWeather.ceiling.feet < MINIMUMS.CEILING ? ' (below minimums)' : ''}`] : 
-                [];
-              console.log('Current ceiling phenomena:', ceilingDesc);
-              return ceilingDesc;
-            })()),
-            // Add visibility trend if significant
-            ...(previousVisibilityReading && currentWeather.visibility?.meters 
-              ? [getVisibilityTrendDescription(
-                  currentWeather.visibility.meters, 
-                  previousVisibilityReading.visibility
-                )]
-              : []
+            ...(currentWeather.conditions?.map(c => {
+              const phenomenon = WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
+              return phenomenon;
+            }).filter((p): p is typeof WEATHER_PHENOMENA[WeatherPhenomenon] => p !== undefined) || []),
+            ...(currentWeather.wind ? 
+              [getStandardizedWindDescription(
+                currentWeather.wind.speed_kts,
+                currentWeather.wind.gust_kts
+              )].filter(Boolean) : 
+              []
+            ),
+            ...(currentWeather.visibility ? 
+              [formatVisibility(currentWeather.visibility.meters)].filter(Boolean) : 
+              []
+            ),
+            ...(currentWeather.ceiling ? 
+              [formatCeiling(currentWeather.ceiling.feet)].filter(Boolean) : 
+              []
             )
-          ]
+          ].filter(Boolean)
         },
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
@@ -901,73 +719,59 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
 function processForecast(taf: TAFData | null): ForecastChange[] {
   if (!taf || !taf.forecast) return [];
 
-  // Log the raw TAF text and data
-  console.log('Raw TAF:', {
-    raw_text: taf.raw_text,
-    forecast: taf.forecast.map(p => ({
-      type: p.change?.indicator?.code || 'BASE',
-      conditions: p.conditions,
-      visibility: p.visibility?.meters,
-      clouds: p.clouds,
-      wind: p.wind,
-      timestamp: p.timestamp,
-      raw: JSON.stringify(p)
-    }))
-  });
-
   const changes: ForecastChange[] = [];
-  let prevailingConditions: string[] = [];
+  
+  // First, sort and validate periods
+  const validPeriods = taf.forecast
+    .filter(period => period.timestamp)
+    .map(period => ({
+      ...period,
+      from: adjustToWarsawTime(new Date(period.timestamp!.from)),
+      to: adjustToWarsawTime(new Date(period.timestamp!.to))
+    }))
+    .filter(period => 
+      period.from < period.to && // Remove zero-duration periods
+      period.from.getTime() !== period.to.getTime()
+    )
+    .sort((a, b) => a.from.getTime() - b.from.getTime());
+
+  if (validPeriods.length === 0) return [];
 
   // Process each period
-  taf.forecast.forEach((period, index) => {
-    if (!period.timestamp) return;
+  validPeriods.forEach((period, index) => {
+    const currentConditions = new Set<string>();
 
-    // Log TEMPO period details
-    if (period.change?.indicator?.code === 'TEMPO') {
-      console.log('\nTEMPO period raw data:', {
-        conditions: period.conditions,
-        visibility: period.visibility,
-        clouds: period.clouds,
-        timestamp: period.timestamp,
-        raw: JSON.stringify(period)
-      });
-    }
-
-    const fromDate = new Date(period.timestamp.from);
-    const toDate = new Date(period.timestamp.to);
-    const from = adjustToWarsawTime(fromDate);
-    const to = adjustToWarsawTime(toDate);
-    const assessment = assessWeatherRisk(period);
-      
-    // Process all weather conditions
-    const currentConditions: string[] = [];
-
-    // Process weather phenomena first
-    if (period.conditions) {
-      console.log('Processing conditions for', period.change?.indicator?.code || 'BASE');
-      for (const condition of period.conditions) {
-        console.log('  - Condition:', {
-          code: condition.code,
-          mapped: WEATHER_PHENOMENA[condition.code as WeatherPhenomenon],
-          isTemporary: period.change?.indicator?.code === 'TEMPO'
-        });
-        const phenomenon = WEATHER_PHENOMENA[condition.code as WeatherPhenomenon];
-        if (phenomenon) {
-          currentConditions.push(phenomenon);
-          console.log('    Added:', phenomenon);
-        }
+    // Process visibility first - it's critical!
+    if (period.visibility?.meters) {
+      const visDesc = formatVisibility(period.visibility.meters);
+      if (visDesc) {
+        currentConditions.add(visDesc);
       }
     }
-    // Process cloud conditions
-    if (period.clouds && period.clouds.length > 0 && period.change?.indicator?.code !== 'TEMPO') {  // Skip for TEMPO
+
+    // Process ceiling/clouds next
+    if (period.clouds && period.clouds.length > 0) {
       const significantCloud = period.clouds
         .filter(cloud => cloud.code === 'BKN' || cloud.code === 'OVC')
         .sort((a, b) => (a.base_feet_agl || 0) - (b.base_feet_agl || 0))[0];
 
       if (significantCloud && significantCloud.base_feet_agl) {
-        const cloudDesc = `☁️ ${significantCloud.code} ${significantCloud.base_feet_agl}ft`;
-        currentConditions.push(cloudDesc);
-        console.log('Added cloud condition:', cloudDesc);
+        if (significantCloud.base_feet_agl < 500) { // Only show if below 500ft
+          const ceilingDesc = formatCeiling(significantCloud.base_feet_agl);
+          if (ceilingDesc) {
+            currentConditions.add(ceilingDesc);
+          }
+        }
+      }
+    }
+
+    // Process weather phenomena
+    if (period.conditions) {
+      for (const condition of period.conditions) {
+        const phenomenon = WEATHER_PHENOMENA[condition.code as WeatherPhenomenon];
+        if (phenomenon) {
+          currentConditions.add(phenomenon);
+        }
       }
     }
 
@@ -976,54 +780,92 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
       getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts) : 
       null;
     if (windDesc) {
-      currentConditions.push(windDesc);
-      console.log('Added wind condition:', windDesc);
+      currentConditions.add(windDesc);
     }
 
-    // Add visibility if reduced
-    if (period.visibility?.meters && period.visibility.meters < 5000) {
-      const visDesc = getStandardizedVisibilityDescription(period.visibility.meters);
-      currentConditions.push(visDesc);
-      console.log('Added visibility condition:', visDesc);
+    // Determine risk level based on conditions
+    let riskLevel: RiskAssessment;
+    let operationalImpacts: string[] = [];
+
+    // Check for severe conditions first
+    if (period.visibility?.meters && period.visibility.meters < MINIMUMS.VISIBILITY) {
+      riskLevel = {
+        level: 4,
+        title: "Major Weather Impact",
+        message: `Operations suspended - visibility ${period.visibility.meters}m below minimums`,
+        color: "red"
+      };
+      operationalImpacts = ["⛔ Operations suspended - below minimums", "✈️ Diversions likely"];
+    } else if (period.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
+      riskLevel = {
+        level: 4,
+        title: "Major Weather Impact",
+        message: "Operations suspended - freezing conditions",
+        color: "red"
+      };
+      operationalImpacts = ["⛔ Operations suspended", "❄️ De-icing required", "✈️ Diversions likely"];
+    } else if (period.visibility?.meters && period.visibility.meters < 2000) {
+      riskLevel = {
+        level: 3,
+        title: "Weather Advisory",
+        message: "Operations restricted - poor visibility",
+        color: "orange"
+      };
+      operationalImpacts = ["⚠️ Possible delays", "✈️ Some flights may divert"];
+    } else if (
+      (period.visibility?.meters && period.visibility.meters < 3000) ||
+      (period.clouds?.some(cloud => 
+        (cloud.code === 'BKN' || cloud.code === 'OVC') && 
+        cloud.base_feet_agl && 
+        cloud.base_feet_agl < MINIMUMS.CEILING
+      ))
+    ) {
+      riskLevel = {
+        level: 2,
+        title: "Minor Weather Impact",
+        message: "Minor operational impacts expected",
+        color: "yellow"
+      };
+      operationalImpacts = ["⏳ Minor delays possible", "✈️ Operations continuing with caution"];
+    } else {
+      riskLevel = {
+        level: 1,
+        title: "Good Flying Conditions",
+        message: "Normal operations",
+        color: "green"
+      };
+      operationalImpacts = ["✈️ Normal operations"];
     }
 
-    // Log before creating the change object
-    if (period.change?.indicator?.code === 'TEMPO') {
-      console.log('TEMPO period before creating change:', {
-        currentConditions,
-        prevailingConditions,
-        from: from.toISOString(),
-        to: to.toISOString()
+    // Add probability to message if it exists
+    if (period.change?.probability) {
+      riskLevel.message = `${period.change.probability}% probability: ${riskLevel.message}`;
+      operationalImpacts = operationalImpacts.map(impact => 
+        `${period.change?.probability ?? 100}% probability: ${impact}`
+      );
+    }
+
+    // Only create a period if there are conditions or it's a TEMPO/PROB period
+    if (currentConditions.size > 0 || 
+        (period.change && 
+         (period.change.indicator?.code === 'TEMPO' || period.change.probability))
+    ) {
+      changes.push({
+        timeDescription: formatTimeDescription(period.from, period.to),
+        from: period.from,
+        to: period.to,
+        conditions: {
+          phenomena: Array.from(currentConditions)
+        },
+        riskLevel,
+        changeType: period.change?.indicator?.code || 'PERSISTENT',
+        visibility: period.visibility,
+        ceiling: period.ceiling,
+        isTemporary: period.change?.indicator?.code === 'TEMPO',
+        probability: period.change?.probability,
+        wind: period.wind,
+        operationalImpacts: operationalImpacts
       });
-    }
-
-    changes.push({
-      timeDescription: formatTimeDescription(from, to),
-      from,
-      to,
-      conditions: {
-        phenomena: currentConditions
-      },
-      riskLevel: assessment,
-      changeType: period.change?.indicator?.code || 'PERSISTENT',
-      visibility: period.visibility,
-      ceiling: period.ceiling,
-      isTemporary: period.change?.indicator?.code === 'TEMPO',
-      probability: period.change?.probability,
-      wind: period.wind
-    });
-
-    // Log after pushing the change
-    if (period.change?.indicator?.code === 'TEMPO') {
-      console.log('TEMPO period after pushing change:', {
-        phenomena: changes[changes.length - 1].conditions.phenomena,
-        isTemporary: changes[changes.length - 1].isTemporary
-      });
-    }
-
-    // For first period or BECMG, update prevailing conditions
-    if (index === 0 || period.change?.indicator?.code === 'BECMG') {
-      prevailingConditions = [...currentConditions];
     }
   });
 
@@ -1256,4 +1098,32 @@ function calculateDeicingRisk(weather: WeatherData): { score: number; reason?: s
   }
 
   return { score: deicingScore, reason };
+}
+
+// Add this helper function for formatting visibility
+function formatVisibility(meters: number): string {
+  if (meters < MINIMUMS.VISIBILITY) {
+    return `👁️ Visibility Below Minimums (${meters}m)`;
+  }
+  if (meters < 1000) {
+    return `👁️ Very Poor Visibility (${meters}m)`;
+  }
+  if (meters < 3000) {
+    return `👁️ Poor Visibility`;  // No specific value needed
+  }
+  if (meters < 5000) {
+    return `👁️ Reduced Visibility`; // No specific value needed
+  }
+  return ''; // Don't show good visibility
+}
+
+// Add this helper function for formatting ceiling
+function formatCeiling(feet: number): string {
+  if (feet < MINIMUMS.CEILING) {
+    return `☁️ Ceiling Below Minimums`;
+  }
+  if (feet < 500) {
+    return `☁️ Very Low Ceiling`;
+  }
+  return ''; // Don't show ceiling if it's above 500ft
 }
