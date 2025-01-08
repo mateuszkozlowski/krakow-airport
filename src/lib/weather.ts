@@ -318,7 +318,6 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
   const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes
   
   return forecast
-    // First, remove any invalid periods
     .filter(period => {
       const periodEnd = period.to;
       const periodStart = period.from;
@@ -326,27 +325,30 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
       // Keep only periods that:
       // 1. Have valid duration
       // 2. End in the future
-      return periodStart < periodEnd && 
-             periodEnd > now;
+      // 3. For current periods, must have at least MINIMUM_DURATION remaining
+      if (periodStart < now) {
+        return periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
+      }
+      return periodStart < periodEnd;
     })
-    // Then adjust periods that have already started
     .map(period => {
       const periodStart = period.from;
       if (periodStart < now) {
-        // For current periods, just use the original end time
-        return {
+        // For current periods, adjust start time and skip if too short
+        const adjustedPeriod = {
           ...period,
           from: now,
           timeDescription: formatTimeDescription(now, period.to)
         };
+        // Only return if the adjusted period has meaningful duration
+        if (adjustedPeriod.to.getTime() - adjustedPeriod.from.getTime() > MINIMUM_DURATION) {
+          return adjustedPeriod;
+        }
+        return null;
       }
       return period;
     })
-    // Finally, remove any periods that would be too short
-    .filter(period => {
-      const duration = period.to.getTime() - period.from.getTime();
-      return duration >= MINIMUM_DURATION;
-    });
+    .filter((period): period is ForecastChange => period !== null);
 }
 
 // Add this function to fetch Open-Meteo data
