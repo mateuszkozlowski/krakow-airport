@@ -262,24 +262,19 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
     riskLevel: number;
   };
 } {
-  const now = new Date();
-  const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const now = adjustToWarsawTime(new Date());
+  const MINIMUM_DURATION = 5 * 60 * 1000;
   
-  // Filter for upcoming periods only, using same logic as filterForecastPeriods
   const upcomingPeriods = forecast
     .filter(period => {
-      const periodEnd = new Date(period.to);
-      const periodStart = new Date(period.from);
+      const periodEnd = adjustToWarsawTime(period.to);
+      const periodStart = adjustToWarsawTime(period.from);
       
-      // Only include future periods that:
-      // 1. Haven't ended yet
-      // 2. Have valid duration
-      // 3. End more than 5 minutes from now
       return periodStart < periodEnd && 
              periodEnd.getTime() - now.getTime() > MINIMUM_DURATION &&
-             periodStart.getTime() > now.getTime(); // Only include future periods
+             periodStart.getTime() > now.getTime();
     })
-    .sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+    .sort((a, b) => adjustToWarsawTime(a.from).getTime() - adjustToWarsawTime(b.from).getTime());
 
   if (upcomingPeriods.length === 0) {
     return { isDeterioration: false };
@@ -319,36 +314,31 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
 
 // Add a function to filter forecast periods
 function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
-  const now = new Date();
-  const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+  // Use adjustToWarsawTime for consistent timezone handling
+  const now = adjustToWarsawTime(new Date());
+  const MINIMUM_DURATION = 5 * 60 * 1000;
   
   return forecast
-    // First, remove zero-duration periods and periods that end too soon
     .filter(period => {
-      const periodEnd = new Date(period.to);
-      const periodStart = new Date(period.from);
+      // Use adjustToWarsawTime for period times
+      const periodEnd = adjustToWarsawTime(period.to);
+      const periodStart = adjustToWarsawTime(period.from);
       
-      // Remove if:
-      // 1. Period has zero duration
-      // 2. Period ends too soon (within next 5 minutes)
-      // 3. Period starts after it ends (invalid period)
-      return periodStart < periodEnd && // Check for valid duration
+      return periodStart < periodEnd && 
              periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
     })
     .map(period => {
-      // If period has started but not ended, adjust the start time to now
-      const periodStart = new Date(period.from);
+      const periodStart = adjustToWarsawTime(period.from);
       if (periodStart < now) {
         return {
           ...period,
           from: now,
-          timeDescription: formatTimeDescription(now, new Date(period.to))
+          timeDescription: formatTimeDescription(now, adjustToWarsawTime(period.to))
         };
       }
       return period;
     })
     .filter(period => {
-      // After adjusting start times, check again for minimum duration
       return period.to.getTime() - period.from.getTime() > MINIMUM_DURATION;
     });
 }
