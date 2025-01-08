@@ -67,14 +67,10 @@ export interface RiskAssessment {
   level: 1 | 2 | 3 | 4;
   title: string;
   message: string;
+  statusMessage: string;
   explanation?: string;
   color: 'red' | 'orange' | 'yellow' | 'green';
   operationalImpacts?: string[];
-  warning?: {
-    message: string;
-    time: Date;
-    severity: number;
-  };
 }
 
 export interface ProcessedConditions {

@@ -792,7 +792,8 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
       riskLevel = {
         level: 4,
         title: "Major Weather Impact",
-        message: `Operations suspended - visibility ${period.visibility.meters}m below minimums`,
+        message: "Operations suspended - visibility below minimums",
+        statusMessage: "Airport operations are currently suspended due to visibility below minimums.",
         color: "red"
       };
       operationalImpacts = ["⛔ Operations suspended - below minimums", "✈️ Diversions likely"];
@@ -801,6 +802,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         level: 4,
         title: "Major Weather Impact",
         message: "Operations suspended - freezing conditions",
+        statusMessage: "Airport operations are currently suspended due to freezing conditions.",
         color: "red"
       };
       operationalImpacts = ["⛔ Operations suspended", "❄️ De-icing required", "✈️ Diversions likely"];
@@ -809,6 +811,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         level: 3,
         title: "Weather Advisory",
         message: "Operations restricted - poor visibility",
+        statusMessage: "Airport operations are restricted due to poor visibility. Expectdelays.",
         color: "orange"
       };
       operationalImpacts = ["⚠️ Possible delays", "✈️ Some flights may divert"];
@@ -824,6 +827,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         level: 2,
         title: "Minor Weather Impact",
         message: "Minor operational impacts expected",
+        statusMessage: "Weather conditions may cause minor delays. Operations continuing with caution.",
         color: "yellow"
       };
       operationalImpacts = ["⏳ Minor delays possible", "✈️ Operations continuing with caution"];
@@ -832,6 +836,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         level: 1,
         title: "Good Flying Conditions",
         message: "Normal operations",
+        statusMessage: "Weather conditions are favorable for normal operations.",
         color: "green"
       };
       operationalImpacts = ["✈️ Normal operations"];
@@ -900,49 +905,6 @@ function formatTimeDescription(start: Date, end: Date): string {
   return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
 }
 
-function calculateRiskScore(weather: WeatherData): { score: number; reasons: string[] } {
-  let totalScore = 0;
-  const reasons: string[] = [];
-  
-  // Time-based risk factors
-  const hour = new Date(weather.observed).getHours();
-  const month = new Date(weather.observed).getMonth();
-  
-  let timeRiskMultiplier = 1.0;
-  
-  // Early morning risk factor (3-7 AM)
-  if (hour >= 3 && hour <= 7) {
-    timeRiskMultiplier = 1.3;
-    reasons.push("⏰ Early morning high-risk period");
-  }
-  
-  // Winter season risk factor (Oct-Feb)
-    if (month >= 9 || month <= 1) {
-    timeRiskMultiplier *= 1.2;
-    reasons.push("❄️ Winter season risk factor");
-  }
-
-  // De-icing risk
-  const { score: deicingScore, reason: deicingReason } = calculateDeicingRisk(weather);
-  if (deicingScore > 0) {
-    totalScore += deicingScore;
-    if (deicingReason) reasons.push(deicingReason);
-  }
-
-  // Existing risk calculations...
-  if (weather.conditions) {
-    for (const condition of weather.conditions) {
-      // Add your existing condition checks here
-      // Use the new RISK_WEIGHTS values
-    }
-  }
-
-  // Apply time-based multiplier
-  totalScore *= timeRiskMultiplier;
-
-  return { score: totalScore, reasons };
-}
-
 function getWeatherDescription(reasons: string[], impacts: string[]): string {
   if (!reasons.length && !impacts.length) {
       return "☀️ Clear skies and good visibility";
@@ -964,62 +926,152 @@ function getWeatherDescription(reasons: string[], impacts: string[]): string {
 }
 
 function assessWeatherRisk(weather: WeatherData): RiskAssessment {
-  const { score, reasons } = calculateRiskScore(weather);
-  const operationalImpacts = assessOperationalImpacts(weather);
-
-  // Check for visibility or ceiling below minimums (highest risk)
-  if ((weather.visibility && weather.visibility.meters < MINIMUMS.VISIBILITY) || 
-      (weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING) ||
-      (weather.conditions?.some(c => c.code === 'FZFG' || c.code === 'FG'))) {
-    return {
-      level: 4,
-      title: "Severe Weather Impact",
-      message: weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING
-        ? "Operations significantly affected due to ceiling below minimums"
-        : "Operations significantly affected due to visibility below minimums",
-      explanation: getWeatherDescription([
-        weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING
-          ? "☁️ Ceiling below landing minimums"
-          : "👁️ Visibility below landing minimums",
-        ...reasons
-      ], operationalImpacts),
-      color: "red",
-      operationalImpacts
-    };
+  const operationalImpactsSet = new Set<string>();
+  const reasons: string[] = [];
+  
+  // Time-based risk factors
+  const hour = new Date(weather.observed).getHours();
+  const month = new Date(weather.observed).getMonth();
+  let timeRiskMultiplier = 1.0;
+  
+  // Early morning risk factor (3-7 AM)
+  if (hour >= 3 && hour <= 7) {
+    timeRiskMultiplier *= 1.3;
+    operationalImpactsSet.add("⏰ Possible reduced visibility during early morning hours");
+  }
+  
+  // Winter season risk factor (Oct-Feb)
+  if (month >= 9 || month <= 1) {
+    timeRiskMultiplier *= 1.2;
+    operationalImpactsSet.add("❄️ Likely de-icing required, expect 20-30 min delay");
+    // Don't add additional winter message since it's covered by the de-icing message
   }
 
-  // Check for conditions close to minimums
-  if ((weather.visibility && weather.visibility.meters < NEAR_MINIMUMS.VISIBILITY) ||
-      (weather.ceiling && weather.ceiling.feet < NEAR_MINIMUMS.CEILING)) {
-    const level = 2;
-    const title = "Minor Weather Impact";
+  // Base risk calculation
+  let baseRiskLevel = 1;
+
+  // Check for severe conditions first (level 4)
+  if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
+    baseRiskLevel = 4;
+    operationalImpactsSet.add("👁️ Visibility below minimums");
+  } 
+  
+  // Check for freezing conditions (level 4)
+  const { score: deicingScore, reason: deicingReason } = calculateDeicingRisk(weather);
+  if (deicingScore >= RISK_WEIGHTS.DEICING.BASE_SCORES.CERTAIN || 
+      weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
+    baseRiskLevel = Math.max(baseRiskLevel, 4);
+    if (deicingReason) {
+      operationalImpactsSet.add(deicingReason);
+    }
+  }
+
+  // Check for poor visibility (level 3)
+  if (weather.visibility?.meters && weather.visibility.meters < 2000) {
+    baseRiskLevel = Math.max(baseRiskLevel, 3);
+    operationalImpactsSet.add("👁️ Poor visibility conditions");
+  }
+
+  // Check for moderate impacts (level 2)
+  if ((weather.visibility?.meters && weather.visibility.meters < 3000) ||
+      (weather.clouds?.some(cloud => 
+        (cloud.code === 'BKN' || cloud.code === 'OVC') && 
+        cloud.base_feet_agl && 
+        cloud.base_feet_agl < MINIMUMS.CEILING
+      ))) {
+    baseRiskLevel = Math.max(baseRiskLevel, 2);
+    operationalImpactsSet.add("☁️ Marginal conditions");
+  }
+
+  // Apply time-based risk multiplier
+  let finalRiskLevel = baseRiskLevel;
+  if (timeRiskMultiplier > 1.0) {
+    // Increase risk level based on multiplier, but never exceed 4
+    const adjustedRisk = Math.min(4, Math.ceil(baseRiskLevel * timeRiskMultiplier));
+    if (adjustedRisk > baseRiskLevel) {
+      finalRiskLevel = adjustedRisk;
+      // Don't add any technical messages about risk levels here
+    }
+  }
+
+  // Add wind-related impacts
+  if (weather.wind) {
+    const windDesc = getStandardizedWindDescription(weather.wind.speed_kts, weather.wind.gust_kts);
+    if (windDesc) {
+      operationalImpactsSet.add(windDesc);
+      if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
+        finalRiskLevel = Math.max(finalRiskLevel, 3);
+        operationalImpactsSet.add("💨 Strong gusts may affect operations");
+      }
+    }
+  }
+
+  // Update the risk mappings with statusMessage
+  const riskMappings = {
+    4: {
+      title: "Major Weather Impact",
+      message: "Operations suspended",
+      statusMessage: "All flights are currently suspended due to severe weather conditions. Check with your airline for updates.",
+      color: "red" as const
+    },
+    3: {
+      title: "Weather Advisory",
+      message: "Operations restricted",
+      statusMessage: "Expect delays of 30+ minutes. Check your flight status.",
+      color: "orange" as const
+    },
+    2: {
+      title: "Minor Weather Impact",
+      message: "Minor operational impacts expected",
+      statusMessage: "Flights are operating with possible delays of 20-30 minutes.",
+      color: "yellow" as const
+    },
+    1: {
+      title: "Good Flying Conditions",
+      message: "Normal operations",
+      statusMessage: "All flights are operating on schedule.",
+      color: "green" as const
+    }
+  };
+
+  // Update time-based risk messaging
+  if (timeRiskMultiplier > 1.0) {
+    const timeFactors = [];
+    if (hour >= 3 && hour <= 7) {
+      timeFactors.push("Early morning conditions may affect visibility");
+    }
+    if (month >= 9 || month <= 1) {
+      timeFactors.push("Winter weather conditions may cause delays");
+    }
     
-    const message = weather.ceiling && weather.ceiling.feet < NEAR_MINIMUMS.CEILING
-      ? weather.visibility && weather.visibility.meters < NEAR_MINIMUMS.VISIBILITY
-        ? "Ceiling and visibility close to minimums"
-        : "Ceiling close to minimums"
-      : "Visibility close to minimums";
-
-    return {
-      level,
-      title,
-      message,
-      explanation: getWeatherDescription(reasons, operationalImpacts),
-      color: "orange",
-      operationalImpacts
-    };
+    // More passenger-friendly messaging
+    if (timeFactors.length > 0) {
+      if (finalRiskLevel === 1) {
+        operationalImpactsSet.add(`Note: ${timeFactors.join(". ")}`);
+      } else {
+        operationalImpactsSet.add(`Additional consideration: ${timeFactors.join(". ")}`);
+      }
+    }
   }
 
-  // Default return for good conditions
-  const level = 1;
-  const title = "Good Flying Conditions";
+  const riskDetails = riskMappings[finalRiskLevel as keyof typeof riskMappings];
+
+  // Convert Set back to array for the final return
+  const operationalImpacts = Array.from(operationalImpactsSet);
+
+  // Remove the "Additional consideration" prefix from reasons
+  const cleanedReasons = reasons.map((reason: string) => 
+    reason.replace("Additional consideration: ", "")
+  );
+
   return {
-    level,
-    title,
-    message: "Weather conditions are favorable for normal operations.",
-    explanation: getWeatherDescription(reasons, operationalImpacts),
-    color: "green",
-    operationalImpacts
+    level: finalRiskLevel as 1 | 2 | 3 | 4,
+    title: riskDetails.title,
+    message: `${riskDetails.message}${cleanedReasons.length ? ` - ${cleanedReasons[0]}` : ''}`,
+    statusMessage: riskDetails.statusMessage,
+    explanation: undefined, // Remove the explanation since it's redundant with operationalImpacts
+    color: riskDetails.color,
+    operationalImpacts: Array.from(operationalImpactsSet)
   };
 }
 

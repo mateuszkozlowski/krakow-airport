@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import type { ForecastChange } from "@/lib/types/weather";
+import type { ForecastChange, RiskAssessment } from "@/lib/types/weather";
 import { RiskLegendDialog } from "./RiskLegend";
+import { adjustToWarsawTime } from '@/lib/utils/time';
 
 interface WeatherTimelineProps {
   current: {
-    riskLevel: {
-      level: 1 | 2 | 3 | 4;
-      title: string;
-      message: string;
-      explanation?: string;
-      color: 'red' | 'orange' | 'yellow' | 'green';
-    };
+    riskLevel: RiskAssessment;
     conditions: {
       phenomena: string[];
     };
@@ -146,6 +141,23 @@ function formatTimeDescription(start: Date, end: Date): string {
   const startPrefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
   const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
   return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
+}
+
+// Add helper function for visibility formatting
+function formatVisibilityDescription(meters: number): string {
+  if (meters < 550) return "👁️ Visibility Below Minimums";
+  if (meters < 1000) return "👁️ Very Poor Visibility";
+  if (meters < 3000) return "👁️ Poor Visibility";
+  if (meters < 5000) return "👁️ Reduced Visibility";
+  return "";
+}
+
+// Add helper function for ceiling formatting
+function formatCeilingDescription(feet: number): string {
+  if (feet < 200) return "☁️ Ceiling Below Minimums";
+  if (feet < 500) return "☁️ Very Low Ceiling";
+  if (feet < 1000) return "☁️ Low Ceiling";
+  return "";
 }
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
@@ -402,64 +414,142 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
             <>
               {/* Current conditions card */}
               <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
-                <CardContent className="p-6">
-                  <div className="flex flex-col gap-6">
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div className="flex items-start gap-3 w-full sm:w-auto">
-                        <div className="mt-1">
-                          {getStatusColors(current.riskLevel.level).icon}
-                        </div>
-                        <div className="flex-1">
-                          <div className={`text-ld font-medium ${getStatusColors(current.riskLevel.level).text}`}>
-                            {current.riskLevel.title}
-                          </div>
-                          <div className="text-base text-slate-300 mt-1">
-                            {current.riskLevel.message}
-                          </div>
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3">
+                    {/* Time and status group */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-sm font-medium text-slate-200">
+                          Current Conditions • Updated {adjustToWarsawTime(new Date(current.observed)).toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'Europe/Warsaw'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusColors(current.riskLevel.level).pill} w-full sm:w-auto text-center sm:text-left`}>
+                          {current.riskLevel.title}
+                        </span>
+                      </div>
+                    </div>
 
-                          {/* Weather conditions */}
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            {current.conditions.phenomena.map((phenomenon, index) => (
-                              <span
-                                key={index}
-                                className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
-                              >
-                                {phenomenon}
-                              </span>
-                            ))}
-                            {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
-                              getStandardizedWindDescription(current.wind.speed_kts, current.wind.gust_kts)
-                            )}
-                            {current.visibility?.meters && current.visibility.meters < 5000 && (
-                              <span className="bg-slate-900/40 text-slate-300 px-3 py-1.5 rounded-full text-sm whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200">
-                                👁️ Poor visibility
-                              </span>
-                            )}
-                          </div>
+                    {/* Add prominent status message */}
+                    <div className={`text-lg font-medium ${getStatusColors(current.riskLevel.level).text}`}>
+                      {current.riskLevel.statusMessage}
+                    </div>
+
+                    {/* Weather conditions group */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap gap-2 w-full">
+                        {/* Weather phenomena */}
+                        {current.conditions.phenomena.map((phenomenon, index) => (
+                          <span
+                            key={index}
+                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            title={getDetailedDescription(phenomenon)}
+                          >
+                            {phenomenon}
+                          </span>
+                        ))}
+
+                        {/* Wind conditions if not already shown in phenomena */}
+                        {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
+                          <span
+                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            title={`Wind ${current.wind.direction}° at ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` (gusts ${current.wind.gust_kts}kt)` : ''}`}
+                          >
+                            {getStandardizedWindDescription(current.wind.speed_kts, current.wind.gust_kts)}
+                            {current.wind.gust_kts && ` (${current.wind.speed_kts}G${current.wind.gust_kts}kt)`}
+                          </span>
+                        )}
+
+                        {/* Visibility conditions */}
+                        {current.visibility?.meters && (
+                          <span
+                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            title={`Current visibility: ${current.visibility.meters} meters`}
+                          >
+                            {formatVisibilityDescription(current.visibility.meters)}
+                            {current.visibility.meters < 5000 && ` (${current.visibility.meters}m)`}
+                          </span>
+                        )}
+
+                        {/* Ceiling conditions */}
+                        {current.ceiling?.feet && (
+                          <span
+                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            title={`Current ceiling: ${current.ceiling.feet} feet`}
+                          >
+                            {formatCeilingDescription(current.ceiling.feet)}
+                            {current.ceiling.feet < 1000 && ` (${current.ceiling.feet}ft)`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Detailed weather information */}
+                    {(current.wind || current.visibility || current.ceiling) && (
+                      <div className="mt-2 text-xs text-slate-400 space-y-1">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {current.wind && (
+                            <span title="Wind direction and speed">
+                              💨 Wind: {current.wind.direction}° at {current.wind.speed_kts}kt
+                              {current.wind.gust_kts && ` (gusts ${current.wind.gust_kts}kt)`}
+                            </span>
+                          )}
+                          
+                          {current.visibility && (
+                            <span title="Ground visibility">
+                              👁️ Visibility: {current.visibility.meters}m
+                            </span>
+                          )}
+                          
+                          {current.ceiling && (
+                            <span title="Cloud ceiling height">
+                              ☁️ Ceiling: {current.ceiling.feet}ft
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {current.riskLevel.level > 1 && (
-                        <div className="w-full sm:w-auto flex flex-col gap-2">
-                          <span className="animate-pulse px-3 py-1.5 rounded-full text-sm bg-red-400/10 text-red-400 flex items-center justify-center sm:justify-start gap-2">
-                            <AlertTriangle className="h-4 w-4" />
-                            Check flight status
-                          </span>
-                          
-                        </div>
-                      )}
-                    </div>
+                    )}
+
+                    {/* Risk explanation and operational impacts */}
+                    {(current.riskLevel.explanation || current.riskLevel.operationalImpacts) && (
+                      <div className="mt-2 text-sm space-y-2">
+                        {current.riskLevel.explanation && (
+                          <p className="text-slate-300">{current.riskLevel.explanation}</p>
+                        )}
+                        
+                        {current.riskLevel.operationalImpacts && 
+                         current.riskLevel.operationalImpacts.length > 0 && (
+                          <div className="mt-2 border-t border-white/10 pt-3">
+                            <p className="font-medium text-slate-200 text-sm">What to expect:</p>
+                            <ul className="mt-1 space-y-1.5">
+                              {current.riskLevel.operationalImpacts.map((impact, idx) => (
+                                <li key={idx} className="text-slate-300 text-sm">
+                                  {impact}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Warning banner for deteriorating conditions */}
                     {current.riskLevel.level === 1 && forecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
                       return withinNextHour && p.riskLevel.level > 1;
                     }) && (
-                      <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
+                      <div className="mt-2 p-3 bg-orange-900/20 rounded-lg border border-orange-700/50">
                         <div className="flex items-top gap-2 text-orange-400">
-                          <AlertTriangle className="w-12 h-12 md:w-4 md:h-4 mt-0.5" />
+                          <AlertTriangle className="h-4 w-4 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium"><span className="font-bold">Weather conditions expected to deteriorate soon.</span> Check the timeline below for detailed changes</p>
+                            <p className="text-xs font-medium">
+                              <span className="font-bold">Weather conditions expected to deteriorate soon.</span>
+                              {' '}Check the timeline below for detailed changes
+                            </p>
                           </div>
                         </div>
                       </div>
