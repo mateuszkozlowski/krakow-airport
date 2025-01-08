@@ -428,130 +428,131 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               {/* Timeline section */}
               {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
-                  {uniqueForecast.slice(0, showAll ? uniqueForecast.length : 4).map((period, index) => {
-                    const colors = getStatusColors(period.riskLevel.level);
-
-                    return (
-                      <Card 
-                        key={index} 
-                        className={`border-slate-700/50 ${
-                          // Only apply colored background if risk level > 1 AND not "Good Flying Conditions"
-                          period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
-                            ? colors.bg 
-                            : 'bg-slate-800/50'
-                        }`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex flex-col gap-3">
-                            {/* Time and status group */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                              <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <span className="text-sm font-medium text-slate-200">
-                                  {period.from.getTime() < new Date().getTime()
-                                    ? formatDateTime(period.to, true)  // Show "until X" format for current period
-                                    : `${formatDateTime(period.from)} - ${
-                                        // If the end time is on a different day than the start time
-                                        period.from.toDateString() !== period.to.toDateString() 
-                                          ? formatDateTime(period.to)  // Show full date/time
-                                          : period.to.toLocaleTimeString('en-GB', {  // Show only time
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                              timeZone: 'Europe/Warsaw'
-                                            })
-                                      }`
+                  {uniqueForecast
+                    .slice(0, showAll ? undefined : 4)
+                    .map((period, index) => {
+                      const colors = getStatusColors(period.riskLevel.level);
+                      
+                      return (
+                        <Card 
+                          key={index} 
+                          className={`border-slate-700/50 ${
+                            period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
+                              ? colors.bg 
+                              : 'bg-slate-800/50'
+                          }`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex flex-col gap-3">
+                              {/* Time and status group */}
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                  <span className="text-sm font-medium text-slate-200">
+                                    {period.from.getTime() < new Date().getTime()
+                                      ? formatDateTime(period.to, true)  // Show "until X" format for current period
+                                      : `${formatDateTime(period.from)} - ${
+                                          // If the end time is on a different day than the start time
+                                          period.from.toDateString() !== period.to.toDateString() 
+                                            ? formatDateTime(period.to)  // Show full date/time
+                                            : period.to.toLocaleTimeString('en-GB', {  // Show only time
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                timeZone: 'Europe/Warsaw'
+                                              })
+                                        }`
                                   }
-                                </span>
-                             
+                                  </span>
+                               
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
+                                    {period.riskLevel.title}
+                                  </span>
+                                  
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
-                                  {period.riskLevel.title}
-                                </span>
-                                
+                              {hasVisiblePhenomena(period) && (
+                                <div className="mt-1.5 border-t border-white/10"> </div>
+                              )}
+                              {/* Weather conditions group */}
+                              <div className="flex flex-wrap items-center gap-2">
+                                {period.isTemporary && (
+                                  <div className="w-full text-xs text-yellow-400 mb-1">
+                                    Temporary conditions possible:
+                                  </div>
+                                )}
+                                <div className="flex flex-wrap gap-2 w-full">
+                                  {period.conditions.phenomena.length > 0 ? (
+                                    period.conditions.phenomena
+                                      .filter(condition => condition.trim() !== '')
+                                      .map((condition, idx) => (
+                                        <span
+                                          key={idx}
+                                          className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                        >
+                                          {condition}
+                                        </span>
+                                      ))
+                                  ) : (
+                                    <span className="text-xs text-slate-500">No phenomena reported</span>
+                                  )}
+                                  {period.wind?.speed_kts && 
+                                   !period.conditions.phenomena.some(p => p.includes('Wind')) &&
+                                   getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts) && (
+                                    <span
+                                      className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                    >
+                                      {getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            {hasVisiblePhenomena(period) && (
-                              <div className="mt-1.5 border-t border-white/10"> </div>
-                            )}
-                            {/* Weather conditions group */}
-                            <div className="flex flex-wrap items-center gap-2">
-                              {period.isTemporary && (
-                                <div className="w-full text-xs text-yellow-400 mb-1">
-                                  Temporary conditions possible:
+
+                              {/* Probability if exists */}
+                              {period.probability && (
+                                <span className="text-xs text-slate-400">
+                                  {period.probability}% chance of these conditions
+                                </span>
+                              )}
+
+                              {/* Only show impacts for future periods with risk > 1 */}
+                              {period.riskLevel.level > 1 && 
+                               new Date(period.from) > new Date() && (
+                                <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
+                                  <p className="font-medium text-slate-300">What to expect:</p>
+                                  <ul className="space-y-1.5">
+                                    {getImpactsList(period.conditions.phenomena, period.riskLevel.level)
+                                      .map((impact, idx) => (
+                                        <li key={idx} className="text-slate-400 flex items-start gap-2">
+                                          <span className="text-slate-500 shrink-0">
+                                            {impact.includes('turbulence') ? '✈️' :
+                                             impact.includes('delays') ? '⏳' :
+                                             impact.includes('de-icing') ? '❄️' :
+                                             impact.includes('diversions') ? '🔄' :
+                                             '💡'}
+                                          </span>
+                                          <span>{impact}</span>
+                                        </li>
+                                      ))}
+                                  </ul>
                                 </div>
                               )}
-                              <div className="flex flex-wrap gap-2 w-full">
-                                {period.conditions.phenomena.length > 0 ? (
-                                  period.conditions.phenomena
-                                    .filter(condition => condition.trim() !== '')
-                                    .map((condition, idx) => (
-                                      <span
-                                        key={idx}
-                                        className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                      >
-                                        {condition}
-                                      </span>
-                                    ))
-                                ) : (
-                                  <span className="text-xs text-slate-500">No phenomena reported</span>
-                                )}
-                                {period.wind?.speed_kts && 
-                                 !period.conditions.phenomena.some(p => p.includes('Wind')) &&
-                                 getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts) && (
-                                  <span
-                                    className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                  >
-                                    {getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts)}
-                                  </span>
-                                )}
-                              </div>
                             </div>
-
-                            {/* Probability if exists */}
-                            {period.probability && (
-                              <span className="text-xs text-slate-400">
-                                {period.probability}% chance of these conditions
-                              </span>
-                            )}
-
-                            {/* Only show impacts for future periods with risk > 1 */}
-                            {period.riskLevel.level > 1 && 
-                             new Date(period.from) > new Date() && (
-                              <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
-                                <p className="font-medium text-slate-300">What to expect:</p>
-                                <ul className="space-y-1.5">
-                                  {getImpactsList(period.conditions.phenomena, period.riskLevel.level)
-                                    .map((impact, idx) => (
-                                      <li key={idx} className="text-slate-400 flex items-start gap-2">
-                                        <span className="text-slate-500 shrink-0">
-                                          {impact.includes('turbulence') ? '✈️' :
-                                           impact.includes('delays') ? '⏳' :
-                                           impact.includes('de-icing') ? '❄️' :
-                                           impact.includes('diversions') ? '🔄' :
-                                           '💡'}
-                                        </span>
-                                        <span>{impact}</span>
-                                      </li>
-                                    ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                  
-                  {uniqueForecast.length > 4 && (
-                    <button
-                      onClick={() => setShowAll(!showAll)}
-                      className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
-                    >
-                      {showAll 
-                        ? 'Show less' 
-                        : `Show ${uniqueForecast.length - 4} more ${uniqueForecast.length - 4 === 1 ? 'period' : 'periods'}`}
-                    </button>
-                  )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    
+                    {uniqueForecast.length > 4 && (
+                      <button
+                        onClick={() => setShowAll(!showAll)}
+                        className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
+                      >
+                        {showAll 
+                          ? 'Show less' 
+                          : `Show ${uniqueForecast.length - 4} more ${uniqueForecast.length - 4 === 1 ? 'period' : 'periods'}`}
+                      </button>
+                    )}
                 </div>
               )}
             </>

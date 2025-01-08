@@ -29,9 +29,17 @@ export function getTimeOffset(date: Date = new Date()): number {
 }
 
 export function adjustToWarsawTime(date: Date): Date {
-  const warsawDate = new Date(date.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-  const localDate = new Date(date.toLocaleString('en-GB'));
-  const offset = warsawDate.getTime() - localDate.getTime();
+  // Get the UTC timestamp
+  const utcTime = date.getTime();
   
-  return new Date(date.getTime() + offset);
+  // Calculate the offset based on whether the resulting time will be in DST
+  const targetDate = new Date(utcTime + getTimeOffset(date));
+  
+  // Double-check if our initial DST assumption was correct
+  // If not, recalculate with the correct offset
+  if (isDST(targetDate) !== isDST(date)) {
+    return new Date(utcTime + getTimeOffset(targetDate));
+  }
+  
+  return targetDate;
 }

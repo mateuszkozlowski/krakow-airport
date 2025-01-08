@@ -314,40 +314,38 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
 
 // Add a function to filter forecast periods
 function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
-  const now = adjustToWarsawTime(new Date());
+  const now = new Date();
   const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes
   
   return forecast
     // First, remove any invalid periods
     .filter(period => {
-      const periodEnd = adjustToWarsawTime(period.to);
-      const periodStart = adjustToWarsawTime(period.from);
+      const periodEnd = period.to;
+      const periodStart = period.from;
       
-      // Skip periods that:
-      // 1. Have already ended
-      // 2. Have zero or negative duration
-      // 3. End too soon (within 5 minutes)
+      // Keep only periods that:
+      // 1. Have valid duration
+      // 2. End in the future
       return periodStart < periodEnd && 
-             periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
+             periodEnd > now;
     })
     // Then adjust periods that have already started
     .map(period => {
-      const periodStart = adjustToWarsawTime(period.from);
+      const periodStart = period.from;
       if (periodStart < now) {
-        // For periods that have started, set start time to next 5-minute mark
-        const nextFiveMinutes = new Date(Math.ceil(now.getTime() / (5 * 60 * 1000)) * (5 * 60 * 1000));
+        // For current periods, just use the original end time
         return {
           ...period,
-          from: nextFiveMinutes,
-          timeDescription: formatTimeDescription(nextFiveMinutes, adjustToWarsawTime(period.to))
+          from: now,
+          timeDescription: formatTimeDescription(now, period.to)
         };
       }
       return period;
     })
-    // Finally, remove any periods that ended up too short after adjustment
+    // Finally, remove any periods that would be too short
     .filter(period => {
       const duration = period.to.getTime() - period.from.getTime();
-      return duration > MINIMUM_DURATION;
+      return duration >= MINIMUM_DURATION;
     });
 }
 
