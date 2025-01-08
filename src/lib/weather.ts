@@ -493,7 +493,7 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
             ? "Reduced visibility may cause delays"
             : "Reduced visibility, operations may be affected"
           : "Weather conditions are favorable for normal operations",
-        color: risk > 1 ? "orange" : "green"
+        color: (risk >= 4 ? "red" : risk > 1 ? "orange" : "green") as "red" | "orange" | "yellow" | "green"
       }
     };
   };
