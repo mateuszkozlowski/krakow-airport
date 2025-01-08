@@ -314,32 +314,40 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
 
 // Add a function to filter forecast periods
 function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
-  // Use adjustToWarsawTime for consistent timezone handling
   const now = adjustToWarsawTime(new Date());
-  const MINIMUM_DURATION = 5 * 60 * 1000;
+  const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes
   
   return forecast
+    // First, remove any invalid periods
     .filter(period => {
-      // Use adjustToWarsawTime for period times
       const periodEnd = adjustToWarsawTime(period.to);
       const periodStart = adjustToWarsawTime(period.from);
       
+      // Skip periods that:
+      // 1. Have already ended
+      // 2. Have zero or negative duration
+      // 3. End too soon (within 5 minutes)
       return periodStart < periodEnd && 
              periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
     })
+    // Then adjust periods that have already started
     .map(period => {
       const periodStart = adjustToWarsawTime(period.from);
       if (periodStart < now) {
+        // For periods that have started, set start time to next 5-minute mark
+        const nextFiveMinutes = new Date(Math.ceil(now.getTime() / (5 * 60 * 1000)) * (5 * 60 * 1000));
         return {
           ...period,
-          from: now,
-          timeDescription: formatTimeDescription(now, adjustToWarsawTime(period.to))
+          from: nextFiveMinutes,
+          timeDescription: formatTimeDescription(nextFiveMinutes, adjustToWarsawTime(period.to))
         };
       }
       return period;
     })
+    // Finally, remove any periods that ended up too short after adjustment
     .filter(period => {
-      return period.to.getTime() - period.from.getTime() > MINIMUM_DURATION;
+      const duration = period.to.getTime() - period.from.getTime();
+      return duration > MINIMUM_DURATION;
     });
 }
 
