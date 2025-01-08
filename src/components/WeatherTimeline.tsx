@@ -120,73 +120,133 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
   return messages;
 }
 
+function formatTimeDescription(start: Date, end: Date): string {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+  };
+
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const startTime = formatTime(start);
+  const endTime = formatTime(end);
+
+  // Same day
+  if (start.getDate() === end.getDate()) {
+    const prefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
+    return `${prefix} ${startTime} - ${endTime}`;
+  }
+  
+  // Crosses midnight
+  const startPrefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
+  const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
+  return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
+}
+
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
-    console.log('Before deduplication:', periods.map(p => ({
-      time: p.timeDescription,
-      isTemporary: p.isTemporary,
-      phenomena: p.conditions.phenomena,
-      risk: p.riskLevel.level
-    })));
-
-    // First, filter out empty periods and sort by time and risk
+    const now = new Date();
+    
+    // First, filter and sort as before
     const validPeriods = periods
       .filter(period => {
-        const hasContent = period.from.getTime() !== period.to.getTime() && // Remove zero-duration periods
-          period.from.getTime() < period.to.getTime() && // Ensure end time is after start time
-          (period.conditions.phenomena.length > 0 || // Keep if has phenomena
-           (period.wind?.speed_kts && period.wind.speed_kts >= 15) || // Keep if significant wind
-           (period.visibility && period.visibility.meters < 5000) || // Keep if poor visibility
-           (period.ceiling && period.ceiling.feet < 1000) || // Keep if low ceiling
-           period.isTemporary); // Always keep temporary periods
-
-        console.log('Period validation:', {
-          time: period.timeDescription,
-          isTemporary: period.isTemporary,
-          hasContent,
-          phenomena: period.conditions.phenomena
-        });
+        const hasContent = period.from.getTime() !== period.to.getTime() && 
+          period.to.getTime() > now.getTime() && 
+          (period.conditions.phenomena.length > 0 || 
+           (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
+           (period.visibility && period.visibility.meters < 5000) || 
+           (period.ceiling && period.ceiling.feet < 1000) || 
+           period.isTemporary);
 
         return hasContent;
       })
-      .sort((a, b) => a.from.getTime() - b.from.getTime());
+      .sort((a, b) => {
+        // Sort by start time first
+        const timeCompare = a.from.getTime() - b.from.getTime();
+        if (timeCompare !== 0) return timeCompare;
+        
+        // If same start time, put temporary conditions after base conditions
+        if (a.isTemporary && !b.isTemporary) return 1;
+        if (!a.isTemporary && b.isTemporary) return -1;
+        
+        // If both temporary or both base, higher risk level goes first
+        return b.riskLevel.level - a.riskLevel.level;
+      });
 
     if (validPeriods.length === 0) return [];
 
     const result: ForecastChange[] = [];
     let currentPeriod = validPeriods[0];
 
+    // Adjust start time of first period if it's in the past
+    if (currentPeriod.from.getTime() < now.getTime()) {
+      currentPeriod = {
+        ...currentPeriod,
+        from: now,
+        timeDescription: formatTimeDescription(now, currentPeriod.to)
+      };
+    }
+
     for (let i = 1; i < validPeriods.length; i++) {
       const nextPeriod = validPeriods[i];
 
-      // If periods overlap and have different conditions
-      if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
-        // If next period has higher risk, truncate current period
-        if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
-          currentPeriod.to = new Date(nextPeriod.from.getTime());
-          result.push(currentPeriod);
-          currentPeriod = nextPeriod;
+      // If next period is temporary and overlaps with current
+      if (nextPeriod.isTemporary && 
+          nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
+        
+        // If temporary period starts after current period's start
+        if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
+          // Add the first part of the base period
+          result.push({
+            ...currentPeriod,
+            to: nextPeriod.from,
+            timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+          });
         }
-        // If next period has same or lower risk, skip it unless it has unique phenomena
-        else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
-          const currentSet = new Set(currentPeriod.conditions.phenomena);
-          const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
-          
-          if (hasUniqueConditions) {
+        
+        // Add the temporary period
+        result.push(nextPeriod);
+        
+        // If temporary period ends before current period ends
+        if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
+          // Continue with the remainder of the base period
+          currentPeriod = {
+            ...currentPeriod,
+            from: nextPeriod.to,
+            timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
+          };
+          continue;
+        }
+      }
+
+      // Handle non-temporary overlapping periods
+      if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
+        if (!nextPeriod.isTemporary) {
+          if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
             currentPeriod.to = new Date(nextPeriod.from.getTime());
             result.push(currentPeriod);
             currentPeriod = nextPeriod;
-          }
-          // Otherwise, extend current period if needed
-          else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
-            currentPeriod.to = new Date(nextPeriod.to.getTime());
+          } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
+            const currentSet = new Set(currentPeriod.conditions.phenomena);
+            const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
+            
+            if (hasUniqueConditions) {
+              currentPeriod.to = new Date(nextPeriod.from.getTime());
+              result.push(currentPeriod);
+              currentPeriod = nextPeriod;
+            } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
+              currentPeriod.to = new Date(nextPeriod.to.getTime());
+            }
           }
         }
-      }
-      // If periods don't overlap
-      else {
+      } else {
         result.push(currentPeriod);
         currentPeriod = nextPeriod;
       }
@@ -195,22 +255,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     // Don't forget to push the last period
     result.push(currentPeriod);
 
-    // Final pass to merge adjacent periods with identical conditions
-    return result.reduce((acc, period) => {
-      const lastPeriod = acc[acc.length - 1];
-      
-      if (lastPeriod && 
-          period.from.getTime() <= lastPeriod.to.getTime() && 
-          period.riskLevel.level === lastPeriod.riskLevel.level &&
-          JSON.stringify(period.conditions.phenomena.sort()) === 
-          JSON.stringify(lastPeriod.conditions.phenomena.sort())) {
-        lastPeriod.to = new Date(Math.max(lastPeriod.to.getTime(), period.to.getTime()));
-      } else {
-        acc.push(period);
-      }
-      
-      return acc;
-    }, [] as ForecastChange[]);
+    return result;
   };
 
   // Just use the deduplication result directly
