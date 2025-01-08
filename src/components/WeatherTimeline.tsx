@@ -434,7 +434,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     return (
                       <Card 
                         key={index} 
-                        className={`border-slate-700/50 ${period.riskLevel.level > 1 ? colors.bg : 'bg-slate-800/50'}`}
+                        className={`border-slate-700/50 ${
+                          // Only apply colored background if risk level > 1 AND not "Good Flying Conditions"
+                          period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
+                            ? colors.bg 
+                            : 'bg-slate-800/50'
+                        }`}
                       >
                         <CardContent className="p-4">
                           <div className="flex flex-col gap-3">

@@ -26,6 +26,12 @@ const MINIMUMS = {
   CROSSWIND: 20      // knots
 } as const;
 
+// Add a constant for "close to minimums" threshold
+const NEAR_MINIMUMS = {
+  CEILING: MINIMUMS.CEILING * 1.5, // 300ft for CAT I minimums of 200ft
+  VISIBILITY: MINIMUMS.VISIBILITY * 1.5 // 825m for CAT I minimums of 550m
+} as const;
+
 // Risk weights for different conditions tailored to Kraków's usual conditions
 const RISK_WEIGHTS = {
   // Severe phenomena
@@ -305,12 +311,20 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
 // Add a function to filter forecast periods
 function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
   const now = new Date();
+  const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
   
   return forecast
+    // First, remove zero-duration periods and periods that end too soon
     .filter(period => {
       const periodEnd = new Date(period.to);
-      // Only include periods that haven't ended yet
-      return periodEnd > now;
+      const periodStart = new Date(period.from);
+      
+      // Remove if:
+      // 1. Period has zero duration
+      // 2. Period ends too soon (within next 5 minutes)
+      // 3. Period starts after it ends (invalid period)
+      return periodStart < periodEnd && // Check for valid duration
+             periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
     })
     .map(period => {
       // If period has started but not ended, adjust the start time to now
@@ -323,6 +337,10 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
         };
       }
       return period;
+    })
+    .filter(period => {
+      // After adjusting start times, check again for minimum duration
+      return period.to.getTime() - period.from.getTime() > MINIMUM_DURATION;
     });
 }
 
@@ -361,7 +379,13 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
     conditions: string[];
     risk: number;
     visibility?: number;
-    wind?: { speed: number; gusts?: number };
+    wind?: { 
+      speed: number; 
+      gusts?: number 
+    };
+    ceiling?: {
+      feet: number;
+    };
   }>();
 
   // Process each hour from OpenMeteo
@@ -374,6 +398,7 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
     const precipProb = openMeteoData.hourly.precipitation_probability[i];
     const rain = openMeteoData.hourly.rain[i];
     const snow = openMeteoData.hourly.snowfall[i];
+    const cloudCover = openMeteoData.hourly.cloud_cover[i];
 
     console.log(`Processing OpenMeteo hour ${time.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' })}:`, {
       visibility: `${visibility}m`,
@@ -411,11 +436,18 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
       snow
     });
 
+    // Estimate ceiling based on cloud cover
+    // This is a rough estimation - in reality ceiling would come from METAR/TAF
+    const ceiling = cloudCover > 80 ? {
+      feet: Math.round(1000 + (100 - cloudCover) * 50)
+    } : undefined;
+
     hourlyConditions.set(time.getTime(), {
       conditions,
       risk,
       visibility,
-      wind: { speed: windSpeed, gusts: windGusts }
+      wind: { speed: windSpeed, gusts: windGusts },
+      ceiling
     });
   }
 
@@ -497,7 +529,12 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
           (hourData.visibility && hourData.visibility < MINIMUMS.VISIBILITY && 
            (!currentVisibility || currentVisibility >= MINIMUMS.VISIBILITY)) ||
           (currentVisibility && currentVisibility < MINIMUMS.VISIBILITY && 
-           hourData.visibility && hourData.visibility >= MINIMUMS.VISIBILITY);
+           hourData.visibility && hourData.visibility >= MINIMUMS.VISIBILITY) ||
+          // Add ceiling checks
+          (hourData.ceiling && hourData.ceiling.feet < MINIMUMS.CEILING &&
+           (!period.ceiling || period.ceiling.feet >= MINIMUMS.CEILING)) ||
+          (period.ceiling && period.ceiling.feet < MINIMUMS.CEILING &&
+           hourData.ceiling && hourData.ceiling.feet >= MINIMUMS.CEILING);
 
         if (shouldSplit && hourToCheck > currentStart) {
           // Create new period
@@ -510,13 +547,14 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
             },
             visibility: currentVisibility ? { meters: currentVisibility } : undefined,
             riskLevel: {
-              ...period.riskLevel,
               level: currentRisk as 1 | 2 | 3 | 4,
-              color: currentRisk >= 4 ? 'red' : currentRisk >= 3 ? 'orange' : 'green',
-              title: currentRisk >= 4 ? 'Major Weather Impact' : 
-                     currentRisk >= 3 ? 'Weather Advisory' : 
-                     currentRisk >= 2 ? 'Minor Weather Impact' : 
-                     'Good Flying Conditions'
+              title: currentRisk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
+              message: currentVisibility && currentVisibility < 5000 
+                ? currentVisibility < 1500 
+                  ? "Reduced visibility may cause delays"
+                  : "Reduced visibility, operations may be affected"
+                : "Weather conditions are favorable for normal operations",
+              color: currentRisk > 1 ? "orange" : "green"
             }
           });
 
@@ -549,8 +587,14 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
         },
         visibility: currentVisibility ? { meters: currentVisibility } : undefined,
         riskLevel: {
-          ...period.riskLevel,
-          level: currentRisk as 1 | 2 | 3 | 4
+          level: currentRisk as 1 | 2 | 3 | 4,
+          title: currentRisk > 1 ? "Minor Weather Impact" : "Good Flying Conditions",
+          message: currentVisibility && currentVisibility < 5000 
+            ? currentVisibility < 1500 
+              ? "Reduced visibility may cause delays"
+              : "Reduced visibility, operations may be affected"
+            : "Weather conditions are favorable for normal operations",
+          color: currentRisk > 1 ? "orange" : "green"
         }
       });
     }
@@ -1054,50 +1098,60 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   const { score, reasons } = calculateRiskScore(weather);
   const operationalImpacts = assessOperationalImpacts(weather);
 
-  // Check for visibility below minimums (highest risk) - expanded check
+  // Check for visibility or ceiling below minimums (highest risk)
   if ((weather.visibility && weather.visibility.meters < MINIMUMS.VISIBILITY) || 
+      (weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING) ||
       (weather.conditions?.some(c => c.code === 'FZFG' || c.code === 'FG'))) {
     return {
       level: 4,
       title: "Severe Weather Impact",
-      message: "Operations significantly affected due to visibility below minimums",
+      message: weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING
+        ? "Operations significantly affected due to ceiling below minimums"
+        : "Operations significantly affected due to visibility below minimums",
       explanation: getWeatherDescription([
-        "👁️ Visibility below landing minimums",
+        weather.ceiling && weather.ceiling.feet < MINIMUMS.CEILING
+          ? "☁️ Ceiling below landing minimums"
+          : "👁️ Visibility below landing minimums",
         ...reasons
       ], operationalImpacts),
       color: "red",
-      operationalImpacts: [
-        "Visibility below safe landing requirements",
-        "High chance of flight diversions",
-        "Significant delays likely",
-        ...operationalImpacts
-      ]
+      operationalImpacts
     };
   }
 
-  // Only escalate to Minor Weather Impact for heavy precipitation
-  if (weather.conditions?.some(c => 
-    (c.code.includes('RA') || c.code.includes('DZ')) && c.code.startsWith('+')
-  )) {
+  // Check for conditions close to minimums
+  if ((weather.visibility && weather.visibility.meters < NEAR_MINIMUMS.VISIBILITY) ||
+      (weather.ceiling && weather.ceiling.feet < NEAR_MINIMUMS.CEILING)) {
+    const level = 2;
+    const title = "Minor Weather Impact";
+    
+    const message = weather.ceiling && weather.ceiling.feet < NEAR_MINIMUMS.CEILING
+      ? weather.visibility && weather.visibility.meters < NEAR_MINIMUMS.VISIBILITY
+        ? "Ceiling and visibility close to minimums"
+        : "Ceiling close to minimums"
+      : "Visibility close to minimums";
+
     return {
-      level: 2,
-      title: "Minor Weather Impact",
-      message: "Some delays possible due to heavy precipitation.",
+      level,
+      title,
+      message,
       explanation: getWeatherDescription(reasons, operationalImpacts),
       color: "orange",
       operationalImpacts
     };
   }
 
-  // Default return for good conditions (including light/moderate rain)
-    return {
-      level: 1,
-      title: "Good Flying Conditions",
-      message: "Weather conditions are favorable for normal operations.",
-      explanation: getWeatherDescription(reasons, operationalImpacts),
-      color: "green",
-      operationalImpacts
-    };
+  // Default return for good conditions
+  const level = 1;
+  const title = "Good Flying Conditions";
+  return {
+    level,
+    title,
+    message: "Weather conditions are favorable for normal operations.",
+    explanation: getWeatherDescription(reasons, operationalImpacts),
+    color: "green",
+    operationalImpacts
+  };
 }
 
 // Helper function to describe visibility trends
