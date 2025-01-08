@@ -123,7 +123,6 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
 
-  // Move deduplication function up
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     console.log('Before deduplication:', periods.map(p => ({
       time: p.timeDescription,
@@ -214,15 +213,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     }, [] as ForecastChange[]);
   };
 
-  // Create uniqueForecast first
-  const uniqueForecast = deduplicateForecastPeriods(forecast);
-  
-  // Then use it in state and effect
-  const [processedForecast, setProcessedForecast] = useState<ForecastChange[]>(uniqueForecast);
-
-  useEffect(() => {
-    setProcessedForecast(uniqueForecast);
-  }, [uniqueForecast]);
+  // Just use the deduplication result directly
+  const uniqueForecast = React.useMemo(() => deduplicateForecastPeriods(forecast), [forecast]);
 
   const getStatusColors = (level: 1 | 2 | 3 | 4) => {
     switch (level) {
@@ -435,16 +427,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               <RiskLegendDialog />
 
               {/* Timeline section */}
-              {processedForecast.length > 0 && (
+              {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
-                  {processedForecast
-                    .slice(0, showAll ? processedForecast.length : 4)
+                  {uniqueForecast
+                    .slice(0, showAll ? uniqueForecast.length : 4)
                     .map((period, index) => {
                       const colors = getStatusColors(period.riskLevel.level);
                       
                       return (
                         <Card 
-                          key={index} 
+                          key={`${period.from.getTime()}-${period.to.getTime()}-${index}`}
                           className={`border-slate-700/50 ${
                             period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
                               ? colors.bg 
@@ -552,14 +544,14 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       );
                     })}
                     
-                    {processedForecast.length > 4 && (
+                    {uniqueForecast.length > 4 && (
                       <button
                         onClick={() => setShowAll(!showAll)}
                         className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
                       >
                         {showAll 
                           ? 'Show less' 
-                          : `Show ${processedForecast.length - 4} more ${processedForecast.length - 4 === 1 ? 'period' : 'periods'}`}
+                          : `Show ${uniqueForecast.length - 4} more ${uniqueForecast.length - 4 === 1 ? 'period' : 'periods'}`}
                       </button>
                     )}
                 </div>
