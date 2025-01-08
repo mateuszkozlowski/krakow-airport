@@ -378,99 +378,190 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   }
 }
 
-// Add this function to combine forecasts
-function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
-  const TAF_WEIGHT = 0.7;  // TAF is more authoritative
-  const OPENMETEO_WEIGHT = 0.3;
+// Add this interface for hourly combined data
+interface CombinedHourlyData {
+  timestamp: Date;
+  phenomena: string[];
+  visibility: number;
+  windSpeed: number;
+  windGusts?: number;
+  precipitation: number;
+  snowfall: number;
+  cloudCover: number;
+  riskLevel: number;
+  source: 'TAF' | 'OPENMETEO' | 'COMBINED';
+}
 
-  // First, process OpenMeteo data into hourly conditions
-  const hourlyConditions = new Map<string, {
-    visibility: number;
-    weatherCode: number;
-    precipProb: number;
-    windSpeed: number;
-    windGusts: number;
-    rain: number;
-    snow: number;
-    trend?: 'improving' | 'deteriorating' | 'stable';
-  }>();
+// Add these weights for different data sources
+const SOURCE_WEIGHTS = {
+  TAF: {
+    PHENOMENA: 0.7,
+    VISIBILITY: 0.6,
+    WIND: 0.7,
+    CEILING: 0.8
+  },
+  OPENMETEO: {
+    PHENOMENA: 0.3,
+    VISIBILITY: 0.4,
+    WIND: 0.3,
+    CEILING: 0.2
+  }
+} as const;
 
-  // Process OpenMeteo data and calculate trends
+// Add this function to convert OpenMeteo data to hourly format
+function processOpenMeteoToHourly(openMeteoData: OpenMeteoForecast): CombinedHourlyData[] {
+  const hourlyData: CombinedHourlyData[] = [];
+
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    const time = openMeteoData.hourly.time[i];
-    const prevHour = i > 0 ? {
-      visibility: openMeteoData.hourly.visibility[i-1],
-      windSpeed: openMeteoData.hourly.wind_speed_10m[i-1]
-    } : null;
-    
-    const currentHour = {
+    const timestamp = new Date(openMeteoData.hourly.time[i]);
+    const phenomena: string[] = [];
+
+    // Convert weather code to phenomena
+    const weatherCode = openMeteoData.hourly.weather_code[i];
+    if (weatherCode) {
+      const conditions = getOpenMeteoConditions({
+        weatherCode,
+        visibility: openMeteoData.hourly.visibility[i],
+        windSpeed: openMeteoData.hourly.wind_speed_10m[i],
+        windGusts: openMeteoData.hourly.wind_gusts_10m[i],
+        precipProb: openMeteoData.hourly.precipitation_probability[i],
+        rain: openMeteoData.hourly.rain[i],
+        snow: openMeteoData.hourly.snowfall[i]
+      });
+      phenomena.push(...conditions);
+    }
+
+    // Calculate risk level based on OpenMeteo data
+    const riskLevel = calculateOpenMeteoRisk({
+      weatherCode,
       visibility: openMeteoData.hourly.visibility[i],
-      weatherCode: openMeteoData.hourly.weather_code[i],
-      precipProb: openMeteoData.hourly.precipitation_probability[i],
       windSpeed: openMeteoData.hourly.wind_speed_10m[i],
       windGusts: openMeteoData.hourly.wind_gusts_10m[i],
+      precipProb: openMeteoData.hourly.precipitation_probability[i],
       rain: openMeteoData.hourly.rain[i],
       snow: openMeteoData.hourly.snowfall[i]
-    };
+    });
 
-    // Calculate trend for internal use
-    let trend: 'improving' | 'deteriorating' | 'stable' | undefined;
-    if (prevHour) {
-      const visibilityChange = currentHour.visibility - prevHour.visibility;
-      const windChange = currentHour.windSpeed - prevHour.windSpeed;
-      
-      if (visibilityChange > 1000 || windChange < -5) {
-        trend = 'improving';
-      } else if (visibilityChange < -1000 || windChange > 5) {
-        trend = 'deteriorating';
-      } else {
-        trend = 'stable';
-      }
-    }
-
-    hourlyConditions.set(time, { ...currentHour, trend });
+    hourlyData.push({
+      timestamp,
+      phenomena,
+      visibility: openMeteoData.hourly.visibility[i],
+      windSpeed: openMeteoData.hourly.wind_speed_10m[i],
+      windGusts: openMeteoData.hourly.wind_gusts_10m[i],
+      precipitation: openMeteoData.hourly.precipitation[i],
+      snowfall: openMeteoData.hourly.snowfall[i],
+      cloudCover: openMeteoData.hourly.cloud_cover[i],
+      riskLevel,
+      source: 'OPENMETEO'
+    });
   }
 
-  // Process each TAF period
-  return tafForecast.map(period => {
-    // For TEMPO periods, just return as is
-    if (period.isTemporary) return period;
+  return hourlyData;
+}
 
-    // Get OpenMeteo data for this period's timeframe
-    const periodStart = period.from.toISOString().split('.')[0];
-    const openMeteoHour = hourlyConditions.get(periodStart);
+// Add this function to convert TAF data to hourly format
+function processTAFToHourly(tafForecast: ForecastChange[]): CombinedHourlyData[] {
+  const hourlyData: CombinedHourlyData[] = [];
+  
+  for (const period of tafForecast) {
+    const startHour = period.from.getHours();
+    const endHour = period.to.getHours();
+    const hoursInPeriod = (period.to.getTime() - period.from.getTime()) / (60 * 60 * 1000);
 
-    if (!openMeteoHour) return period;
-
-    // Calculate weighted risk level
-    const tafRisk = period.riskLevel.level;
-    const openMeteoRisk = calculateOpenMeteoRisk(openMeteoHour);
-    
-    // Calculate combined risk level
-    const weightedRisk = Math.round(
-      (tafRisk * TAF_WEIGHT + openMeteoRisk * OPENMETEO_WEIGHT) as 1 | 2 | 3 | 4
-    );
-
-    // Only update risk level if OpenMeteo suggests significantly worse conditions
-    if (weightedRisk > tafRisk) {
-      // Update the risk level but keep the original messages
-      period.riskLevel = {
-        ...period.riskLevel,
-        level: weightedRisk as 1 | 2 | 3 | 4,
-        title: weightedRisk === 4 ? "Major Weather Impact" :
-               weightedRisk === 3 ? "Weather Advisory" :
-               weightedRisk === 2 ? "Minor Weather Impact" :
-               "Good Flying Conditions"
-      };
+    for (let hour = 0; hour < hoursInPeriod; hour++) {
+      const timestamp = new Date(period.from.getTime() + (hour * 60 * 60 * 1000));
+      
+      hourlyData.push({
+        timestamp,
+        phenomena: period.conditions.phenomena,
+        visibility: period.visibility?.meters ?? 9999,
+        windSpeed: period.wind?.speed_kts ?? 0,
+        windGusts: period.wind?.gust_kts,
+        precipitation: 0, // TAF doesn't provide exact precipitation values
+        snowfall: 0, // TAF doesn't provide exact snowfall values
+        cloudCover: 0, // Would need to be calculated from clouds array
+        riskLevel: period.riskLevel.level,
+        source: 'TAF'
+      });
     }
+  }
 
-    // Use trend to adjust risk level but don't show it in UI
-    if (openMeteoHour.trend === 'deteriorating' && period.riskLevel.level < 4) {
-      period.riskLevel.level = Math.min(4, period.riskLevel.level + 1) as 1 | 2 | 3 | 4;
-    }
+  return hourlyData;
+}
 
-    return period;
+// Add this function to combine hourly data from both sources
+function combineHourlyData(
+  tafHourly: CombinedHourlyData[], 
+  openMeteoHourly: CombinedHourlyData[]
+): CombinedHourlyData[] {
+  const combinedData: CombinedHourlyData[] = [];
+  const timeMap = new Map<string, CombinedHourlyData[]>();
+
+  // Group data by hour
+  [...tafHourly, ...openMeteoHourly].forEach(data => {
+    const timeKey = data.timestamp.toISOString();
+    const existing = timeMap.get(timeKey) || [];
+    existing.push(data);
+    timeMap.set(timeKey, existing);
   });
+
+  // Combine data for each hour
+  for (const [timeKey, hourData] of timeMap) {
+    const tafData = hourData.find(d => d.source === 'TAF');
+    const openMeteoData = hourData.find(d => d.source === 'OPENMETEO');
+
+    if (tafData && openMeteoData) {
+      // Combine phenomena with weights
+      const phenomena = new Set<string>();
+      tafData.phenomena.forEach(p => phenomena.add(p));
+      openMeteoData.phenomena.forEach(p => phenomena.add(p));
+
+      // Calculate weighted values
+      const visibility = (
+        tafData.visibility * SOURCE_WEIGHTS.TAF.VISIBILITY +
+        openMeteoData.visibility * SOURCE_WEIGHTS.OPENMETEO.VISIBILITY
+      ) / (SOURCE_WEIGHTS.TAF.VISIBILITY + SOURCE_WEIGHTS.OPENMETEO.VISIBILITY);
+
+      const windSpeed = (
+        tafData.windSpeed * SOURCE_WEIGHTS.TAF.WIND +
+        openMeteoData.windSpeed * SOURCE_WEIGHTS.OPENMETEO.WIND
+      ) / (SOURCE_WEIGHTS.TAF.WIND + SOURCE_WEIGHTS.OPENMETEO.WIND);
+
+      // Use higher risk level between sources
+      const riskLevel = Math.max(tafData.riskLevel, openMeteoData.riskLevel);
+
+      combinedData.push({
+        timestamp: new Date(timeKey),
+        phenomena: Array.from(phenomena),
+        visibility,
+        windSpeed,
+        windGusts: Math.max(tafData.windGusts || 0, openMeteoData.windGusts || 0),
+        precipitation: openMeteoData.precipitation, // Use OpenMeteo for precise values
+        snowfall: openMeteoData.snowfall,
+        cloudCover: openMeteoData.cloudCover,
+        riskLevel,
+        source: 'COMBINED'
+      });
+    } else {
+      // If we only have one source, use that
+      combinedData.push(hourData[0]);
+    }
+  }
+
+  return combinedData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+}
+
+// Update the existing combineForecasts function to use the new hourly combination
+function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
+  // Convert both forecasts to hourly data
+  const tafHourly = processTAFToHourly(tafForecast);
+  const openMeteoHourly = processOpenMeteoToHourly(openMeteoData);
+  
+  // Combine hourly data
+  const combinedHourly = combineHourlyData(tafHourly, openMeteoHourly);
+
+  // Convert combined hourly data back to forecast periods
+  return convertHourlyToForecastPeriods(combinedHourly);
 }
 
 function calculateOpenMeteoRisk({
@@ -872,7 +963,8 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   return changes;
 }
 
-function formatTimeDescription(start: Date, end: Date): string {
+export function formatTimeDescription(start: Date, end: Date): string {
+  const now = adjustToWarsawTime(new Date());
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-GB', {
       hour: '2-digit',
@@ -881,10 +973,29 @@ function formatTimeDescription(start: Date, end: Date): string {
     });
   };
 
-  const today = new Date();
+  const today = adjustToWarsawTime(new Date());
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  // If this is the current period (started in the past or now), use "Until" format
+  if (start.getTime() <= now.getTime()) {
+    if (end.getDate() === today.getDate()) {
+      return `Until ${formatTime(end)}`;
+    } else if (end.getDate() === tomorrow.getDate()) {
+      return `Until Tomorrow ${formatTime(end)}`;
+    } else {
+      return `Until ${end.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Warsaw'
+      })}`;
+    }
+  }
+
+  // For future periods, use the range format
   const startTime = formatTime(start);
   const endTime = formatTime(end);
 
@@ -1126,4 +1237,178 @@ function formatCeiling(feet: number): string {
     return `☁️ Very Low Ceiling`;
   }
   return ''; // Don't show ceiling if it's above 500ft
+}
+
+// Add this function to convert hourly data back to forecast periods
+function convertHourlyToForecastPeriods(hourlyData: CombinedHourlyData[]): ForecastChange[] {
+  if (hourlyData.length === 0) return [];
+
+  const periods: ForecastChange[] = [];
+  let currentPeriod: {
+    from: Date;
+    conditions: { phenomena: string[] };
+    riskLevel: RiskAssessment;
+    changeType: 'PERSISTENT' | 'TEMPO' | 'BECMG';
+    wind?: {
+      speed_kts: number;
+      gust_kts?: number;
+    };
+    visibility?: {
+      meters: number;
+    };
+  } = {
+    from: hourlyData[0].timestamp,
+    conditions: { phenomena: hourlyData[0].phenomena },
+    riskLevel: getRiskAssessment(hourlyData[0]),
+    changeType: 'PERSISTENT',
+    wind: {
+      speed_kts: hourlyData[0].windSpeed,
+      gust_kts: hourlyData[0].windGusts
+    },
+    visibility: {
+      meters: hourlyData[0].visibility
+    }
+  };
+
+  for (let i = 1; i < hourlyData.length; i++) {
+    const currentHour = hourlyData[i];
+    const prevHour = hourlyData[i - 1];
+
+    // Check if conditions have changed significantly
+    if (hasSignificantChange(prevHour, currentHour)) {
+      // Close current period
+      periods.push({
+        ...currentPeriod,
+        to: currentHour.timestamp,
+        timeDescription: formatTimeDescription(currentPeriod.from, currentHour.timestamp)
+      } as ForecastChange);
+
+      // Start new period
+      currentPeriod = {
+        from: currentHour.timestamp,
+        conditions: { phenomena: currentHour.phenomena },
+        riskLevel: getRiskAssessment(currentHour),
+        changeType: 'PERSISTENT',
+        wind: {
+          speed_kts: currentHour.windSpeed,
+          gust_kts: currentHour.windGusts
+        },
+        visibility: {
+          meters: currentHour.visibility
+        }
+      };
+    } else {
+      // Update current period with any new phenomena
+      const combinedPhenomena = new Set([
+        ...currentPeriod.conditions.phenomena,
+        ...currentHour.phenomena
+      ]);
+      currentPeriod.conditions.phenomena = Array.from(combinedPhenomena);
+
+      // Update risk level if current hour has higher risk
+      const currentRisk = getRiskAssessment(currentHour);
+      if (currentRisk.level > currentPeriod.riskLevel.level) {
+        currentPeriod.riskLevel = currentRisk;
+      }
+
+      // Update wind and visibility with worst values
+      currentPeriod.wind = {
+        speed_kts: Math.max(currentPeriod.wind?.speed_kts || 0, currentHour.windSpeed),
+        gust_kts: Math.max(currentPeriod.wind?.gust_kts || 0, currentHour.windGusts || 0)
+      };
+      currentPeriod.visibility = {
+        meters: Math.min(currentPeriod.visibility?.meters || 9999, currentHour.visibility)
+      };
+    }
+  }
+
+  // Add the last period
+  periods.push({
+    ...currentPeriod,
+    to: hourlyData[hourlyData.length - 1].timestamp,
+    timeDescription: formatTimeDescription(
+      currentPeriod.from,
+      hourlyData[hourlyData.length - 1].timestamp
+    )
+  } as ForecastChange);
+
+  // Filter out any periods shorter than minimum duration
+  const MINIMUM_DURATION = 30 * 60 * 1000; // 30 minutes
+  return periods.filter(period => 
+    period.to.getTime() - period.from.getTime() >= MINIMUM_DURATION
+  );
+}
+
+// Helper function to determine if weather conditions have changed significantly
+function hasSignificantChange(prev: CombinedHourlyData, current: CombinedHourlyData): boolean {
+  // Risk level change
+  if (current.riskLevel !== prev.riskLevel) return true;
+
+  // Significant visibility change (more than 1000m)
+  if (Math.abs(current.visibility - prev.visibility) > 1000) return true;
+
+  // Significant wind change (more than 10 knots)
+  if (Math.abs(current.windSpeed - prev.windSpeed) > 10) return true;
+
+  // Phenomena changes
+  const prevSet = new Set(prev.phenomena);
+  const currentSet = new Set(current.phenomena);
+  
+  // Check for any new or removed phenomena
+  for (const phenomenon of currentSet) {
+    if (!prevSet.has(phenomenon)) return true;
+  }
+  for (const phenomenon of prevSet) {
+    if (!currentSet.has(phenomenon)) return true;
+  }
+
+  // Significant precipitation change
+  if (Math.abs(current.precipitation - prev.precipitation) > 0.5) return true;
+  if (Math.abs(current.snowfall - prev.snowfall) > 0.5) return true;
+
+  return false;
+}
+
+// Helper function to get risk assessment from hourly data
+function getRiskAssessment(hour: CombinedHourlyData): RiskAssessment {
+  const level = hour.riskLevel as 1 | 2 | 3 | 4;
+  
+  return {
+    level,
+    title: level === 4 ? "Major Weather Impact" :
+           level === 3 ? "Weather Advisory" :
+           level === 2 ? "Minor Weather Impact" :
+           "Good Flying Conditions",
+    message: getWeatherMessage(hour),
+    color: level === 4 ? "red" :
+           level === 3 ? "orange" :
+           level === 2 ? "yellow" :
+           "green"
+  };
+}
+
+// Helper function to generate weather message
+function getWeatherMessage(hour: CombinedHourlyData): string {
+  const messages: string[] = [];
+
+  // Check visibility
+  if (hour.visibility < MINIMUMS.VISIBILITY) {
+    messages.push("Visibility below minimums");
+  } else if (hour.visibility < 1000) {
+    messages.push("Very poor visibility");
+  }
+
+  // Check winds
+  if (hour.windGusts && hour.windGusts >= 35) {
+    messages.push("Strong wind gusts");
+  } else if (hour.windSpeed >= 25) {
+    messages.push("Strong winds");
+  }
+
+  // Add significant phenomena
+  if (hour.phenomena.length > 0) {
+    messages.push(hour.phenomena[0]); // Add most significant phenomenon
+  }
+
+  return messages.join(" • ") || "Normal conditions";
 }

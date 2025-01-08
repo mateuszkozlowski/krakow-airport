@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange } from "@/lib/types/weather";
 import { RiskLegendDialog } from "./RiskLegend";
+import { adjustToWarsawTime } from '@/lib/utils/time';
+import { formatTimeDescription } from '@/lib/weather';
 
 interface WeatherTimelineProps {
   current: {
@@ -123,6 +125,21 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
 
+  // Filter out past periods
+  const now = adjustToWarsawTime(new Date());
+  const filteredForecast = React.useMemo(() => 
+    forecast.filter(period => period.to.getTime() > now.getTime())
+    .map(period => {
+      if (period.from.getTime() < now.getTime()) {
+        return {
+          ...period,
+          from: now,
+          timeDescription: formatTimeDescription(now, period.to)
+        };
+      }
+      return period;
+    }), [forecast]);
+
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     console.log('Before deduplication:', periods.map(p => ({
       time: p.timeDescription,
@@ -214,7 +231,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   };
 
   // Just use the deduplication result directly
-  const uniqueForecast = React.useMemo(() => deduplicateForecastPeriods(forecast), [forecast]);
+  const uniqueForecast = React.useMemo(() => deduplicateForecastPeriods(filteredForecast), [filteredForecast]);
 
   const getStatusColors = (level: 1 | 2 | 3 | 4) => {
     switch (level) {
@@ -348,7 +365,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
         <LoadingSkeleton />
       ) : (
         <>
-          {forecast.length === 0 ? (
+          {filteredForecast.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <p className="text-lg">No weather changes expected</p>
               <p className="text-sm mt-2">Current conditions should remain stable</p>
@@ -406,7 +423,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     </div>
 
                     {/* Warning banner for deteriorating conditions */}
-                    {current.riskLevel.level === 1 && forecast.some(p => {
+                    {current.riskLevel.level === 1 && filteredForecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
                       return withinNextHour && p.riskLevel.level > 1;
                     }) && (
