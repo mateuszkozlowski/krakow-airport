@@ -317,38 +317,47 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
   const now = new Date();
   const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes
   
-  return forecast
+  // First, combine any overlapping periods that have the same conditions
+  const combinedForecast = forecast.reduce((acc, period) => {
+    const lastPeriod = acc[acc.length - 1];
+    
+    if (lastPeriod && 
+        period.from <= lastPeriod.to && 
+        JSON.stringify(period.conditions) === JSON.stringify(lastPeriod.conditions)) {
+      lastPeriod.to = period.to;
+      return acc;
+    }
+    
+    acc.push(period);
+    return acc;
+  }, [] as ForecastChange[]);
+  
+  return combinedForecast
     .filter(period => {
       const periodEnd = period.to;
       const periodStart = period.from;
       
-      // Keep only periods that:
-      // 1. Have valid duration
-      // 2. End in the future
-      // 3. For current periods, must have at least MINIMUM_DURATION remaining
+      // Remove any period that:
+      // 1. Has already ended
+      // 2. Is too short
+      // 3. Is a current period with no phenomena
       if (periodStart < now) {
-        return periodEnd.getTime() - now.getTime() > MINIMUM_DURATION;
+        return periodEnd.getTime() - now.getTime() > MINIMUM_DURATION &&
+               (period.conditions.phenomena.length > 0 || period.isTemporary);
       }
       return periodStart < periodEnd;
     })
     .map(period => {
       const periodStart = period.from;
       if (periodStart < now) {
-        // For current periods, adjust start time and skip if too short
-        const adjustedPeriod = {
+        return {
           ...period,
           from: now,
           timeDescription: formatTimeDescription(now, period.to)
         };
-        // Only return if the adjusted period has meaningful duration
-        if (adjustedPeriod.to.getTime() - adjustedPeriod.from.getTime() > MINIMUM_DURATION) {
-          return adjustedPeriod;
-        }
-        return null;
       }
       return period;
-    })
-    .filter((period): period is ForecastChange => period !== null);
+    });
 }
 
 // Add this function to fetch Open-Meteo data
