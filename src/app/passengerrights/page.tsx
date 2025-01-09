@@ -1,15 +1,18 @@
 // src/app/passengerrights/page.tsx
+'use client';
+
 import { Alert } from "@/components/ui/alert";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PassengerRights } from "@/components/PassengerRights";
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Passenger Rights & Flight Delay Support',
-};
+import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/lib/translations';
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const PassengerRightsPage = () => {
+    const { language } = useLanguage();
+    const t = translations[language];
+
     return (
         <div className="min-h-screen">
             <div 
@@ -22,17 +25,18 @@ const PassengerRightsPage = () => {
                             href="/"
                             className="text-sm flex items-center gap-2 text-white/80 hover:text-white transition-colors">
                             <ArrowLeft className="h-4 w-4" />
-                            Back to Airport Info
+                            {t.backToAirportInfo}
                         </Link>
+                        <LanguageSelector />
                     </div>
                 </Alert>
 
                 <div className="max-w-4xl mx-auto px-6 pb-16">
                     <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">
-                        Delayed Flight? We're Here to Help
+                        {t.pageTitle}
                     </h1>
                     <div className="text-xl md:text-3xl mb-8 text-white/80">
-                        Find out what support is available and where to get immediate assistance at Kraków Airport
+                        {t.pageSubtitle}
                     </div>
                 </div>
             </div>

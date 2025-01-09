@@ -7,11 +7,18 @@ import type {
   ForecastChange,
   WeatherResponse,
   OpenMeteoForecast,
+  RiskLevel,
 } from './types/weather';
 
-// Import WEATHER_PHENOMENA and WMO_WEATHER_CODES as values
-import { WEATHER_PHENOMENA, WMO_WEATHER_CODES } from './types/weather';
+// Import WEATHER_PHENOMENA, WEATHER_PHENOMENA_TRANSLATIONS i WMO_WEATHER_CODES jako wartości
+import { 
+  WEATHER_PHENOMENA, 
+  WEATHER_PHENOMENA_TRANSLATIONS,
+  WMO_WEATHER_CODES 
+} from './types/weather';
 import { adjustToWarsawTime } from '@/lib/utils/time';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/lib/translations';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 type WeatherPhenomenon = keyof typeof WEATHER_PHENOMENA;
@@ -215,39 +222,40 @@ const previousVisibilityReading: {
 } | null = null;
 
 // Add operational impact assessment
-function assessOperationalImpacts(weather: WeatherData): string[] {
+function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): string[] {
+  const t = translations[language].operationalImpactMessages;
   const impacts: string[] = [];
   const temp = weather.temperature?.celsius ?? 0;
   
   // De-icing assessment
   if (temp <= DEICING_CONDITIONS.TEMPERATURE.BELOW_ZERO) {
     if (temp <= DEICING_CONDITIONS.TEMPERATURE.SEVERE) {
-      impacts.push("❄️ Mandatory de-icing, expect 30-45 min delay");
+      impacts.push(t.deicingDelay);
     } else if (temp <= DEICING_CONDITIONS.TEMPERATURE.HIGH_RISK) {
-      impacts.push("❄️ Likely de-icing required, expect 20-30 min delay");
+      impacts.push(t.likelyDeicing);
     } else {
-      impacts.push("❄️ Possible de-icing, expect 15-20 min delay");
+      impacts.push(t.possibleDeicing);
     }
   }
 
   // Check for precipitation requiring de-icing
   if (weather.conditions?.some(c => DEICING_CONDITIONS.PHENOMENA.has(c.code))) {
-    impacts.push("🧊 Active precipitation requiring de-icing procedures");
+    impacts.push(t.activeDeicing);
   }
 
   // Ground operations impacts
   if (weather.conditions?.some(c => c.code === 'SN' || c.code === '+SN')) {
-    impacts.push("🚜 Runway/taxiway snow clearing in progress");
+    impacts.push(t.runwayClearing);
   }
 
   // Low visibility procedures
   if (weather.visibility?.meters && weather.visibility.meters < 1500) {
-    impacts.push("👁️ Low Visibility Procedures active - reduced airport capacity");
+    impacts.push(t.reducedCapacity);
   }
 
   // Strong winds impact
   if (weather.wind?.speed_kts && weather.wind.speed_kts >= 20) {
-    impacts.push("💨 Single runway operations possible - reduced capacity");
+    impacts.push(t.singleRunway);
   }
 
   return impacts;
@@ -313,7 +321,7 @@ function analyzeUpcomingConditions(forecast: ForecastChange[]): {
 }
 
 // Add a function to filter forecast periods
-function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
+function filterForecastPeriods(forecast: ForecastChange[], language: 'en' | 'pl'): ForecastChange[] {
   const now = new Date();
   const MINIMUM_DURATION = 5 * 60 * 1000; // 5 minutes
   
@@ -353,7 +361,7 @@ function filterForecastPeriods(forecast: ForecastChange[]): ForecastChange[] {
         return {
           ...period,
           from: now,
-          timeDescription: formatTimeDescription(now, period.to)
+          timeDescription: formatTimeDescription(now, period.to, language)
         };
       }
       return period;
@@ -379,7 +387,7 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
 }
 
 // Add this function to combine forecasts
-function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast): ForecastChange[] {
+function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast, language: 'en' | 'pl'): ForecastChange[] {
   const TAF_WEIGHT = 0.7;  // TAF is more authoritative
   const OPENMETEO_WEIGHT = 0.3;
 
@@ -572,17 +580,19 @@ function getOpenMeteoConditions({
   precipProb: number;
   rain: number;
   snow: number;
-}): string[] {
+}, language: 'en' | 'pl'): string[] {
+  const t = translations[language].weatherConditionMessages;
   const conditions: string[] = [];
 
   // Add visibility condition first with correct thresholds
-  // visibility is in meters from OpenMeteo
-  if (visibility < MINIMUMS.VISIBILITY) { // MINIMUMS.VISIBILITY is 550m
-    conditions.push("👁️ Visibility Below Minimums");
+  if (visibility < MINIMUMS.VISIBILITY) {
+    conditions.push(t.visibilityBelowMinimums);
   } else if (visibility < 1000) {
-    conditions.push("👁️ Poor Visibility");
+    conditions.push(t.veryPoorVisibilityMeters.replace('{meters}', visibility.toString()));
   } else if (visibility < 3000) {
-    conditions.push("👁️ Reduced Visibility");
+    conditions.push(t.poorVisibility);
+  } else if (visibility < 5000) {
+    conditions.push(t.reducedVisibilitySimple);
   }
 
   // Standardize precipitation descriptions with probability check
@@ -591,18 +601,18 @@ function getOpenMeteoConditions({
     if (probability < 40) return null;
 
     const precipMap: Record<number, string> = {
-      51: '🌧️ Light Drizzle',
-      53: '🌧️ Moderate Drizzle',
-      55: '🌧️ Heavy Drizzle',
-      61: '🌧️ Light Rain',
-      63: '🌧️ Rain',
-      65: '🌧️ Heavy Rain',
-      71: '🌨️ Light Snow',
-      73: '🌨️ Snow',
-      75: '🌨️ Heavy Snow',
-      95: '⛈️ Thunderstorm',
-      96: '⛈️ Thunderstorm with Hail',
-      99: '⛈️ Severe Thunderstorm'
+      51: t.lightDrizzle || '🌧️ Light Drizzle',
+      53: t.moderateDrizzle || '🌧️ Moderate Drizzle',
+      55: t.heavyDrizzle || '🌧️ Heavy Drizzle',
+      61: t.lightRain || '🌧️ Light Rain',
+      63: t.rain || '🌧️ Rain',
+      65: t.heavyRain || '🌧️ Heavy Rain',
+      71: t.lightSnow || '🌨️ Light Snow',
+      73: t.snow || '🌨️ Snow',
+      75: t.heavySnow || '🌨️ Heavy Snow',
+      95: t.thunderstorm || '⛈️ Thunderstorm',
+      96: t.thunderstormWithHail || '⛈️ Thunderstorm with Hail',
+      99: t.severeThunderstorm || '⛈️ Severe Thunderstorm'
     };
     return precipMap[code] || null;
   };
@@ -616,34 +626,26 @@ function getOpenMeteoConditions({
   }
 
   // Add standardized wind condition
-  const windDesc = getStandardizedWindDescription(windSpeed, windGusts);
+  const windDesc = getStandardizedWindDescription(windSpeed, language, windGusts);
   if (windDesc) {
     conditions.push(windDesc);
   }
-
-  console.log('OpenMeteo conditions generated:', {
-    weatherCode,
-    visibility: `${visibility}m`,
-    belowMinimums: visibility < MINIMUMS.VISIBILITY,
-    minimums: MINIMUMS.VISIBILITY,
-    precipProb,
-    conditions
-  });
 
   return conditions;
 }
 
 // Helper function to get standardized wind description
-function getStandardizedWindDescription(speed: number, gusts?: number): string {
-  if (gusts && gusts >= 40) return "💨 Very Strong Wind Gusts";
-  if (gusts && gusts >= 35) return "💨 Strong Wind Gusts";
-  if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong Winds";
-  if (speed >= 15) return "💨 Moderate Winds";
-  return "";
+export function getStandardizedWindDescription(speed: number, language: 'en' | 'pl', gusts?: number): string {
+  const t = translations[language].weatherConditionMessages;
+  
+  if (gusts && gusts >= 35) return t.veryStrongWindGusts;  // "💨 Very Strong Wind Gusts" | "💨 Bardzo silne porywy wiatru"
+  if (gusts && gusts >= 25 || speed >= 25) return t.strongWinds;  // "💨 Strong Winds" | "💨 Silny wiatr"
+  if (speed >= 15) return t.moderateWinds;  // "💨 Moderate Winds" | "💨 Umiarkowany wiatr"
+  return ""; // Don't show light winds
 }
 
 // Update the getAirportWeather function
-export async function getAirportWeather(): Promise<WeatherResponse | null> {
+export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<WeatherResponse | null> {
   try {
     // Fetch both TAF and Open-Meteo data
     const [weatherResponse, openMeteoData] = await Promise.all([
@@ -668,15 +670,16 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
     const forecast: TAFData = taf.data[0];
 
     // First process TAF data
-    const tafPeriods = processForecast(forecast);
+    const tafPeriods = processForecast(forecast, language);
 
     // Then combine with OpenMeteo if available
     const combinedForecast = openMeteoData 
-      ? combineForecasts(tafPeriods, openMeteoData)
+      ? combineForecasts(tafPeriods, openMeteoData, language)
       : tafPeriods;
 
-    const currentAssessment = assessWeatherRisk(currentWeather);
-
+    const currentAssessment = assessWeatherRisk(currentWeather, language);
+    const impacts = assessOperationalImpacts(currentWeather, language);
+    
     // Return the combined forecast
     return {
       current: {
@@ -690,16 +693,17 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
             ...(currentWeather.wind ? 
               [getStandardizedWindDescription(
                 currentWeather.wind.speed_kts,
+                language,
                 currentWeather.wind.gust_kts
               )].filter(Boolean) : 
               []
             ),
             ...(currentWeather.visibility ? 
-              [formatVisibility(currentWeather.visibility.meters)].filter(Boolean) : 
+              [formatVisibility(currentWeather.visibility.meters, language)].filter(Boolean) : 
               []
             ),
             ...(currentWeather.ceiling ? 
-              [formatCeiling(currentWeather.ceiling.feet)].filter(Boolean) : 
+              [formatCeiling(currentWeather.ceiling.feet, language)].filter(Boolean) : 
               []
             )
           ].filter(Boolean)
@@ -716,9 +720,11 @@ export async function getAirportWeather(): Promise<WeatherResponse | null> {
   }
 }
 
-function processForecast(taf: TAFData | null): ForecastChange[] {
+function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastChange[] {
   if (!taf || !taf.forecast) return [];
 
+  const t = translations[language];
+  const warnings = t.operationalWarnings;
   const changes: ForecastChange[] = [];
   
   // First, sort and validate periods
@@ -743,7 +749,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
     // Process visibility first
     if (period.visibility?.meters) {
-      const visDesc = formatVisibility(period.visibility.meters);
+      const visDesc = formatVisibility(period.visibility.meters, language);
       if (visDesc) {
         currentConditions.add(visDesc);
       }
@@ -757,7 +763,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
 
       if (significantCloud && significantCloud.base_feet_agl) {
         if (significantCloud.base_feet_agl < 500) {
-          const ceilingDesc = formatCeiling(significantCloud.base_feet_agl);
+          const ceilingDesc = formatCeiling(significantCloud.base_feet_agl, language);
           if (ceilingDesc) {
             currentConditions.add(ceilingDesc);
           }
@@ -768,108 +774,109 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
     // Process weather phenomena
     if (period.conditions) {
       for (const condition of period.conditions) {
-        const phenomenon = WEATHER_PHENOMENA[condition.code as WeatherPhenomenon];
-        if (phenomenon) {
-          currentConditions.add(phenomenon);
+        const translatedPhenomenon = getWeatherPhenomenonDescription(condition.code, language);
+        if (translatedPhenomenon) {
+          currentConditions.add(translatedPhenomenon);
         }
       }
     }
 
     // Add wind if significant
     const windDesc = period.wind ? 
-      getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts) : 
+      getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) : 
       null;
     if (windDesc) {
       currentConditions.add(windDesc);
     }
 
-    // Determine initial risk level
-    let riskLevel: RiskAssessment;
+    // Default to good conditions
+    let riskLevel: RiskLevel = {
+      level: 1,
+      title: t.riskLevel1Title,
+      message: t.riskLevel1Message,
+      statusMessage: t.riskLevel1Status,
+      color: "green"
+    };
     let operationalImpacts: string[] = [];
 
     // Check for severe conditions first
     if (period.visibility?.meters && period.visibility.meters < MINIMUMS.VISIBILITY) {
       riskLevel = {
         level: 4,
-        title: "Major Weather Impact",
-        message: "Operations suspended - visibility below minimums",
-        statusMessage: "Airport operations are currently suspended due to visibility below minimums.",
+        title: t.riskLevel4Title,
+        message: t.riskLevel4Message,
+        statusMessage: t.riskLevel4Status,
         color: "red"
       };
-      operationalImpacts = ["⛔ Operations suspended - below minimums", "✈️ Diversions likely"];
+      operationalImpacts = [warnings.operationsSuspended, warnings.diversionsLikely];
     } else if (period.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
       riskLevel = {
         level: 4,
-        title: "Major Weather Impact",
-        message: "Operations suspended - freezing conditions",
-        statusMessage: "Airport operations are currently suspended due to freezing conditions.",
+        title: t.riskLevel4Title,
+        message: t.riskLevel4Message,
+        statusMessage: t.riskLevel4Status,
         color: "red"
       };
-      operationalImpacts = ["⛔ Operations suspended", "❄️ De-icing required", "✈️ Diversions likely"];
+      operationalImpacts = [
+        warnings.operationsSuspended,
+        warnings.deicingRequired,
+        warnings.diversionsLikely
+      ];
     } else if (period.visibility?.meters && period.visibility.meters < 2000) {
       riskLevel = {
         level: 3,
-        title: "Weather Advisory",
-        message: "Operations restricted - poor visibility",
-        statusMessage: "Airport operations are restricted due to poor visibility. Expect delays.",
+        title: t.riskLevel3Title,
+        message: t.riskLevel3Message,
+        statusMessage: t.riskLevel3Status,
         color: "orange"
       };
-      operationalImpacts = ["⚠️ Possible delays", "✈️ Some flights may divert"];
-    } else {
-      // Default to good conditions, then check for wind
-      riskLevel = {
-        level: 1,
-        title: "Good Flying Conditions",
-        message: "Normal operations",
-        statusMessage: "Weather conditions are favorable for normal operations.",
-        color: "green"
-      };
-      operationalImpacts = ["✈️ Normal operations"];
+      operationalImpacts = [
+        warnings.possibleDelays,
+        warnings.someFlightsMayDivert
+      ];
     }
 
-    // Assess wind risk before creating the period
+    // Assess wind risk
     if (period.wind) {
       const { speed_kts, gust_kts } = period.wind;
       
-      // Increase risk level for strong winds/gusts
-      if (gust_kts && gust_kts >= 40) {
+      if (speed_kts >= 35 || (gust_kts && gust_kts >= 40)) {
         riskLevel = {
-          level: 4 as const,
-          title: "Major Weather Impact",
-          message: "Operations severely restricted - dangerous wind gusts",
-          statusMessage: "Strong wind gusts may cause suspensions. Many flights may divert.",
+          level: 4,
+          title: t.riskLevel4Title,
+          message: t.riskLevel4Message,
+          statusMessage: t.riskLevel4Status,
           color: "red"
         };
         operationalImpacts = [
-          "⛔ Operations may be suspended due to strong gusts",
-          "✈️ Many flights may divert",
-          "⚠️ Expect significant delays"
+          warnings.dangerousGusts,
+          warnings.diversionsLikely
         ];
       } else if (gust_kts && gust_kts >= 35) {
         riskLevel = {
           level: Math.max(riskLevel.level, 3) as 1 | 2 | 3 | 4,
-          title: "Weather Advisory",
-          message: "Operations restricted - strong wind gusts",
-          statusMessage: "Strong wind gusts causing restrictions. Expect delays.",
+          title: t.riskLevel3Title,
+          message: t.riskLevel3Message,
+          statusMessage: t.riskLevel3Status,
           color: "orange"
         };
         operationalImpacts = [
-          "⚠️ Strong wind gusts affecting operations",
-          "⏳ Extended delays likely",
-          "✈️ Some flights may divert"
+          warnings.strongGustsOperations,
+          warnings.extendedDelays,
+          warnings.diversionsLikely
         ];
       } else if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) {
         if (riskLevel.level < 2) {
           riskLevel = {
             level: 2 as const,
-            title: "Minor Weather Impact",
-            message: "Strong winds may affect operations",
-            statusMessage: "Strong winds may cause minor delays.",
+            title: t.riskLevel2Title,
+            message: t.riskLevel2Message,
+            statusMessage: t.riskLevel2Status,
             color: "yellow"
           };
           operationalImpacts = [
-            "⚠️ Strong winds affecting approaches",
-            "⏳ Minor delays possible"
+            warnings.strongWindsApproaches,
+            warnings.minorDelaysPossible
           ];
         }
       }
@@ -880,12 +887,19 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         (period.change && 
          (period.change.indicator?.code === 'TEMPO' || period.change.probability))
     ) {
+      const phenomena = Array.from(currentConditions);
+      
+      // Jeśli nie ma żadnych zjawisk, dodaj NSW
+      if (phenomena.length === 0) {
+        phenomena.push(getWeatherPhenomenonDescription('NSW', language));
+      }
+
       changes.push({
-        timeDescription: formatTimeDescription(period.from, period.to),
+        timeDescription: formatTimeDescription(period.from, period.to, language),
         from: period.from,
         to: period.to,
         conditions: {
-          phenomena: Array.from(currentConditions)
+          phenomena
         },
         riskLevel,
         changeType: period.change?.indicator?.code || 'PERSISTENT',
@@ -902,8 +916,18 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   return changes;
 }
 
-function formatTimeDescription(start: Date, end: Date): string {
+function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): string {
+  const t = translations[language];
+  
   const formatTime = (date: Date) => {
+    if (language === 'pl') {
+      const time = date.toLocaleTimeString('pl-PL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Warsaw'
+      });
+      return `${time}`;
+    }
     return date.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
@@ -918,39 +942,61 @@ function formatTimeDescription(start: Date, end: Date): string {
   const startTime = formatTime(start);
   const endTime = formatTime(end);
 
-  // Same day
-  if (start.getDate() === end.getDate()) {
-    const prefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
-    return `${prefix} ${startTime} - ${endTime}`;
-  }
-  
-  // Crosses midnight
-  const startPrefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
-  const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
-  return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
-}
-
-function getWeatherDescription(reasons: string[], impacts: string[]): string {
-  if (!reasons.length && !impacts.length) {
-      return "☀️ Clear skies and good visibility";
+  if (language === 'pl') {
+    // Polski format
+    if (start.getDate() === end.getDate()) {
+      // Ten sam dzień
+      const dayPrefix = start.getDate() === today.getDate() ? 'Dziś' : 'Jutro';
+      return `${dayPrefix} ${startTime} - ${endTime}`;
     }
     
-    // Combine weather reasons with operational impacts
-    const allImpacts = [...impacts];
+    // Przechodzi przez północ
+    const startPrefix = start.getDate() === today.getDate() ? 'Dziś' : 'Jutro';
+    const endPrefix = end.getDate() === tomorrow.getDate() ? 'jutro' : 'pojutrze';
+    
+    // Jeśli kończy się o północy, użyj specjalnego formatu
+    if (endTime === '00:00') {
+      return `do ${endPrefix} ${endTime}`;
+    }
+    
+    // Standardowy format dla różnych dni
+    return `${startPrefix} ${startTime} do ${endPrefix} ${endTime}`;
+  } else {
+    // Angielski format (bez zmian)
+    if (start.getDate() === end.getDate()) {
+      const prefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
+      return `${prefix} ${startTime} - ${endTime}`;
+    }
+    
+    const startPrefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
+    const endPrefix = end.getDate() === tomorrow.getDate() ? t.tomorrow : t.nextDay;
+    return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
+  }
+}
+
+function getWeatherDescription(reasons: string[], impacts: string[], language: 'en' | 'pl'): string {
+  const t = translations[language].weatherConditionMessages;
+  
+  if (!reasons.length && !impacts.length) {
+    return t.clearSkies;
+  }
+    
+  // Combine weather reasons with operational impacts
+  const allImpacts = [...impacts];
   if (reasons.length > 0) {
     const primaryReason = reasons[0];
-      const description = Object.entries(weatherDescriptions).find(
-        ([condition]) => primaryReason.includes(condition)
-      );
-      if (description) {
-        allImpacts.unshift(description[1]);
-      }
+    const description = getDetailedDescription(primaryReason, language);
+    if (description) {
+      allImpacts.unshift(description);
     }
+  }
     
-    return allImpacts.join(" • ");
+  return allImpacts.join(" • ");
 }
 
-function assessWeatherRisk(weather: WeatherData): RiskAssessment {
+function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
+  const t = translations[language];
+  const warnings = t.operationalWarnings;
   const operationalImpactsSet = new Set<string>();
   const reasons: string[] = [];
   
@@ -962,27 +1008,27 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   // Early morning risk factor (3-7 AM)
   if (hour >= 3 && hour <= 7) {
     timeRiskMultiplier *= 1.3;
-    operationalImpactsSet.add("⏰ Possible reduced visibility during early morning hours");
+    operationalImpactsSet.add(warnings.reducedVisibilityMorning);
   }
   
   // Winter season risk factor (Oct-Feb)
   if (month >= 9 || month <= 1) {
     timeRiskMultiplier *= 1.2;
-    operationalImpactsSet.add("❄️ Likely de-icing required, expect 20-30 min delay");
-    // Don't add additional winter message since it's covered by the de-icing message
+    operationalImpactsSet.add(warnings.winterDeicing);
   }
 
   // Base risk calculation
   let baseRiskLevel = 1;
 
-  // Check for severe conditions first (level 4)
+  // Check for severe conditions
   if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
     baseRiskLevel = 4;
-    operationalImpactsSet.add("👁️ Visibility below minimums");
-  } 
-  
+    operationalImpactsSet.add(warnings.operationsSuspended);
+    operationalImpactsSet.add(warnings.diversionsLikely);
+  }
+
   // Check for freezing conditions (level 4)
-  const { score: deicingScore, reason: deicingReason } = calculateDeicingRisk(weather);
+  const { score: deicingScore, reason: deicingReason } = calculateDeicingRisk(weather, language);
   if (deicingScore >= RISK_WEIGHTS.DEICING.BASE_SCORES.CERTAIN || 
       weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
     baseRiskLevel = Math.max(baseRiskLevel, 4);
@@ -991,13 +1037,13 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
     }
   }
 
-  // Check for poor visibility (level 3)
+  // Check for poor visibility
   if (weather.visibility?.meters && weather.visibility.meters < 2000) {
     baseRiskLevel = Math.max(baseRiskLevel, 3);
-    operationalImpactsSet.add("👁️ Poor visibility conditions");
+    operationalImpactsSet.add(warnings.poorVisibilityOps);
   }
 
-  // Check for moderate impacts (level 2)
+  // Check for moderate impacts
   if ((weather.visibility?.meters && weather.visibility.meters < 3000) ||
       (weather.clouds?.some(cloud => 
         (cloud.code === 'BKN' || cloud.code === 'OVC') && 
@@ -1005,7 +1051,20 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
         cloud.base_feet_agl < MINIMUMS.CEILING
       ))) {
     baseRiskLevel = Math.max(baseRiskLevel, 2);
-    operationalImpactsSet.add("☁️ Marginal conditions");
+    operationalImpactsSet.add(warnings.marginalConditions);
+  }
+
+  // Wind assessment
+  if (weather.wind?.gust_kts && weather.wind.gust_kts >= 40) {
+    baseRiskLevel = 4;
+    operationalImpactsSet.add(warnings.dangerousGusts);
+  } else if (weather.wind?.gust_kts && weather.wind.gust_kts >= 35) {
+    baseRiskLevel = Math.max(baseRiskLevel, 3);
+    operationalImpactsSet.add(warnings.strongGustsOperations);
+  } else if (weather.wind?.speed_kts && weather.wind.speed_kts >= 25 || 
+             (weather.wind?.gust_kts && weather.wind.gust_kts >= 25)) {
+    baseRiskLevel = Math.max(baseRiskLevel, 2);
+    operationalImpactsSet.add(warnings.windDelays);
   }
 
   // Apply time-based risk multiplier
@@ -1019,49 +1078,30 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
     }
   }
 
-  // Enhance wind risk assessment
-  if (weather.wind) {
-    const windDesc = getStandardizedWindDescription(weather.wind.speed_kts, weather.wind.gust_kts);
-    if (windDesc) {
-      operationalImpactsSet.add(windDesc);
-      // Increase risk level for strong gusts
-      if (weather.wind.gust_kts && weather.wind.gust_kts >= 40) {
-        baseRiskLevel = 4 as const; // Explicitly type as 4
-        operationalImpactsSet.add("💨 Dangerous wind gusts - operations may be suspended");
-      } else if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
-        baseRiskLevel = Math.max(baseRiskLevel, 3) as 1 | 2 | 3 | 4;
-        operationalImpactsSet.add("💨 Strong gusts affecting operations");
-      } else if (weather.wind.speed_kts >= 25 || (weather.wind.gust_kts && weather.wind.gust_kts >= 25)) {
-        baseRiskLevel = Math.max(baseRiskLevel, 2) as 1 | 2 | 3 | 4;
-        operationalImpactsSet.add("💨 Strong winds may cause delays");
-      }
-    }
-  }
-
   // Update the risk mappings with statusMessage
   const riskMappings = {
     4: {
-      title: "Major Weather Impact",
-      message: "Operations suspended",
-      statusMessage: "All flights are currently suspended due to severe weather conditions. Check with your airline for updates.",
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      statusMessage: t.riskLevel4Status,
       color: "red" as const
     },
     3: {
-      title: "Weather Advisory",
-      message: "Operations restricted",
-      statusMessage: "Expect delays of 30+ minutes. Check your flight status.",
+      title: t.riskLevel3Title,
+      message: t.riskLevel3Message,
+      statusMessage: t.riskLevel3Status,
       color: "orange" as const
     },
     2: {
-      title: "Minor Weather Impact",
-      message: "Minor operational impacts expected",
-      statusMessage: "Flights are operating with possible delays of 20-30 minutes.",
+      title: t.riskLevel2Title,
+      message: t.riskLevel2Message,
+      statusMessage: t.riskLevel2Status,
       color: "yellow" as const
     },
     1: {
-      title: "Good Flying Conditions",
-      message: "Normal operations",
-      statusMessage: "All flights are operating on schedule.",
+      title: t.riskLevel1Title,
+      message: t.riskLevel1Message,
+      statusMessage: t.riskLevel1Status,
       color: "green" as const
     }
   };
@@ -1070,18 +1110,22 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
   if (timeRiskMultiplier > 1.0) {
     const timeFactors = [];
     if (hour >= 3 && hour <= 7) {
-      timeFactors.push("Early morning conditions may affect visibility");
+      timeFactors.push(warnings.reducedVisibilityMorning);
     }
     if (month >= 9 || month <= 1) {
-      timeFactors.push("Winter weather conditions may cause delays");
+      timeFactors.push(warnings.winterWeatherWarning);
     }
     
-    // More passenger-friendly messaging
     if (timeFactors.length > 0) {
+      const message = timeFactors.join(". ");
       if (finalRiskLevel === 1) {
-        operationalImpactsSet.add(`Note: ${timeFactors.join(". ")}`);
+        if (!Array.from(operationalImpactsSet).some(impact => impact.includes(message))) {
+          operationalImpactsSet.add(`${t.note}${message}`);
+        }
       } else {
-        operationalImpactsSet.add(`Additional consideration: ${timeFactors.join(". ")}`);
+        if (!Array.from(operationalImpactsSet).some(impact => impact.includes(message))) {
+          operationalImpactsSet.add(`${t.additionalConsideration}${message}`);
+        }
       }
     }
   }
@@ -1108,16 +1152,17 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
 }
 
 // Helper function to describe visibility trends
-function getVisibilityTrendDescription(current: number, previous: number): string {
+function getVisibilityTrendDescription(current: number, previous: number, language: 'en' | 'pl'): string {
+  const t = translations[language].operationalWarnings;
   const change = current - previous;
   const percentChange = Math.abs(change / previous * 100);
   
-  if (percentChange < 10) return ''; // No significant change
+  if (percentChange < 10) return '';
   
   if (change < 0) {
-    return '📉 Visibility decreasing';
+    return t.visibilityDecreasing;
   } else {
-    return '📈 Visibility improving';
+    return t.visibilityImproving;
   }
 }
 
@@ -1147,7 +1192,9 @@ function getWeatherScore(code: number): number {
 }
 
 // Add the de-icing risk calculation
-function calculateDeicingRisk(weather: WeatherData): { score: number; reason?: string } {
+function calculateDeicingRisk(weather: WeatherData, language: 'en' | 'pl'): { score: number; reason?: string } {
+  const t = translations[language].weatherConditionMessages;
+  
   if (!weather.temperature?.celsius) {
     return { score: 0 };
   }
@@ -1156,19 +1203,17 @@ function calculateDeicingRisk(weather: WeatherData): { score: number; reason?: s
   let deicingScore = 0;
   let reason = '';
 
-  // Temperature-based assessment
   if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.SEVERE) {
     deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.CERTAIN;
-    reason = "❄️ Severe icing conditions";
+    reason = t.severeIcing;
   } else if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.HIGH_RISK) {
     deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.LIKELY;
-    reason = "❄️ High icing risk";
+    reason = t.highIcingRisk;
   } else if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.BELOW_ZERO) {
     deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.POSSIBLE;
-    reason = "❄️ Possible icing conditions";
+    reason = t.possibleIcing;
   }
 
-  // Increase risk if precipitation present in cold temperatures
   if (deicingScore > 0 && weather.conditions) {
     const hasPrecipitation = weather.conditions.some(c => 
       ['RA', 'SN', 'FZRA', 'FZDZ', 'SHSN', 'SHRA'].some(code => 
@@ -1176,8 +1221,8 @@ function calculateDeicingRisk(weather: WeatherData): { score: number; reason?: s
       )
     );
     if (hasPrecipitation) {
-      deicingScore *= 1.5;  // 50% increase if precipitation present
-      reason += " with active precipitation";
+      deicingScore *= 1.5;
+      reason += t.withPrecipitation;
     }
   }
 
@@ -1185,29 +1230,109 @@ function calculateDeicingRisk(weather: WeatherData): { score: number; reason?: s
 }
 
 // Add this helper function for formatting visibility
-function formatVisibility(meters: number): string {
+function formatVisibility(meters: number, language: 'en' | 'pl'): string {
+  const t = translations[language].weatherConditionMessages;
+  
   if (meters < MINIMUMS.VISIBILITY) {
-    return `👁️ Visibility Below Minimums (${meters}m)`;
+    return t.visibilityBelowMinimumsMeters.replace('{meters}', meters.toString());
   }
   if (meters < 1000) {
-    return `👁️ Very Poor Visibility (${meters}m)`;
+    return t.veryPoorVisibilityMeters.replace('{meters}', meters.toString());
   }
   if (meters < 3000) {
-    return `👁️ Poor Visibility`;  // No specific value needed
+    return t.poorVisibility;
   }
   if (meters < 5000) {
-    return `👁️ Reduced Visibility`; // No specific value needed
+    return t.reducedVisibilitySimple;
   }
-  return ''; // Don't show good visibility
+  return '';
 }
 
 // Add this helper function for formatting ceiling
-function formatCeiling(feet: number): string {
+function formatCeiling(feet: number, language: 'en' | 'pl'): string {
+  const t = translations[language].weatherConditionMessages;
+  
   if (feet < MINIMUMS.CEILING) {
-    return `☁️ Ceiling Below Minimums`;
+    return t.ceilingBelowMinimums;
   }
   if (feet < 500) {
-    return `☁️ Very Low Ceiling`;
+    return t.veryLowCeiling;
   }
-  return ''; // Don't show ceiling if it's above 500ft
+  return '';
+}
+
+function getDetailedDescription(condition: string, language: 'en' | 'pl'): string {
+  const t = translations[language].weatherDescriptions;
+  
+  if (condition.includes('Strong Winds') || condition.includes('Strong Wind Gusts')) {
+    return t.strongWinds;
+  }
+  if (condition.includes('Rain') && condition.includes('Strong')) {
+    return t.rainAndWind;
+  }
+  if (condition.includes('Snow')) {
+    return t.snowConditions;
+  }
+  return condition;
+}
+
+// Add this interface for warnings
+interface WarningMessages {
+  dangerousGusts: string;
+  diversionsLikely: string;
+  strongGustsOperations: string;
+  extendedDelays: string;
+  strongWindsApproaches: string;
+  minorDelaysPossible: string;
+  [key: string]: string; // For other warning messages
+}
+
+// Update the function with proper typing
+function getWindImpacts(
+  wind: { speed_kts: number; gust_kts?: number }, 
+  warnings: WarningMessages
+): string[] {
+  const impacts: string[] = [];
+  
+  if (wind.gust_kts && wind.gust_kts >= 40) {
+    impacts.push(warnings.dangerousGusts);
+    impacts.push(warnings.diversionsLikely);
+  } else if (wind.gust_kts && wind.gust_kts >= 35) {
+    impacts.push(warnings.strongGustsOperations);
+    impacts.push(warnings.extendedDelays);
+  } else if (wind.speed_kts >= 25 || (wind.gust_kts && wind.gust_kts >= 25)) {
+    impacts.push(warnings.strongWindsApproaches);
+    impacts.push(warnings.minorDelaysPossible);
+  }
+  
+  return impacts;
+}
+
+function getWeatherPhenomenonDescription(code: string, language: 'en' | 'pl'): string {
+  return WEATHER_PHENOMENA_TRANSLATIONS[language][code as keyof typeof WEATHER_PHENOMENA] || code;
+}
+
+export function formatBannerText(forecast: ForecastChange[], language: 'en' | 'pl'): string {
+  const t = translations[language].banner;
+  
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString(language === 'pl' ? 'pl-PL' : 'en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Warsaw'
+    });
+  };
+
+  const period = forecast[0];
+  if (!period) return '';
+
+  const phenomena = period.conditions.phenomena.join(', ').toLowerCase();
+  const startTime = formatTime(period.from);
+  const endTime = formatTime(period.to);
+
+  if (language === 'pl') {
+    return `${t.significantDisruptions} ${t.between} ${startTime} ${t.and} ${endTime} ${t.dueTo} ${phenomena} ${t.thatMayOccur}. ${t.temporaryConditions}. ${t.checkStatus}.`;
+  } else {
+    return `${t.significantDisruptions} ${t.between} ${startTime} ${t.and} ${endTime} ${t.dueTo} ${phenomena} ${t.thatMayOccur}. ${t.temporaryConditions}. ${t.checkStatus}.`;
+  }
 }
