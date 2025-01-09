@@ -10,6 +10,7 @@ import { MainNav } from "@/components/MainNav"
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { adjustToWarsawTime } from '@/lib/utils/time';
+import { AlertTriangle, Plane } from "lucide-react";
 
 export default function Page() {
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
@@ -139,90 +140,150 @@ export default function Page() {
         const periodStart = new Date(firstPeriod.from);
         const periodEnd = new Date(firstPeriod.to);
         const now = new Date();
-        
-        // Get the main reason for the high risk
+
         const getRiskReason = (period: typeof firstPeriod) => {
-            // Check for very strong wind gusts first
-            if (period.conditions.phenomena.some(p => p.includes("Very Strong Wind Gusts"))) {
-                return "due to dangerous wind gusts";
-            }
-            // Check for strong wind gusts
-            if (period.conditions.phenomena.some(p => p.includes("Strong Wind Gusts"))) {
-                return "due to strong wind gusts";
-            }
-            // Check for visibility issues
-            if (period.conditions.phenomena.some(p => p.includes("Visibility Below Minimums"))) {
-                return "due to visibility below minimums";
-            }
-            if (period.conditions.phenomena.some(p => p.includes("Poor Visibility"))) {
-                return "due to poor visibility";
-            }
-            // Check for thunderstorms
-            if (period.conditions.phenomena.some(p => p.includes("⛈️"))) {
-                return "due to thunderstorms";
-            }
-            // Check for snow
-            if (period.conditions.phenomena.some(p => p.includes("🌨️"))) {
-                return "due to snow conditions";
-            }
-            // Check for freezing conditions
-            if (period.conditions.phenomena.some(p => p.includes("❄️"))) {
-                return "due to freezing conditions";
+            // Helper to check if multiple conditions exist
+            const conditions = period.conditions.phenomena;
+            const hasCondition = (type: string) => conditions.some(p => p.includes(type));
+            
+            // Build a comprehensive reason with multiple conditions if they exist
+            const reasons: string[] = [];
+            
+            // Check wind conditions (priority 1)
+            if (hasCondition("Very Strong Wind Gusts")) {
+                reasons.push("dangerous wind conditions");
+            } else if (hasCondition("Strong Wind Gusts")) {
+                reasons.push("strong winds");
             }
             
-            // If no specific reason found, return a generic message
-            return "due to severe weather conditions";
+            // Check visibility (priority 2)
+            if (hasCondition("Visibility Below Minimums")) {
+                reasons.push("extremely poor visibility");
+            } else if (hasCondition("Poor Visibility")) {
+                reasons.push("reduced visibility");
+            }
+            
+            // Check severe weather (priority 3)
+            if (hasCondition("⛈️")) {
+                reasons.push("thunderstorms");
+            }
+            
+            // Check winter conditions (priority 4)
+            const hasSnow = hasCondition("🌨️");
+            const hasFreezing = hasCondition("❄️");
+            if (hasSnow && hasFreezing) {
+                reasons.push("snow and freezing conditions");
+            } else if (hasSnow) {
+                reasons.push("snow");
+            } else if (hasFreezing) {
+                reasons.push("freezing conditions");
+            }
+
+            // If no specific conditions found
+            if (reasons.length === 0) {
+                return "due to adverse weather conditions";
+            }
+
+            // Construct the message based on number of conditions
+            let baseReason = "";
+            if (reasons.length === 1) {
+                baseReason = `due to ${reasons[0]}`;
+            } else if (reasons.length === 2) {
+                baseReason = `due to ${reasons[0]} and ${reasons[1]}`;
+            } else {
+                const lastReason = reasons.pop();
+                baseReason = `due to ${reasons.join(", ")}, and ${lastReason}`;
+            }
+
+            // Add temporal context
+            if (period.isTemporary) {
+                const timeContext = period.probability 
+                    ? `with a ${period.probability}% chance of occurring` 
+                    : "that may occur";
+                
+                // Handle different time spans
+                const duration = periodEnd.getTime() - periodStart.getTime();
+                const hours = duration / (1000 * 60 * 60);
+                
+                if (hours <= 2) {
+                    return `${baseReason} ${timeContext} during brief periods`;
+                } else if (hours <= 4) {
+                    return `${baseReason} ${timeContext} at times`;
+                } else {
+                    return `${baseReason} ${timeContext} intermittently`;
+                }
+            }
+
+            return baseReason;
         };
 
-        const reason = getRiskReason(firstPeriod);
-        
-        // If the period has already started
-        if (periodStart <= now && periodEnd > now) {
-            return `until ${periodEnd.toLocaleTimeString('en-GB', {
+        const formatTimeRange = () => {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const warsawDate = new Date(periodStart.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+            const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+            const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+            
+            // If period is happening now
+            if (periodStart <= now && periodEnd > now) {
+                const endTime = periodEnd.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Warsaw'
+                });
+                
+                // If ends today
+                if (periodEnd.getDate() === today.getDate()) {
+                    return `until ${endTime} today`;
+                }
+                // If ends tomorrow
+                if (periodEnd.getDate() === tomorrow.getDate()) {
+                    return `until ${endTime} tomorrow`;
+                }
+                // If ends later
+                return `until ${periodEnd.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Warsaw'
+                })}`;
+            }
+
+            // For future periods
+            const isSameDay = (d1: Date, d2: Date) => 
+                d1.getDate() === d2.getDate() &&
+                d1.getMonth() === d2.getMonth() &&
+                d1.getFullYear() === d2.getFullYear();
+            
+            const timeFormat = {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Europe/Warsaw'
-            })} ${reason}`;
-        }
-        
-        // Original logic for future periods with added reason
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const warsawDate = new Date(periodStart.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-        const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-        const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-        
-        const isSameDay = (d1: Date, d2: Date) => 
-            d1.getDate() === d2.getDate() &&
-            d1.getMonth() === d2.getMonth() &&
-            d1.getFullYear() === d2.getFullYear();
-        
-        const dayLabel = isSameDay(warsawDate, warsawToday)
-            ? 'today'
-            : isSameDay(warsawDate, warsawTomorrow)
-                ? 'tomorrow'
-                : periodStart.toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    timeZone: 'Europe/Warsaw'
-                });
+            } as const;
 
-        const startTime = periodStart.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Warsaw'
-        });
-        
-        const endTime = periodEnd.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Warsaw'
-        });
+            const startTime = periodStart.toLocaleTimeString('en-GB', timeFormat);
+            const endTime = periodEnd.toLocaleTimeString('en-GB', timeFormat);
 
-        return `${dayLabel} between ${startTime} and ${endTime} ${reason}`;
+            if (isSameDay(warsawDate, warsawToday)) {
+                return `today between ${startTime} and ${endTime}`;
+            }
+            if (isSameDay(warsawDate, warsawTomorrow)) {
+                return `tomorrow between ${startTime} and ${endTime}`;
+            }
+            
+            return `on ${periodStart.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Europe/Warsaw'
+            })} between ${startTime} and ${endTime}`;
+        };
+
+        return `${formatTimeRange()} ${getRiskReason(firstPeriod)}`;
     };
 
     if (isLoading) {
@@ -252,29 +313,66 @@ export default function Page() {
 
                 {highRiskPeriods.length > 0 && highRiskPeriods.some(period => period.riskLevel.level >= 3) && (
                     <Alert className={cn(
-                        "rounded-none border-0 backdrop-blur text-white",
+                        "rounded-none border-0 backdrop-blur py-4",
                         highRiskPeriods.some(p => p.riskLevel.level === 4) 
-                            ? "bg-red-900" 
-                            : "bg-red-800"
+                            ? "bg-red-950/95"
+                            : "bg-red-900/95"
                     )}>
                         <div className="max-w-4xl mx-auto w-full">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <p className="text-sm font-medium">
-                                    {highRiskPeriods.some(p => p.riskLevel.level === 4)
-                                        ? "⚠️ Significant flight disruptions likely "
-                                        : "⚠️ Severe weather conditions expected "}
-                                    {formatHighRiskTimes()}. 
-                                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
-                                        && " Additional severe weather periods possible later."}
-                                    {" Check your flight status"}
-                                    {!highRiskPeriods.some(p => p.riskLevel.level === 4) && " with your airline"}.
-                                </p>
-                                <Link 
-                                    href="/passengerrights" 
-                                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-red-600 hover:bg-white/90 h-7 rounded-md px-2"
-                                >
-                                    Know Your Rights
-                                </Link>
+                            <div className="flex flex-col md:flex-row gap-6">
+                                {/* Left side - Main message */}
+                                <div className="flex-1 space-y-1">
+                                    {/* Title with icon */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <AlertTriangle className="h-5 w-5 text-white" />
+                                        <h3 className="font-semibold text-white">
+                                            {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                                                ? "Important Flight Information"
+                                                : "Weather Advisory"}
+                                        </h3>
+                                    </div>
+                                    
+                                    {/* Main message with better typography */}
+                                    <p className="text-sm leading-relaxed text-white">
+                                        {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                                            ? "Significant flight disruptions are expected "
+                                            : "Severe weather conditions are expected "}
+                                        {formatHighRiskTimes()}
+                                        {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
+                                            && ". Temporary severe weather conditions could also happen later in the day"}
+                                        {". Please check your flight status"}
+                                        {!highRiskPeriods.some(p => p.riskLevel.level === 4) 
+                                            ? " with your airline for any changes"
+                                            : " directly with your airline for the latest updates"}.
+                                    </p>
+                                </div>
+
+                                {/* Right side - Actions */}
+                                <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center md:justify-start md:min-w-[200px] md:border-l md:border-white/20 md:pl-6">
+                                    {/* Flight Status Button */}
+                                    <a 
+                                        href="https://www.krakowairport.pl/en/passenger/flight-information/departures"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
+                                            bg-white/20 hover:bg-white/30 text-white transition-colors rounded-md px-4 py-2
+                                            focus:outline-none focus:ring-2 focus:ring-white/50"
+                                    >
+                                        <Plane className="h-4 w-4" />
+                                        Check Flight Status
+                                    </a>
+                                    
+                                    {/* Passenger Rights Button */}
+                                    <Link 
+                                        href="/passengerrights"
+                                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
+                                            bg-white hover:bg-white/90 text-red-900 transition-colors rounded-md px-4 py-2
+                                            focus:outline-none focus:ring-2 focus:ring-white/50"
+                                    >
+                                        <Shield className="h-4 w-4" />
+                                        Know Your Rights
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </Alert>
