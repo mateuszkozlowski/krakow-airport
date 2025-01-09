@@ -7,6 +7,7 @@ import { adjustToWarsawTime } from '@/lib/utils/time';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/lib/translations';
 import { getStandardizedWindDescription } from '@/lib/weather';
+import { deduplicateForecastPeriods } from '@/lib/weather';
 
 interface WeatherTimelineProps {
   current: {
@@ -183,78 +184,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const { language } = useLanguage();
   const t = translations[language];
 
-  const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
-    const now = new Date();
-    
-    // First, filter and sort periods
-    const validPeriods = periods
-      .filter(period => {
-        const hasContent = period.from.getTime() !== period.to.getTime() && 
-          period.to.getTime() > now.getTime() && 
-          (period.conditions.phenomena.length > 0 || 
-           (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
-           (period.visibility && period.visibility.meters < 5000) || 
-           (period.ceiling && period.ceiling.feet < 1000) || 
-           period.isTemporary);
-
-        return hasContent;
-      })
-      .sort((a, b) => a.from.getTime() - b.from.getTime());
-
-    if (validPeriods.length === 0) return [];
-
-    // Group periods by time ranges
-    const timeRanges: Map<string, ForecastChange[]> = new Map();
-    
-    validPeriods.forEach(period => {
-      const timeKey = `${period.from.getTime()}-${period.to.getTime()}`;
-      const existing = timeRanges.get(timeKey) || [];
-      timeRanges.set(timeKey, [...existing, period]);
-    });
-
-    // Process each time range
-    const result: ForecastChange[] = [];
-    
-    timeRanges.forEach((rangePeriods, timeKey) => {
-      // Sort by risk level (ascending)
-      const sortedPeriods = rangePeriods.sort((a, b) => a.riskLevel.level - b.riskLevel.level);
-      
-      // Base period is the one with lowest risk
-      const basePeriod = sortedPeriods[0];
-      
-      // Group higher risk periods by their time ranges
-      const higherRiskPeriods = sortedPeriods.slice(1);
-      const groupedByTime = new Map<string, ForecastChange[]>();
-      
-      higherRiskPeriods.forEach(period => {
-        const periodKey = `${period.from.getTime()}-${period.to.getTime()}`;
-        const existing = groupedByTime.get(periodKey) || [];
-        groupedByTime.set(periodKey, [...existing, period]);
-      });
-
-      // Create nested conditions with time grouping
-      const nestedConditions: ForecastChange[] = [];
-      
-      groupedByTime.forEach((timePeriods) => {
-        timePeriods.forEach(period => {
-          nestedConditions.push({
-            ...period,
-            isNested: true,
-            probability: period.probability || (period.change?.probability ?? undefined)
-          });
-        });
-      });
-
-      result.push({
-        ...basePeriod,
-        nestedConditions: nestedConditions
-      });
-    });
-
-    return result.sort((a, b) => a.from.getTime() - b.from.getTime());
-  };
-
-  // Just use the deduplication result directly
   const uniqueForecast = React.useMemo(() => deduplicateForecastPeriods(forecast), [forecast]);
 
   const getStatusColors = (level: 1 | 2 | 3 | 4) => {

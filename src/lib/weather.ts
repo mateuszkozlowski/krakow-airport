@@ -1338,3 +1338,77 @@ export function formatBannerText(forecast: ForecastChange[], language: 'en' | 'p
     return `${t.significantDisruptions} ${t.between} ${startTime} ${t.and} ${endTime} ${t.dueTo} ${phenomena} ${t.thatMayOccur}. ${t.temporaryConditions}. ${t.checkStatus}.`;
   }
 }
+
+const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
+  const now = new Date();
+  
+  // First, filter and sort periods
+  const validPeriods = periods
+    .filter(period => {
+      const hasContent = period.from.getTime() !== period.to.getTime() && 
+        period.to.getTime() > now.getTime() && 
+        (period.conditions.phenomena.length > 0 || 
+         (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
+         (period.visibility && period.visibility.meters < 5000) || 
+         (period.ceiling && period.ceiling.feet < 1000) || 
+         period.isTemporary);
+
+      // Filtruj okresy bazowe z "No significant weather"
+      const hasOnlyNSW = !period.isTemporary && 
+        period.conditions.phenomena.length === 1 && 
+        period.conditions.phenomena[0].includes('NSW');
+
+      // Filtruj okresy bazowe, które są całkowicie pokryte przez TEMPO
+      const isBaseOverlapped = periods.some(otherPeriod => 
+        otherPeriod !== period &&
+        otherPeriod.isTemporary &&
+        otherPeriod.from.getTime() <= period.from.getTime() &&
+        otherPeriod.to.getTime() >= period.to.getTime() &&
+        otherPeriod.riskLevel.level > period.riskLevel.level
+      );
+
+      // Zachowaj tylko okresy z treścią, nie NSW i nie pokryte całkowicie przez TEMPO
+      return hasContent && !hasOnlyNSW && (!isBaseOverlapped || period.isTemporary);
+    })
+    .sort((a, b) => a.from.getTime() - b.from.getTime());
+
+  // Znajdź unikalne przedziały czasowe
+  const uniqueTimeRanges = Array.from(new Set(
+    validPeriods.map(p => `${p.from.getTime()}-${p.to.getTime()}`)
+  ));
+
+  const result: ForecastChange[] = [];
+
+  // Dla każdego unikalnego przedziału czasowego
+  uniqueTimeRanges.forEach(timeRange => {
+    const [startTime, endTime] = timeRange.split('-').map(Number);
+    const periodsInRange = validPeriods.filter(p => 
+      p.from.getTime() === startTime && p.to.getTime() === endTime
+    );
+
+    if (periodsInRange.length > 0) {
+      // Sortuj po poziomie ryzyka
+      const sortedPeriods = periodsInRange.sort((a, b) => a.riskLevel.level - b.riskLevel.level);
+      const basePeriod = sortedPeriods[0];
+      const nestedPeriods = sortedPeriods.slice(1);
+
+      if (nestedPeriods.length > 0) {
+        result.push({
+          ...basePeriod,
+          nestedConditions: nestedPeriods.map(p => ({
+            ...p,
+            isNested: true
+          }))
+        });
+      } else if (!basePeriod.conditions.phenomena.some(p => p.includes('NSW'))) {
+        // Dodaj okres bazowy tylko jeśli nie jest to "No significant weather"
+        result.push(basePeriod);
+      }
+    }
+  });
+
+  return result.sort((a, b) => a.from.getTime() - b.from.getTime());
+};
+
+// Upewnij się, że ta funkcja jest eksportowana i używana
+export { deduplicateForecastPeriods };
