@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange, RiskAssessment } from "@/lib/types/weather";
+import { WEATHER_PHENOMENA, WEATHER_PHENOMENA_TRANSLATIONS } from "@/lib/types/weather";
 import { RiskLegendDialog } from "./RiskLegend";
 import { adjustToWarsawTime } from '@/lib/utils/time';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -182,6 +183,15 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const [showAll, setShowAll] = useState(false);
   const { language } = useLanguage();
   const t = translations[language];
+
+  // Funkcja pomocnicza do tłumaczenia zjawisk pogodowych
+  const translatePhenomenon = (code: string) => {
+    // Sprawdź czy kod istnieje w tłumaczeniach
+    if (code in WEATHER_PHENOMENA_TRANSLATIONS[language]) {
+      return WEATHER_PHENOMENA_TRANSLATIONS[language][code as keyof typeof WEATHER_PHENOMENA];
+    }
+    return code; // Jeśli nie znaleziono tłumaczenia, zwróć oryginalny kod
+  };
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
@@ -483,7 +493,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                             className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
                             title={getDetailedDescription(phenomenon)}
                           >
-                            {phenomenon}
+                            {translatePhenomenon(phenomenon)}
                           </span>
                         ))}
 
