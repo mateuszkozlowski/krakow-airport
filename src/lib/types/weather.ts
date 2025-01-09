@@ -74,7 +74,16 @@ export interface RiskAssessment {
 }
 
 export interface ProcessedConditions {
-  phenomena: string[];  // No longer optional
+  phenomena: string[];
+  temperature?: number;
+  visibility?: {
+    meters: number;
+  };
+  wind?: {
+    speed_kts: number;
+    direction?: number;
+    gust_kts?: number;
+  };
 }
 
 export interface ForecastChange {
@@ -255,22 +264,22 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     TSRA: '⛈️ Burza z deszczem',
     
     // Freezing conditions
-    FZRA: '🌧️❄️ Marznący deszcz (wymagane odladzanie)',
-    FZDZ: '💧❄️ Marznąca mżawka (wymagane odladzanie)',
-    FZFG: '🌫️❄️ Marznąca mgła (możliwe odladzanie)',
-    FZ: '🌨️❄️ Warunki marznące (wymagane odladzanie)',
+    FZRA: '🌧️❄️ Marznący deszcz',
+    FZDZ: '💧❄️ Marznąca mżawka',
+    FZFG: '🌫️❄️ Marznąca mgła',
+    FZ: '🌨️❄️ Warunki marznące',
     
     // Combined freezing conditions
-    'FZRA FZFG': '🌧️❄️ Marznący deszcz z mgłą (wymagane odladzanie)',
-    'FZDZ FZFG': '💧❄️ Marznąca mżawka z mgłą (wymagane odladzanie)',
+    'FZRA FZFG': '🌧️❄️ Marznący deszcz z mgłą',
+    'FZDZ FZFG': '💧❄️ Marznąca mżawka z mgłą',
     
     // Snow conditions
     'SN': '🌨️ Śnieg',
     '-SN': '🌨️ Lekki śnieg',
-    '+SN': '🌨️ Intensywny śnieg (wymagane odladzanie)',
-    'SHSN': '🌨️ Przelotny śnieg (możliwe odladzanie)',
+    '+SN': '🌨️ Intensywny śnieg',
+    'SHSN': '🌨️ Przelotny śnieg',
     '-SHSN': '🌨️ Lekki przelotny śnieg',
-    '+SHSN': '🌨️ Intensywny przelotny śnieg (wymagane odladzanie)',
+    '+SHSN': '🌨️ Intensywny przelotny śnieg',
     'BLSN': '🌨️ Zawieja śnieżna',
     '+SHSN BLSN': '🌨️ Intensywny przelotny śnieg z zawieją',
     'SHSN BLSN': '🌨️ Przelotny śnieg z zawieją',
@@ -366,4 +375,26 @@ export interface RiskLevel {
   message: string;
   statusMessage: string;
   color: "green" | "yellow" | "orange" | "red";
+}
+
+export interface OpenMeteoHourly {
+  time: string[];
+  temperature_2m: number[];
+  wind_speed_10m: number[];
+  wind_gusts_10m: number[];
+  visibility: number[];
+  precipitation: number[];
+}
+
+export interface OpenMeteoResponse {
+  hourly: OpenMeteoHourly;
+}
+
+export interface OpenMeteoDataPoint {
+  time: Date;
+  temperature: number;
+  windSpeed: number;
+  windGusts: number;
+  visibility: number;
+  precipitation: number;
 }

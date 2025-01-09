@@ -8,6 +8,7 @@ import type {
   WeatherResponse,
   OpenMeteoForecast,
   RiskLevel,
+  OpenMeteoResponse,
 } from './types/weather';
 
 // Import WEATHER_PHENOMENA, WEATHER_PHENOMENA_TRANSLATIONS i WMO_WEATHER_CODES jako wartości
@@ -372,7 +373,7 @@ function filterForecastPeriods(forecast: ForecastChange[], language: 'en' | 'pl'
 async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   try {
     const response = await fetch(
-      'https://api.open-meteo.com/v1/forecast?latitude=50.07778&longitude=19.78472&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&forecast_days=3'
+      'https://api.open-meteo.com/v1/forecast?latitude=50.07778&longitude=19.78472&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&forecast_days=2'
     );
 
     if (!response.ok) {
@@ -386,22 +387,91 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   }
 }
 
-// Add this function to combine forecasts
-function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast, language: 'en' | 'pl'): ForecastChange[] {
-  const TAF_WEIGHT = 0.7;  // TAF is more authoritative
-  const OPENMETEO_WEIGHT = 0.3;
+interface HourlyCondition {
+  visibility: number;
+  weatherCode: number;
+  precipProb: number;
+  windSpeed: number;
+  windGusts: number;
+  rain: number;
+  snow: number;
+  trend?: 'improving' | 'deteriorating' | 'stable';
+}
 
+type WeightValue = 0.9 | 0.85 | 0.8 | 0.7 | 0.5 | 0.4 | 0.3;
+
+interface SourceWeights {
+  TAF_PRIORITY: {
+    TS: WeightValue;
+    TSRA: WeightValue;
+    FC: WeightValue;
+    FZRA: WeightValue;
+    FZDZ: WeightValue;
+    FZFG: WeightValue;
+    FG: WeightValue;
+    MIFG: WeightValue;
+    BR: WeightValue;
+    ceiling: WeightValue;
+    default: WeightValue;
+  };
+  OPENMETEO_PRIORITY: {
+    temperature: WeightValue;
+    precipitation: WeightValue;
+    wind_speed: WeightValue;
+    wind_gusts: WeightValue;
+    default: WeightValue;
+  };
+  UPDATE_INTERVALS: {
+    TAF: number;
+    OPENMETEO: number;
+  };
+}
+
+const SOURCE_WEIGHTS: SourceWeights = {
+  // TAF has higher priority for these conditions
+  TAF_PRIORITY: {
+    // Thunderstorms and severe conditions
+    TS: 0.9,    // Thunderstorms
+    TSRA: 0.9,  // Thunderstorms with rain
+    FC: 0.9,    // Funnel cloud
+    
+    // Freezing conditions
+    FZRA: 0.9,  // Freezing rain
+    FZDZ: 0.9,  // Freezing drizzle
+    FZFG: 0.9,  // Freezing fog
+    
+    // Visibility phenomena
+    FG: 0.85,   // Fog
+    MIFG: 0.85, // Shallow fog
+    BR: 0.8,    // Mist
+    
+    // Ceiling
+    ceiling: 0.85,
+    
+    // Default weight for other TAF phenomena
+    default: 0.7
+  },
+  
+  // OpenMeteo has higher priority for these conditions
+  OPENMETEO_PRIORITY: {
+    temperature: 0.5,     // Temperature predictions
+    precipitation: 0.4,   // Rain/snow amount
+    wind_speed: 0.4,      // Wind speed
+    wind_gusts: 0.4,      // Wind gusts
+    default: 0.3         // Default weight for other conditions
+  },
+
+  // Update intervals in milliseconds
+  UPDATE_INTERVALS: {
+    TAF: 3.5 * 60 * 60 * 1000,  // 3.5 hours
+    OPENMETEO: 60 * 60 * 1000    // 1 hour
+  }
+};
+
+// Update the combine forecasts function
+function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMeteoForecast, language: 'en' | 'pl'): ForecastChange[] {
   // First, process OpenMeteo data into hourly conditions
-  const hourlyConditions = new Map<string, {
-    visibility: number;
-    weatherCode: number;
-    precipProb: number;
-    windSpeed: number;
-    windGusts: number;
-    rain: number;
-    snow: number;
-    trend?: 'improving' | 'deteriorating' | 'stable';
-  }>();
+  const hourlyConditions = new Map<string, HourlyCondition>();
 
   // Process OpenMeteo data and calculate trends
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
@@ -439,46 +509,149 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
     hourlyConditions.set(time, { ...currentHour, trend });
   }
 
-  // Process each TAF period
+  // Helper function to adjust weight based on data age
+  const adjustWeightForAge = (baseWeight: number, lastUpdate: Date, updateInterval: number): number => {
+    const age = Date.now() - lastUpdate.getTime();
+    const intervalsPassed = age / updateInterval;
+    
+    // Reduce weight by 10% for each interval passed
+    const ageFactor = Math.max(0.5, 1 - (intervalsPassed * 0.1));
+    return baseWeight * ageFactor;
+  };
+
+  // Helper function to get TAF weight based on condition and age
+  const getTafWeight = (phenomena: string[], tafTime: Date): number => {
+    let baseWeight = SOURCE_WEIGHTS.TAF_PRIORITY.default;
+    
+    // Find the highest priority phenomenon
+    for (const phenomenon of phenomena) {
+      for (const [code, weight] of Object.entries(SOURCE_WEIGHTS.TAF_PRIORITY)) {
+        if (phenomenon.includes(code) && weight > baseWeight) {
+          baseWeight = weight;
+        }
+      }
+    }
+
+    // Adjust weight based on TAF age
+    return adjustWeightForAge(
+      baseWeight,
+      tafTime,
+      SOURCE_WEIGHTS.UPDATE_INTERVALS.TAF
+    );
+  };
+
+  // Helper function to get OpenMeteo weight based on condition type and age
+  const getOpenMeteoWeight = (
+    condition: keyof typeof SOURCE_WEIGHTS.OPENMETEO_PRIORITY,
+    dataTime: Date
+  ): number => {
+    const baseWeight = SOURCE_WEIGHTS.OPENMETEO_PRIORITY[condition] || 
+                      SOURCE_WEIGHTS.OPENMETEO_PRIORITY.default;
+    
+    return adjustWeightForAge(
+      baseWeight,
+      dataTime,
+      SOURCE_WEIGHTS.UPDATE_INTERVALS.OPENMETEO
+    );
+  };
+
+  // Helper function to calculate wind-specific risk
+  const calculateWindRisk = (conditions: HourlyCondition | undefined): 1 | 2 | 3 | 4 => {
+    if (!conditions) return 1;
+    
+    const { windSpeed, windGusts } = conditions;
+    
+    if (windGusts >= 35 || windSpeed >= MINIMUMS.MAX_WIND) return 4;
+    if (windGusts >= 25 || windSpeed >= 25) return 3;
+    if (windSpeed >= 15) return 2;
+    return 1;
+  };
+
+  // Helper function to calculate precipitation-specific risk
+  const calculatePrecipitationRisk = (conditions: HourlyCondition | undefined): 1 | 2 | 3 | 4 => {
+    if (!conditions) return 1;
+    
+    const { precipProb, rain, snow } = conditions;
+    
+    if (snow > 5 || rain > 10) return 4;
+    if (snow > 2 || rain > 5) return 3;
+    if ((snow > 0 || rain > 0) && precipProb > 70) return 2;
+    return 1;
+  };
+
   return tafForecast.map(period => {
-    // For TEMPO periods, just return as is
     if (period.isTemporary) return period;
 
-    // Get OpenMeteo data for this period's timeframe
     const periodStart = period.from.toISOString().split('.')[0];
     const openMeteoHour = hourlyConditions.get(periodStart);
 
     if (!openMeteoHour) return period;
 
-    // Calculate weighted risk level
-    const tafRisk = period.riskLevel.level;
-    const openMeteoRisk = calculateOpenMeteoRisk(openMeteoHour);
+    // Calculate weights based on conditions present and data age
+    const tafWeight = getTafWeight(period.conditions.phenomena, period.from);
     
-    // Calculate combined risk level
-    const weightedRisk = Math.round(
-      (tafRisk * TAF_WEIGHT + openMeteoRisk * OPENMETEO_WEIGHT) as 1 | 2 | 3 | 4
-    );
+    // Calculate weighted risk level for different aspects
+    const riskLevels = {
+      taf: period.riskLevel.level,
+      openMeteo: calculateOpenMeteoRisk(openMeteoHour)
+    };
 
-    // Only update risk level if OpenMeteo suggests significantly worse conditions
-    if (weightedRisk > tafRisk) {
-      // Update the risk level but keep the original messages
+    // Calculate separate weighted risks for different condition types
+    const windWeight = getOpenMeteoWeight('wind_speed', new Date(periodStart));
+    const tempWeight = getOpenMeteoWeight('temperature', new Date(periodStart));
+    const precipWeight = getOpenMeteoWeight('precipitation', new Date(periodStart));
+
+    // Combine risks with appropriate weights
+    const finalRiskLevel = Math.max(
+      // Base TAF risk
+      period.riskLevel.level,
+      
+      // Wind risk (weighted)
+      Math.round(
+        riskLevels.taf * (1 - windWeight) +
+        calculateWindRisk(openMeteoHour) * windWeight
+      ),
+      
+      // Precipitation risk (weighted)
+      Math.round(
+        riskLevels.taf * (1 - precipWeight) +
+        calculatePrecipitationRisk(openMeteoHour) * precipWeight
+      )
+    ) as 1 | 2 | 3 | 4;
+
+    // Update the period with weighted risk level
+    if (finalRiskLevel > period.riskLevel.level) {
       period.riskLevel = {
         ...period.riskLevel,
-        level: weightedRisk as 1 | 2 | 3 | 4,
-        title: weightedRisk === 4 ? "Major Weather Impact" :
-               weightedRisk === 3 ? "Weather Advisory" :
-               weightedRisk === 2 ? "Minor Weather Impact" :
-               "Good Flying Conditions"
+        level: finalRiskLevel,
+        title: getRiskTitle(finalRiskLevel, language),
+        message: getRiskMessage(finalRiskLevel, language)
       };
-    }
-
-    // Use trend to adjust risk level but don't show it in UI
-    if (openMeteoHour.trend === 'deteriorating' && period.riskLevel.level < 4) {
-      period.riskLevel.level = Math.min(4, period.riskLevel.level + 1) as 1 | 2 | 3 | 4;
     }
 
     return period;
   });
+}
+
+// Helper functions to get risk titles and messages
+function getRiskTitle(level: 1 | 2 | 3 | 4, language: 'en' | 'pl'): string {
+  const t = translations[language];
+  switch (level) {
+    case 4: return t.riskLevel4Title;
+    case 3: return t.riskLevel3Title;
+    case 2: return t.riskLevel2Title;
+    default: return t.riskLevel1Title;
+  }
+}
+
+function getRiskMessage(level: 1 | 2 | 3 | 4, language: 'en' | 'pl'): string {
+  const t = translations[language];
+  switch (level) {
+    case 4: return t.riskLevel4Message;
+    case 3: return t.riskLevel3Message;
+    case 2: return t.riskLevel2Message;
+    default: return t.riskLevel1Message;
+  }
 }
 
 function calculateOpenMeteoRisk({
@@ -656,7 +829,7 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
         },
         cache: 'no-store'
       }),
-      fetchOpenMeteoForecast()
+      getOpenMeteoData()
     ]);
 
     if (!weatherResponse.ok) {
@@ -672,15 +845,17 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
     // First process TAF data
     const tafPeriods = processForecast(forecast, language);
 
-    // Then combine with OpenMeteo if available
-    const combinedForecast = openMeteoData 
-      ? combineForecasts(tafPeriods, openMeteoData, language)
-      : tafPeriods;
+    // Merge TAF with OpenMeteo data
+    const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData);
+    
+    // First merge overlapping periods
+    const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast);
+    
+    // Then merge consecutive similar periods
+    const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping);
 
     const currentAssessment = assessWeatherRisk(currentWeather, language);
-    const impacts = assessOperationalImpacts(currentWeather, language);
     
-    // Return the combined forecast
     return {
       current: {
         riskLevel: currentAssessment,
@@ -711,11 +886,11 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
       },
-      forecast: combinedForecast,
+      forecast: mergedForecast,
       raw_taf: forecast.raw_text
     };
   } catch (error) {
-    console.error('Error fetching weather:', error);
+    console.error('Error fetching weather data:', error);
     return null;
   }
 }
@@ -889,17 +1064,22 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
     ) {
       const phenomena = Array.from(currentConditions);
       
-      // Jeśli nie ma żadnych zjawisk, dodaj NSW
-      if (phenomena.length === 0) {
-        phenomena.push(getWeatherPhenomenonDescription('NSW', language));
-      }
-
+      console.log('Debug weather.ts:', {
+        currentConditions: Array.from(currentConditions),
+        phenomena,
+        riskLevel,
+        willShowNSW: phenomena.length === 0 && riskLevel.level === 1
+      });
+      
+      // Przenosimy sprawdzenie NSW na koniec, po dodaniu wszystkich zjawisk
       changes.push({
         timeDescription: formatTimeDescription(period.from, period.to, language),
         from: period.from,
         to: period.to,
         conditions: {
-          phenomena
+          phenomena: phenomena.length === 0 && riskLevel.level === 1 
+            ? [getWeatherPhenomenonDescription('NSW', language)]
+            : phenomena
         },
         riskLevel,
         changeType: period.change?.indicator?.code || 'PERSISTENT',
@@ -1335,4 +1515,277 @@ export function formatBannerText(forecast: ForecastChange[], language: 'en' | 'p
   } else {
     return `${t.significantDisruptions} ${t.between} ${startTime} ${t.and} ${endTime} ${t.dueTo} ${phenomena} ${t.thatMayOccur}. ${t.temporaryConditions}. ${t.checkStatus}.`;
   }
+}
+
+function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: OpenMeteoResponse): ForecastChange[] {
+  const mergedPeriods: ForecastChange[] = [];
+  
+  for (const tafPeriod of tafPeriods) {
+    const periodStart = tafPeriod.from;
+    const periodEnd = tafPeriod.to;
+    
+    // Get OpenMeteo data points within this TAF period
+    const relevantOpenMeteoData = openMeteoData.hourly.time
+      .map((time, index) => ({
+        time: new Date(time),
+        temperature: openMeteoData.hourly.temperature_2m[index],
+        windSpeed: openMeteoData.hourly.wind_speed_10m[index],
+        windGusts: openMeteoData.hourly.wind_gusts_10m[index],
+        visibility: openMeteoData.hourly.visibility[index],
+        precipitation: openMeteoData.hourly.precipitation[index]
+      }))
+      .filter(data => {
+        const dataTime = data.time.getTime();
+        return dataTime >= periodStart.getTime() && dataTime <= periodEnd.getTime();
+      });
+
+    if (relevantOpenMeteoData.length === 0) {
+      mergedPeriods.push(tafPeriod);
+      continue;
+    }
+
+    let currentSubPeriodStart = periodStart;
+    let lastData = relevantOpenMeteoData[0];
+
+    for (const data of relevantOpenMeteoData) {
+      const isSignificantChange = 
+        Math.abs(data.temperature - lastData.temperature) > 5 || // 5°C change
+        Math.abs(data.windSpeed - lastData.windSpeed) > 10 || // 10kt wind change
+        Math.abs(data.windGusts - lastData.windGusts) > 15 || // 15kt gust change
+        Math.abs(data.visibility - lastData.visibility) > 3000 || // 3000m visibility change
+        data.precipitation > 0.5; // Precipitation starts/intensifies
+
+      if (isSignificantChange && data.time > currentSubPeriodStart) {
+        // Add the period up to this point
+        mergedPeriods.push({
+          ...tafPeriod,
+          from: currentSubPeriodStart,
+          to: data.time,
+          conditions: {
+            ...tafPeriod.conditions,
+            temperature: lastData.temperature,
+            visibility: { meters: lastData.visibility },
+            wind: {
+              ...tafPeriod.wind,
+              speed_kts: Math.round(lastData.windSpeed),
+              gust_kts: Math.round(lastData.windGusts)
+            }
+          }
+        });
+
+        currentSubPeriodStart = data.time;
+        lastData = data;
+      }
+    }
+
+    // Add the final sub-period
+    if (currentSubPeriodStart < periodEnd) {
+      mergedPeriods.push({
+        ...tafPeriod,
+        from: currentSubPeriodStart,
+        to: periodEnd,
+        conditions: {
+          ...tafPeriod.conditions,
+          temperature: lastData.temperature,
+          visibility: { meters: lastData.visibility },
+          wind: {
+            ...tafPeriod.wind,
+            speed_kts: Math.round(lastData.windSpeed),
+            gust_kts: Math.round(lastData.windGusts)
+          }
+        }
+      });
+    }
+  }
+
+  return mergedPeriods;
+}
+
+async function getTafData(): Promise<TAFData> {
+  const response = await fetch('/api/weather', {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache'
+    },
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    throw new Error('Weather data fetch failed');
+  }
+
+  const data = await response.json();
+  return data.taf.data[0];
+}
+
+async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
+  const data = await fetchOpenMeteoForecast();
+  if (!data) {
+    throw new Error('Failed to fetch OpenMeteo data');
+  }
+  return {
+    hourly: {
+      time: data.hourly.time,
+      temperature_2m: data.hourly.temperature_2m,
+      wind_speed_10m: data.hourly.wind_speed_10m,
+      wind_gusts_10m: data.hourly.wind_gusts_10m,
+      visibility: data.hourly.visibility,
+      precipitation: data.hourly.precipitation
+    }
+  };
+}
+
+function mergeOverlappingPeriods(periods: ForecastChange[]): ForecastChange[] {
+  // Group periods by their time ranges
+  const periodGroups = new Map<string, ForecastChange[]>();
+  
+  for (const period of periods) {
+    const timeKey = `${period.from.getTime()}-${period.to.getTime()}`;
+    if (!periodGroups.has(timeKey)) {
+      periodGroups.set(timeKey, []);
+    }
+    periodGroups.get(timeKey)!.push(period);
+  }
+
+  // Merge each group and sort by start time
+  const mergedPeriods = Array.from(periodGroups.values())
+    .map(group => group.length > 1 ? mergePeriodGroup(group) : group[0])
+    .sort((a, b) => a.from.getTime() - b.from.getTime());
+
+  return mergedPeriods;
+}
+
+function mergePeriodGroup(periods: ForecastChange[]): ForecastChange {
+  if (periods.length === 1) return periods[0];
+
+  // Calculate weighted risk level
+  const totalWeight = periods.reduce((sum, p) => {
+    const weight = p.changeType === 'TEMPO' ? 0.4 : 1;
+    return sum + weight;
+  }, 0);
+
+  const weightedRiskLevel = periods.reduce((sum, p) => {
+    const weight = p.changeType === 'TEMPO' ? 0.4 : 1;
+    return sum + (p.riskLevel.level * weight);
+  }, 0) / totalWeight;
+
+  // Round to nearest risk level
+  const finalRiskLevel = Math.round(weightedRiskLevel);
+
+  // Combine all phenomena and impacts
+  const allPhenomena = new Set<string>();
+  const allImpacts = new Set<string>();
+  
+  periods.forEach(p => {
+    p.conditions.phenomena.forEach(phen => allPhenomena.add(phen));
+    p.operationalImpacts?.forEach(impact => allImpacts.add(impact));
+  });
+
+  // Take the base period (non-TEMPO if available)
+  const basePeriod = periods.find(p => p.changeType !== 'TEMPO') || periods[0];
+
+  return {
+    ...basePeriod,
+    conditions: {
+      ...basePeriod.conditions,
+      phenomena: Array.from(allPhenomena)
+    },
+    operationalImpacts: Array.from(allImpacts),
+    riskLevel: {
+      level: finalRiskLevel as 1 | 2 | 3 | 4,
+      title: getRiskLevelTitle(finalRiskLevel),
+      message: getRiskLevelMessage(finalRiskLevel),
+      statusMessage: getRiskLevelStatus(finalRiskLevel),
+      color: getRiskLevelColor(finalRiskLevel)
+    }
+  };
+}
+
+// Helper functions for risk level text
+function getRiskLevelTitle(level: number): string {
+  switch (level) {
+    case 4: return "Major Weather Impact";
+    case 3: return "Weather Advisory";
+    case 2: return "Minor Weather Impact";
+    default: return "Good Flying Conditions";
+  }
+}
+
+function getRiskLevelMessage(level: number): string {
+  switch (level) {
+    case 4: return "Operations suspended";
+    case 3: return "Operations restricted";
+    case 2: return "Minor operational impacts expected";
+    default: return "Normal operations";
+  }
+}
+
+function getRiskLevelStatus(level: number): string {
+  switch (level) {
+    case 4: return "All flights are currently suspended due to severe weather conditions. Check with your airline for updates.";
+    case 3: return "Expect delays of 30+ minutes. Check your flight status.";
+    case 2: return "Flights are operating with possible delays of 20-30 minutes.";
+    default: return "All flights are operating on schedule.";
+  }
+}
+
+function getRiskLevelColor(level: number): "red" | "orange" | "yellow" | "green" {
+  switch (level) {
+    case 4: return "red";
+    case 3: return "orange";
+    case 2: return "yellow";
+    default: return "green";
+  }
+}
+
+function mergeConsecutiveSimilarPeriods(periods: ForecastChange[]): ForecastChange[] {
+  if (periods.length <= 1) return periods;
+  
+  const result: ForecastChange[] = [];
+  let currentPeriod = periods[0];
+  
+  for (let i = 1; i < periods.length; i++) {
+    const nextPeriod = periods[i];
+    
+    // Check if periods are consecutive and similar
+    if (arePeriodsSimilar(currentPeriod, nextPeriod) && 
+        arePeriodsConsecutive(currentPeriod, nextPeriod)) {
+      // Merge by extending the end time
+      currentPeriod = {
+        ...currentPeriod,
+        to: nextPeriod.to
+      };
+    } else {
+      result.push(currentPeriod);
+      currentPeriod = nextPeriod;
+    }
+  }
+  
+  // Don't forget to add the last period
+  result.push(currentPeriod);
+  
+  return result;
+}
+
+function arePeriodsSimilar(a: ForecastChange, b: ForecastChange): boolean {
+  // Check risk levels
+  if (a.riskLevel.level !== b.riskLevel.level) return false;
+  
+  // Check phenomena (including no phenomena case)
+  const aPhenomena = new Set(a.conditions.phenomena);
+  const bPhenomena = new Set(b.conditions.phenomena);
+  
+  if (aPhenomena.size !== bPhenomena.size) return false;
+  
+  // If both have no phenomena, they're similar
+  if (aPhenomena.size === 0 && bPhenomena.size === 0) return true;
+  
+  // Check if all phenomena match
+  return Array.from(aPhenomena).every(p => bPhenomena.has(p)) &&
+         Array.from(bPhenomena).every(p => aPhenomena.has(p));
+}
+
+function arePeriodsConsecutive(a: ForecastChange, b: ForecastChange): boolean {
+  // Allow for 1-minute gap to handle potential rounding
+  return Math.abs(b.from.getTime() - a.to.getTime()) <= 60000;
 }

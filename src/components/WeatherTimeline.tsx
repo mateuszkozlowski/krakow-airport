@@ -226,6 +226,25 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
       };
     }
 
+    const arePeriodsIdentical = (a: ForecastChange, b: ForecastChange) => {
+      // Check if risk levels are the same
+      if (a.riskLevel.level !== b.riskLevel.level) return false;
+      
+      // Check if both have NSW or both have the same phenomena
+      const aPhenomena = new Set(a.conditions.phenomena);
+      const bPhenomena = new Set(b.conditions.phenomena);
+      
+      // If both have NSW, they're identical
+      const aHasNSW = a.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'));
+      const bHasNSW = b.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'));
+      
+      if (aHasNSW && bHasNSW) return true;
+      
+      // Otherwise compare all phenomena
+      if (aPhenomena.size !== bPhenomena.size) return false;
+      return Array.from(aPhenomena).every(p => bPhenomena.has(p));
+    };
+
     for (let i = 1; i < validPeriods.length; i++) {
       const nextPeriod = validPeriods[i];
 
@@ -258,29 +277,40 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
         }
       }
 
-      // Handle non-temporary overlapping periods
-      if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
-        if (!nextPeriod.isTemporary) {
-          if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
-            currentPeriod.to = new Date(nextPeriod.from.getTime());
-            result.push(currentPeriod);
-            currentPeriod = nextPeriod;
-          } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
-            const currentSet = new Set(currentPeriod.conditions.phenomena);
-            const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
-            
-            if (hasUniqueConditions) {
+      // Check if periods can be merged
+      if (arePeriodsIdentical(currentPeriod, nextPeriod) && 
+          currentPeriod.to.getTime() === nextPeriod.from.getTime()) {
+        // Merge periods by extending the end time
+        currentPeriod = {
+          ...currentPeriod,
+          to: nextPeriod.to,
+          timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to)
+        };
+      } else {
+        // Handle non-temporary overlapping periods
+        if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
+          if (!nextPeriod.isTemporary) {
+            if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
               currentPeriod.to = new Date(nextPeriod.from.getTime());
               result.push(currentPeriod);
               currentPeriod = nextPeriod;
-            } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
-              currentPeriod.to = new Date(nextPeriod.to.getTime());
+            } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
+              const currentSet = new Set(currentPeriod.conditions.phenomena);
+              const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
+              
+              if (hasUniqueConditions) {
+                currentPeriod.to = new Date(nextPeriod.from.getTime());
+                result.push(currentPeriod);
+                currentPeriod = nextPeriod;
+              } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
+                currentPeriod.to = new Date(nextPeriod.to.getTime());
+              }
             }
           }
+        } else {
+          result.push(currentPeriod);
+          currentPeriod = nextPeriod;
         }
-      } else {
-        result.push(currentPeriod);
-        currentPeriod = nextPeriod;
       }
     }
 
@@ -639,26 +669,60 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   </div>
                                 )}
                                 <div className="flex flex-wrap gap-2 w-full">
-                                  {period.conditions.phenomena.length > 0 ? (
-                                    period.conditions.phenomena
+                                  {(() => {
+                                    console.log('WeatherTimeline debug:', {
+                                      phenomena: period.conditions.phenomena,
+                                      riskLevel: period.riskLevel.level,
+                                      hasNSW: period.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'))
+                                    });
+
+                                    // Helper function to get visibility severity
+                                    const getVisibilitySeverity = (condition: string): number => {
+                                      if (condition.includes('Visibility Below Minimums') || condition.includes('Widoczność poniżej minimów')) return 4;
+                                      if (condition.includes('Very Poor Visibility') || condition.includes('Bardzo słaba widoczność')) return 3;
+                                      if (condition.includes('Poor Visibility') || condition.includes('Słaba widoczność')) return 2;
+                                      if (condition.includes('Reduced Visibility') || condition.includes('Ograniczona widoczność')) return 1;
+                                      return 0;
+                                    };
+
+                                    let phenomena = period.conditions.phenomena
                                       .filter(condition => condition.trim() !== '')
-                                      .filter((condition, index, array) => {
-                                        if (condition.includes('💨')) {
-                                          return array.indexOf(condition) === index;
-                                        }
-                                        return true;
-                                      })
-                                      .map((condition, idx) => (
-                                        <span
-                                          key={idx}
-                                          className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                        >
-                                          {condition}
-                                        </span>
-                                      ))
-                                  ) : (
-                                    <span className="text-xs text-slate-500">{t.noPhenomena}</span>
-                                  )}
+                                      .filter(condition => !(condition.includes('Brak szczególnych zjawisk') || condition.includes('No significant weather')) || 
+                                              (period.conditions.phenomena.length === 1 && period.riskLevel.level === 1));
+
+                                    // Deduplicate visibility conditions
+                                    const visibilityConditions = phenomena
+                                      .filter(p => p.includes('👁️'))
+                                      .sort((a, b) => getVisibilitySeverity(b) - getVisibilitySeverity(a));
+
+                                    // Keep only the worst visibility condition
+                                    if (visibilityConditions.length > 0) {
+                                      phenomena = phenomena
+                                        .filter(p => !p.includes('👁️'))
+                                        .concat(visibilityConditions[0]);
+                                    }
+
+                                    // Deduplicate wind conditions
+                                    phenomena = phenomena.filter((condition, index, array) => {
+                                      if (condition.includes('💨')) {
+                                        return array.indexOf(condition) === index;
+                                      }
+                                      return true;
+                                    });
+                                    
+                                    if (phenomena.length === 0 && period.riskLevel.level === 1) {
+                                      return <span className="text-xs text-slate-500">{t.noPhenomena}</span>;
+                                    }
+
+                                    return phenomena.map((condition, idx) => (
+                                      <span
+                                        key={idx}
+                                        className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                      >
+                                        {condition}
+                                      </span>
+                                    ));
+                                  })()}
                                   {period.wind?.speed_kts && 
                                    !period.conditions.phenomena.some(p => p.includes('💨')) &&
                                    getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
