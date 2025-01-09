@@ -357,7 +357,13 @@ export const translations = {
             thatMayOccur: "that may occur at times",
             temporaryConditions: "Temporary adverse weather conditions may occur later in the day",
             checkStatus: "Please check your flight status directly with your airline for the latest information"
-        }
+        },
+        possibleConditions: "Possible Conditions",
+        weatherTimeline: {
+            periodWarning: "During this period, conditions may temporarily intensify to:",
+            temporaryIntensification: "chance of intensifying to"
+        },
+        probability: "chance"
     },
     pl: {
         title: "Czy dziś polecę z Krakowa?",
@@ -702,6 +708,12 @@ export const translations = {
             thatMayOccur: "które mogą występować okresowo",
             temporaryConditions: "Tymczasowe trudne warunki pogodowe mogą wystąpić później w ciągu dnia",
             checkStatus: "Prosimy sprawdzić status lotu bezpośrednio u przewoźnika, aby uzyskać najnowsze informacje"
-        }
+        },
+        possibleConditions: "Możliwe warunki",
+        weatherTimeline: {
+            periodWarning: "W tym okresie warunki mogą chwilowo przybrać na sile do:",
+            temporaryIntensification: "szans na nasilenie do"
+        },
+        probability: "prawdopodobieństwo"
     }
 } as const; 

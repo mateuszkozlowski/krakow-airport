@@ -34,6 +34,7 @@ export interface ChangeIndicator {
 export interface Change {
   probability?: number;
   indicator?: ChangeIndicator;
+  raw_text?: string;
 }
 
 export interface WeatherData {
@@ -98,6 +99,7 @@ export interface ForecastChange {
   isTemporary?: boolean;
   probability?: number;
   operationalImpacts?: string[];
+  nestedConditions?: (ForecastChange & { isNested?: boolean })[];
 }
 
 // Example for ProcessedConditions

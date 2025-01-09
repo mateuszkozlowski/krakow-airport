@@ -736,17 +736,19 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
       to: adjustToWarsawTime(new Date(period.timestamp!.to))
     }))
     .filter(period => 
-      period.from < period.to && // Remove zero-duration periods
+      period.from < period.to && 
       period.from.getTime() !== period.to.getTime()
     )
     .sort((a, b) => a.from.getTime() - b.from.getTime());
 
   if (validPeriods.length === 0) return [];
 
-  // Process each period
-  validPeriods.forEach((period, index) => {
-    const currentConditions = new Set<string>();
+  console.log('Raw TAF data:', taf); // Debug
 
+  // Process each period
+  validPeriods.forEach((period) => {
+    const currentConditions = new Set<string>();
+    
     // Process visibility first
     if (period.visibility?.meters) {
       const visDesc = formatVisibility(period.visibility.meters, language);
@@ -882,36 +884,36 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
       }
     }
 
-    // Only create a period if there are conditions or it's a TEMPO/PROB period
-    if (currentConditions.size > 0 || 
-        (period.change && 
-         (period.change.indicator?.code === 'TEMPO' || period.change.probability))
-    ) {
-      const phenomena = Array.from(currentConditions);
-      
-      // Jeśli nie ma żadnych zjawisk, dodaj NSW
-      if (phenomena.length === 0) {
-        phenomena.push(getWeatherPhenomenonDescription('NSW', language));
-      }
+    // Sprawdź probability z change.indicator lub z raw_text
+    const probability = period.change?.indicator?.probability || 
+                       (period.raw_text?.match(/PROB(\d+)/) ? 
+                        parseInt(period.raw_text.match(/PROB(\d+)/)![1]) : 
+                        undefined);
+    
+    console.log('Extracted probability:', probability, 'from period:', period); // Debug
 
-      changes.push({
-        timeDescription: formatTimeDescription(period.from, period.to, language),
-        from: period.from,
-        to: period.to,
-        conditions: {
-          phenomena
-        },
-        riskLevel,
-        changeType: period.change?.indicator?.code || 'PERSISTENT',
-        visibility: period.visibility,
-        ceiling: period.ceiling,
-        isTemporary: period.change?.indicator?.code === 'TEMPO',
-        probability: period.change?.probability,
-        wind: period.wind,
-        operationalImpacts: operationalImpacts
-      });
-    }
+    // Tworzenie obiektu ForecastChange
+    const forecastChange: ForecastChange = {
+      timeDescription: formatTimeDescription(period.from, period.to, language),
+      from: period.from,
+      to: period.to,
+      conditions: {
+        phenomena: Array.from(currentConditions)
+      },
+      riskLevel,
+      changeType: period.change?.indicator?.code || 'PERSISTENT',
+      visibility: period.visibility,
+      ceiling: period.ceiling,
+      isTemporary: period.change?.indicator?.code === 'TEMPO',
+      probability: probability,  // Używamy wyekstrahowanej wartości
+      wind: period.wind,
+      operationalImpacts: operationalImpacts
+    };
+
+    changes.push(forecastChange);
   });
+
+  console.log('Final changes:', changes); // Debug
 
   return changes;
 }

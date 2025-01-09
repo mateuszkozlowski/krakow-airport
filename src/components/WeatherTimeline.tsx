@@ -186,7 +186,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
     
-    // First, filter and sort as before
+    // First, filter and sort periods
     const validPeriods = periods
       .filter(period => {
         const hasContent = period.from.getTime() !== period.to.getTime() && 
@@ -199,95 +199,59 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
         return hasContent;
       })
-      .sort((a, b) => {
-        // Sort by start time first
-        const timeCompare = a.from.getTime() - b.from.getTime();
-        if (timeCompare !== 0) return timeCompare;
-        
-        // If same start time, put temporary conditions after base conditions
-        if (a.isTemporary && !b.isTemporary) return 1;
-        if (!a.isTemporary && b.isTemporary) return -1;
-        
-        // If both temporary or both base, higher risk level goes first
-        return b.riskLevel.level - a.riskLevel.level;
-      });
+      .sort((a, b) => a.from.getTime() - b.from.getTime());
 
     if (validPeriods.length === 0) return [];
 
+    // Group periods by time ranges
+    const timeRanges: Map<string, ForecastChange[]> = new Map();
+    
+    validPeriods.forEach(period => {
+      const timeKey = `${period.from.getTime()}-${period.to.getTime()}`;
+      const existing = timeRanges.get(timeKey) || [];
+      timeRanges.set(timeKey, [...existing, period]);
+    });
+
+    // Process each time range
     const result: ForecastChange[] = [];
-    let currentPeriod = validPeriods[0];
+    
+    timeRanges.forEach((rangePeriods, timeKey) => {
+      // Sort by risk level (ascending)
+      const sortedPeriods = rangePeriods.sort((a, b) => a.riskLevel.level - b.riskLevel.level);
+      
+      // Base period is the one with lowest risk
+      const basePeriod = sortedPeriods[0];
+      
+      // Group higher risk periods by their time ranges
+      const higherRiskPeriods = sortedPeriods.slice(1);
+      const groupedByTime = new Map<string, ForecastChange[]>();
+      
+      higherRiskPeriods.forEach(period => {
+        const periodKey = `${period.from.getTime()}-${period.to.getTime()}`;
+        const existing = groupedByTime.get(periodKey) || [];
+        groupedByTime.set(periodKey, [...existing, period]);
+      });
 
-    // Adjust start time of first period if it's in the past
-    if (currentPeriod.from.getTime() < now.getTime()) {
-      currentPeriod = {
-        ...currentPeriod,
-        from: now,
-        timeDescription: formatTimeDescription(now, currentPeriod.to)
-      };
-    }
-
-    for (let i = 1; i < validPeriods.length; i++) {
-      const nextPeriod = validPeriods[i];
-
-      // If next period is temporary and overlaps with current
-      if (nextPeriod.isTemporary && 
-          nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
-        
-        // If temporary period starts after current period's start
-        if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
-          // Add the first part of the base period
-          result.push({
-            ...currentPeriod,
-            to: nextPeriod.from,
-            timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+      // Create nested conditions with time grouping
+      const nestedConditions: ForecastChange[] = [];
+      
+      groupedByTime.forEach((timePeriods) => {
+        timePeriods.forEach(period => {
+          nestedConditions.push({
+            ...period,
+            isNested: true,
+            probability: period.probability || (period.change?.probability ?? undefined)
           });
-        }
-        
-        // Add the temporary period
-        result.push(nextPeriod);
-        
-        // If temporary period ends before current period ends
-        if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
-          // Continue with the remainder of the base period
-          currentPeriod = {
-            ...currentPeriod,
-            from: nextPeriod.to,
-            timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
-          };
-          continue;
-        }
-      }
+        });
+      });
 
-      // Handle non-temporary overlapping periods
-      if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
-        if (!nextPeriod.isTemporary) {
-          if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
-            currentPeriod.to = new Date(nextPeriod.from.getTime());
-            result.push(currentPeriod);
-            currentPeriod = nextPeriod;
-          } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
-            const currentSet = new Set(currentPeriod.conditions.phenomena);
-            const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
-            
-            if (hasUniqueConditions) {
-              currentPeriod.to = new Date(nextPeriod.from.getTime());
-              result.push(currentPeriod);
-              currentPeriod = nextPeriod;
-            } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
-              currentPeriod.to = new Date(nextPeriod.to.getTime());
-            }
-          }
-        }
-      } else {
-        result.push(currentPeriod);
-        currentPeriod = nextPeriod;
-      }
-    }
+      result.push({
+        ...basePeriod,
+        nestedConditions: nestedConditions
+      });
+    });
 
-    // Don't forget to push the last period
-    result.push(currentPeriod);
-
-    return result;
+    return result.sort((a, b) => a.from.getTime() - b.from.getTime());
   };
 
   // Just use the deduplication result directly
@@ -599,95 +563,99 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         <Card 
                           key={`${period.from.getTime()}-${period.to.getTime()}-${index}`}
                           className={`border-slate-700/50 ${
-                            period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
-                              ? colors.bg 
-                              : 'bg-slate-800/50'
+                            period.riskLevel.level > 1 ? colors.bg : 'bg-slate-800/50'
                           }`}
                         >
                           <CardContent className="p-4">
                             <div className="flex flex-col gap-3">
-                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
                                   <span className="text-sm font-medium text-slate-200">
-                                    {period.from.getTime() < new Date().getTime()
-                                      ? formatDateTime(period.to, true)
-                                      : `${formatDateTime(period.from)} - ${
-                                          period.from.toDateString() !== period.to.toDateString() 
-                                            ? formatDateTime(period.to)
-                                            : period.to.toLocaleTimeString('en-GB', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                timeZone: 'Europe/Warsaw'
-                                              })
-                                        }`
-                                  }
+                                    {formatDateTime(period.from)} - {formatDateTime(period.to)}
                                   </span>
-                                </div>
-                                <div className="flex items-center gap-2 w-full sm:w-auto">
-                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
+                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill}`}>
                                     {period.riskLevel.title}
                                   </span>
                                 </div>
-                              </div>
-                              {hasVisiblePhenomena(period) && (
-                                <div className="mt-1.5 border-t border-white/10"> </div>
-                              )}
-                              <div className="flex flex-wrap items-center gap-2">
+                                
                                 {period.isTemporary && (
-                                  <div className="w-full text-xs text-yellow-400 mb-1">
+                                  <span className="text-xs text-yellow-400">
                                     {t.temporaryConditions}
-                                  </div>
+                                  </span>
                                 )}
-                                <div className="flex flex-wrap gap-2 w-full">
-                                  {period.conditions.phenomena.length > 0 ? (
-                                    period.conditions.phenomena
-                                      .filter(condition => condition.trim() !== '')
-                                      .filter((condition, index, array) => {
-                                        if (condition.includes('💨')) {
-                                          return array.indexOf(condition) === index;
-                                        }
-                                        return true;
-                                      })
-                                      .map((condition, idx) => (
-                                        <span
-                                          key={idx}
-                                          className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                        >
-                                          {condition}
-                                        </span>
-                                      ))
-                                  ) : (
-                                    <span className="text-xs text-slate-500">{t.noPhenomena}</span>
-                                  )}
-                                  {period.wind?.speed_kts && 
-                                   !period.conditions.phenomena.some(p => p.includes('💨')) &&
-                                   getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
-                                    <span
-                                      className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                    >
-                                      {getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts)}
-                                    </span>
-                                  )}
-                                </div>
                               </div>
 
-                              {period.probability && (
-                                <span className="text-xs text-slate-400">
-                                  {period.probability}{t.probabilityChance}
-                                </span>
+                              <div className="flex flex-wrap gap-2">
+                                {period.conditions.phenomena.map((phenomenon, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs"
+                                  >
+                                    {phenomenon}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {period.operationalImpacts && period.operationalImpacts.length > 0 && (
+                                <div className="mt-2 text-xs space-y-1">
+                                  {period.operationalImpacts.map((impact, idx) => (
+                                    <div key={idx} className="text-slate-400">
+                                      {impact}
+                                    </div>
+                                  ))}
+                                </div>
                               )}
 
-                              {period.riskLevel.level > 1 && 
-                               new Date(period.from) > new Date() && (
-                                <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
-                                  <p className="font-medium text-slate-300">{t.operationalImpacts}:</p>
-                                  <ul className="space-y-1.5">
-                                    {period.operationalImpacts?.map((impact, idx) => (
-                                      <li key={idx} className="text-slate-400">
-                                        {impact}
-                                      </li>
-                                    ))}
-                                  </ul>
+                              {period.nestedConditions && period.nestedConditions.length > 0 && (
+                                <div className="mt-4 space-y-3">
+                                  <div className="text-sm text-slate-300">
+                                    {t.weatherTimeline.periodWarning}
+                                  </div>
+                                  {period.nestedConditions.map((nestedPeriod, idx) => (
+                                    <div 
+                                      key={idx}
+                                      className={`p-3 rounded-lg ${getStatusColors(nestedPeriod.riskLevel.level).bg}`}
+                                    >
+                                      <div className="flex flex-col gap-3">
+                                        {/* Header with risk level and probability */}
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            {nestedPeriod.probability && (
+                                              <span className="text-xs text-yellow-400 px-2 py-0.5 rounded-full bg-yellow-400/10">
+                                                {nestedPeriod.probability}% {t.weatherTimeline.temporaryIntensification}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusColors(nestedPeriod.riskLevel.level).pill}`}>
+                                            {nestedPeriod.riskLevel.title}
+                                          </span>
+                                        </div>
+
+                                        {/* Weather phenomena */}
+                                        <div className="flex flex-wrap gap-2">
+                                          {nestedPeriod.conditions.phenomena.map((phenomenon, pIdx) => (
+                                            <span
+                                              key={pIdx}
+                                              className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs"
+                                            >
+                                              {phenomenon}
+                                            </span>
+                                          ))}
+                                        </div>
+
+                                        {/* Operational impacts */}
+                                        {nestedPeriod.operationalImpacts && nestedPeriod.operationalImpacts.length > 0 && (
+                                          <div className="text-xs space-y-1">
+                                            {nestedPeriod.operationalImpacts.map((impact, impIdx) => (
+                                              <div key={impIdx} className="text-slate-400">
+                                                {impact}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
