@@ -251,7 +251,7 @@ export async function GET() {
 
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, max-age=1200',
+        'Cache-Control': 'public, max-age=180',
         ...(fromCache && { 'X-Served-From': 'cache' })
       }
     });

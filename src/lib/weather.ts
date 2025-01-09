@@ -1276,8 +1276,22 @@ function getDetailedDescription(condition: string, language: 'en' | 'pl'): strin
   return condition;
 }
 
-// Pomocnicza funkcja do obsługi wpływu wiatru
-function getWindImpacts(wind: { speed_kts: number, gust_kts?: number }, warnings: any): string[] {
+// Add this interface for warnings
+interface WarningMessages {
+  dangerousGusts: string;
+  diversionsLikely: string;
+  strongGustsOperations: string;
+  extendedDelays: string;
+  strongWindsApproaches: string;
+  minorDelaysPossible: string;
+  [key: string]: string; // For other warning messages
+}
+
+// Update the function with proper typing
+function getWindImpacts(
+  wind: { speed_kts: number; gust_kts?: number }, 
+  warnings: WarningMessages
+): string[] {
   const impacts: string[] = [];
   
   if (wind.gust_kts && wind.gust_kts >= 40) {
