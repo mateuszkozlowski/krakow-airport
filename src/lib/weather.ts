@@ -895,6 +895,44 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
   }
 }
 
+// Add these interfaces at the top of the file
+interface WeatherPeriod {
+  from: Date;
+  to: Date;
+  conditions?: {
+    code: string;
+  }[];
+  visibility?: {
+    meters: number;
+  };
+  clouds?: {
+    code: string;
+    base_feet_agl?: number;
+    type?: string;
+  }[];
+  wind?: {
+    speed_kts: number;
+    gust_kts?: number;
+  };
+  change?: {
+    probability?: number;
+    indicator?: {
+      code: string;
+    };
+  };
+  ceiling?: {
+    feet: number;
+  };
+}
+
+interface GroupedPeriod {
+  conditions: string[];
+  riskLevel: number;
+  timeDescription: string;
+  from: Date;
+  to: Date;
+}
+
 function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastChange[] {
   if (!taf || !taf.forecast) return [];
 
@@ -915,12 +953,12 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
   if (validPeriods.length === 0) return [];
 
   // Helper function to check if a period has high-risk conditions
-  const hasHighRiskConditions = (period: any): boolean => {
+  const hasHighRiskConditions = (period: WeatherPeriod): boolean => {
     // Check visibility
     if (period.visibility?.meters && period.visibility.meters < 1500) return true;
     
     // Check severe weather phenomena
-    if (period.conditions?.some((c: { code: string }) => 
+    if (period.conditions?.some(c => 
       ['FZFG', 'FZRA', 'FZDZ', 'TS', '+SN', '+SHSN', 'BLSN'].includes(c.code)
     )) return true;
     
@@ -929,7 +967,7 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
     if (period.wind?.speed_kts && period.wind.speed_kts >= 30) return true;
 
     // Check low ceiling with CB
-    if (period.clouds?.some((cloud: { code: string; base_feet_agl?: number; type?: string }) => 
+    if (period.clouds?.some(cloud => 
       (cloud.code === 'BKN' || cloud.code === 'OVC') && 
       cloud.base_feet_agl && 
       cloud.base_feet_agl < 500 &&
@@ -940,7 +978,7 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
   };
 
   // Helper function to check if periods can be merged
-  const canMergePeriods = (a: any, b: any): boolean => {
+  const canMergePeriods = (a: WeatherPeriod, b: WeatherPeriod): boolean => {
     // Don't merge if either period has high risk conditions
     if (hasHighRiskConditions(a) || hasHighRiskConditions(b)) return false;
     
@@ -1007,8 +1045,8 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
     if (windDesc) conditions.add(windDesc);
 
     // Calculate risk level for base period
-    let riskLevel = calculateRiskLevel(period, language, warnings);
-    let operationalImpacts = calculateOperationalImpacts(period, language, warnings);
+    const riskLevel = calculateRiskLevel(period, language, warnings);
+    const operationalImpacts = calculateOperationalImpacts(period, language, warnings);
 
     // Add base period
     const phenomena = Array.from(conditions);
@@ -1044,7 +1082,7 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
     });
 
     // Group overlapping TEMPO periods by probability and risk level
-    const groupedTempos = new Map<string, any[]>();
+    const groupedTempos = new Map<string, WeatherPeriod[]>();
     overlappingTempos.forEach(tempo => {
       const key = `${tempo.change?.probability || 'none'}-${calculateRiskLevel(tempo, language, warnings).level}`;
       if (!groupedTempos.has(key)) {
@@ -1054,12 +1092,12 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
     });
 
     // Process each group of TEMPO periods
-    groupedTempos.forEach((tempos, key) => {
+    groupedTempos.forEach((tempos) => {
       // Sort tempos by time
       tempos.sort((a, b) => a.from.getTime() - b.from.getTime());
 
       // Try to merge consecutive periods with same conditions
-      let currentGroup = [tempos[0]];
+      const currentGroup = [tempos[0]];
       for (let i = 1; i < tempos.length; i++) {
         const lastPeriod = currentGroup[currentGroup.length - 1];
         const currentPeriod = tempos[i];
@@ -1150,7 +1188,7 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
 }
 
 // Helper function to calculate risk level
-function calculateRiskLevel(period: any, language: 'en' | 'pl', warnings: any): RiskLevel {
+function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): RiskLevel {
   const t = translations[language];
 
     // Default to good conditions
@@ -1226,7 +1264,7 @@ function calculateRiskLevel(period: any, language: 'en' | 'pl', warnings: any): 
 }
 
 // Helper function to calculate operational impacts
-function calculateOperationalImpacts(period: any, language: 'en' | 'pl', warnings: any): string[] {
+function calculateOperationalImpacts(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): string[] {
   const impacts: string[] = [];
 
   if (period.visibility?.meters && period.visibility.meters < MINIMUMS.VISIBILITY) {
