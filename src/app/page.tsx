@@ -29,22 +29,7 @@ function LoadingSkeleton() {
           </div>
         </div>
 
-        {/* Alert Skeleton */}
-        <div className="bg-red-900/95 backdrop-blur py-4">
-          <div className="max-w-4xl mx-auto w-full">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 space-y-3">
-                <div className="h-6 bg-white/20 rounded w-1/3"></div>
-                <div className="h-4 bg-white/20 rounded w-3/4"></div>
-                <div className="h-4 bg-white/20 rounded w-1/2"></div>
-              </div>
-              <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:min-w-[200px] md:border-l md:border-white/20 md:pl-6">
-                <div className="h-10 bg-white/20 rounded w-full"></div>
-                <div className="h-10 bg-white/90 rounded w-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Main Content Skeleton */}
         <div className="max-w-4xl mx-auto px-6 pb-36">
