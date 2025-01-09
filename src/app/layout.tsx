@@ -5,6 +5,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import Clarity from '@microsoft/clarity';
 import { Metadata } from 'next';
 import Script from 'next/script';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 const projectId = "ploo7g9ey8"
 
@@ -46,7 +47,9 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
         {gaId && <GoogleAnalytics gaId={gaId} />}
         
       </body>

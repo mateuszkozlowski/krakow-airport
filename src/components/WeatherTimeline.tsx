@@ -4,6 +4,9 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ForecastChange, RiskAssessment } from "@/lib/types/weather";
 import { RiskLegendDialog } from "./RiskLegend";
 import { adjustToWarsawTime } from '@/lib/utils/time';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/lib/translations';
+import { getStandardizedWindDescription } from '@/lib/weather';
 
 interface WeatherTimelineProps {
   current: {
@@ -20,13 +23,6 @@ interface WeatherTimelineProps {
   isLoading: boolean;
   isError: boolean;
   retry: () => Promise<void>;
-}
-
-function getStandardizedWindDescription(speed: number, gusts?: number): string {
-  if (gusts && gusts >= 35) return "💨 Strong Wind Gusts";
-  if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong Winds";
-  if (speed >= 15) return "💨 Moderate Winds";
-  return ""; // Don't show light winds
 }
 
 function hasVisiblePhenomena(period: ForecastChange | { conditions: { phenomena: string[] }, wind?: { speed_kts: number; gust_kts?: number } }): boolean {
@@ -160,8 +156,32 @@ function formatCeilingDescription(feet: number): string {
   return "";
 }
 
+// Dodaj typy dla periodText
+type EnglishPeriodText = {
+  one: string;
+  other: string;
+};
+
+type PolishPeriodText = {
+  one: string;
+  few: string;
+  many: string;
+};
+
+type PeriodText = EnglishPeriodText | PolishPeriodText;
+
+function isPolishPeriodText(text: PeriodText): text is PolishPeriodText {
+  return 'few' in text && 'many' in text;
+}
+
+function isEnglishPeriodText(text: PeriodText): text is EnglishPeriodText {
+  return 'other' in text;
+}
+
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
   const [showAll, setShowAll] = useState(false);
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
@@ -343,11 +363,11 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
     if (isEndTime) {
       if (isToday) {
-        return `Until ${time}`;
+        return `${t.until} ${time}`;
       } else if (isTomorrow) {
-        return `Until Tomorrow ${time}`;
+        return `${t.until} ${t.tomorrow} ${time}`;
       } else {
-        return `Until ${date.toLocaleDateString('en-GB', {
+        return `${t.until} ${date.toLocaleDateString('en-GB', {
           weekday: 'short',
           day: 'numeric',
           month: 'short',
@@ -359,9 +379,9 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     }
 
     if (isToday) {
-      return `Today ${time}`;
+      return `${t.today} ${time}`;
     } else if (isTomorrow) {
-      return `Tomorrow ${time}`;
+      return `${t.tomorrow} ${time}`;
     } else {
       return date.toLocaleDateString('en-GB', {
         weekday: 'short',
@@ -395,6 +415,24 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     risk: p.riskLevel.level
   })));
 
+  const getPeriodText = (count: number) => {
+    const periodText = t.periodText;
+    
+    if (language === 'pl' && isPolishPeriodText(periodText)) {
+      if (count === 1) return periodText.one;
+      if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) 
+        return periodText.few;
+      return periodText.many;
+    }
+    
+    if (isEnglishPeriodText(periodText)) {
+      return count === 1 ? periodText.one : periodText.other;
+    }
+    
+    // Fallback
+    return count === 1 ? periodText.one : 'periods';
+  };
+
   return (
     <div className="space-y-4">
       {isError ? (
@@ -416,11 +454,10 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
               <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-3">
-                    {/* Time and status group */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <span className="text-sm font-medium text-slate-200">
-                          Current Conditions • Updated {adjustToWarsawTime(new Date(current.observed)).toLocaleTimeString('en-GB', {
+                          {t.currentConditions} • {t.updated} {adjustToWarsawTime(new Date(current.observed)).toLocaleTimeString('en-GB', {
                             hour: '2-digit',
                             minute: '2-digit',
                             timeZone: 'Europe/Warsaw'
@@ -434,15 +471,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       </div>
                     </div>
 
-                    {/* Add prominent status message */}
                     <div className={`text-lg font-medium ${getStatusColors(current.riskLevel.level).text}`}>
                       {current.riskLevel.statusMessage}
                     </div>
 
-                    {/* Weather conditions group */}
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex flex-wrap gap-2 w-full">
-                        {/* Weather phenomena */}
                         {current.conditions.phenomena.map((phenomenon, index) => (
                           <span
                             key={index}
@@ -453,18 +487,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           </span>
                         ))}
 
-                        {/* Wind conditions if not already shown in phenomena */}
                         {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
                           <span
                             className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
                             title={`Wind ${current.wind.direction}° at ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` (gusts ${current.wind.gust_kts}kt)` : ''}`}
                           >
-                            {getStandardizedWindDescription(current.wind.speed_kts, current.wind.gust_kts)}
+                            {getStandardizedWindDescription(current.wind.speed_kts, language, current.wind.gust_kts)}
                             {current.wind.gust_kts && ` (${current.wind.speed_kts}G${current.wind.gust_kts}kt)`}
                           </span>
                         )}
 
-                        {/* Visibility conditions */}
                         {current.visibility?.meters && (
                           <span
                             className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
@@ -475,7 +507,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           </span>
                         )}
 
-                        {/* Ceiling conditions */}
                         {current.ceiling?.feet && (
                           <span
                             className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
@@ -488,33 +519,31 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       </div>
                     </div>
 
-                    {/* Detailed weather information */}
                     {(current.wind || current.visibility || current.ceiling) && (
                       <div className="mt-2 text-xs text-slate-400 space-y-1">
                         <div className="flex flex-wrap gap-x-4 gap-y-1">
                           {current.wind && (
                             <span title="Wind direction and speed">
-                              💨 Wind: {current.wind.direction}° at {current.wind.speed_kts}kt
-                              {current.wind.gust_kts && ` (gusts ${current.wind.gust_kts}kt)`}
+                              💨 {t.windConditions}: {current.wind.direction}° at {current.wind.speed_kts}kt
+                              {current.wind.gust_kts && ` (${t.gusts} ${current.wind.gust_kts}kt)`}
                             </span>
                           )}
                           
                           {current.visibility && (
                             <span title="Ground visibility">
-                              👁️ Visibility: {current.visibility.meters}m
+                              👁️ {t.visibilityConditions}: {current.visibility.meters}m
                             </span>
                           )}
                           
                           {current.ceiling && (
                             <span title="Cloud ceiling height">
-                              ☁️ Ceiling: {current.ceiling.feet}ft
+                              ☁️ {t.ceilingConditions}: {current.ceiling.feet}ft
                             </span>
                           )}
                         </div>
                       </div>
                     )}
 
-                    {/* Risk explanation and operational impacts */}
                     {(current.riskLevel.explanation || current.riskLevel.operationalImpacts) && (
                       <div className="mt-2 text-sm space-y-2">
                         {current.riskLevel.explanation && (
@@ -524,7 +553,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         {current.riskLevel.operationalImpacts && 
                          current.riskLevel.operationalImpacts.length > 0 && (
                           <div className="mt-2 border-t border-white/10 pt-3">
-                            <p className="font-medium text-slate-200 text-sm">What to expect:</p>
+                            <p className="font-medium text-slate-200 text-sm">{t.operationalImpacts}:</p>
                             <ul className="mt-1 space-y-1.5">
                               {current.riskLevel.operationalImpacts.map((impact, idx) => (
                                 <li key={idx} className="text-slate-300 text-sm">
@@ -537,7 +566,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       </div>
                     )}
 
-                    {/* Warning banner for deteriorating conditions */}
                     {current.riskLevel.level === 1 && forecast.some(p => {
                       const withinNextHour = new Date(p.from).getTime() - new Date().getTime() <= 3600000;
                       return withinNextHour && p.riskLevel.level > 1;
@@ -558,10 +586,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                 </CardContent>
               </Card>
 
-              {/* Replace the existing legend button with this drawer */}
               <RiskLegendDialog />
 
-              {/* Timeline section */}
               {uniqueForecast.length > 0 && (
                 <div className="space-y-4">
                   {uniqueForecast
@@ -580,17 +606,15 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         >
                           <CardContent className="p-4">
                             <div className="flex flex-col gap-3">
-                              {/* Time and status group */}
                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                   <span className="text-sm font-medium text-slate-200">
                                     {period.from.getTime() < new Date().getTime()
-                                      ? formatDateTime(period.to, true)  // Show "until X" format for current period
+                                      ? formatDateTime(period.to, true)
                                       : `${formatDateTime(period.from)} - ${
-                                          // If the end time is on a different day than the start time
                                           period.from.toDateString() !== period.to.toDateString() 
-                                            ? formatDateTime(period.to)  // Show full date/time
-                                            : period.to.toLocaleTimeString('en-GB', {  // Show only time
+                                            ? formatDateTime(period.to)
+                                            : period.to.toLocaleTimeString('en-GB', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
                                                 timeZone: 'Europe/Warsaw'
@@ -598,29 +622,32 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                         }`
                                   }
                                   </span>
-                               
                                 </div>
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                   <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
                                     {period.riskLevel.title}
                                   </span>
-                                  
                                 </div>
                               </div>
                               {hasVisiblePhenomena(period) && (
                                 <div className="mt-1.5 border-t border-white/10"> </div>
                               )}
-                              {/* Weather conditions group */}
                               <div className="flex flex-wrap items-center gap-2">
                                 {period.isTemporary && (
                                   <div className="w-full text-xs text-yellow-400 mb-1">
-                                    Temporary conditions possible:
+                                    {t.temporaryConditions}
                                   </div>
                                 )}
                                 <div className="flex flex-wrap gap-2 w-full">
                                   {period.conditions.phenomena.length > 0 ? (
                                     period.conditions.phenomena
                                       .filter(condition => condition.trim() !== '')
+                                      .filter((condition, index, array) => {
+                                        if (condition.includes('💨')) {
+                                          return array.indexOf(condition) === index;
+                                        }
+                                        return true;
+                                      })
                                       .map((condition, idx) => (
                                         <span
                                           key={idx}
@@ -630,32 +657,30 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                         </span>
                                       ))
                                   ) : (
-                                    <span className="text-xs text-slate-500">No phenomena reported</span>
+                                    <span className="text-xs text-slate-500">{t.noPhenomena}</span>
                                   )}
                                   {period.wind?.speed_kts && 
-                                   !period.conditions.phenomena.some(p => p.includes('Wind')) &&
-                                   getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts) && (
+                                   !period.conditions.phenomena.some(p => p.includes('💨')) &&
+                                   getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
                                     <span
                                       className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
                                     >
-                                      {getStandardizedWindDescription(period.wind.speed_kts, period.wind.gust_kts)}
+                                      {getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts)}
                                     </span>
                                   )}
                                 </div>
                               </div>
 
-                              {/* Probability if exists */}
                               {period.probability && (
                                 <span className="text-xs text-slate-400">
-                                  {period.probability}% chance of these conditions
+                                  {period.probability}{t.probabilityChance}
                                 </span>
                               )}
 
-                              {/* Only show impacts for future periods with risk > 1 */}
                               {period.riskLevel.level > 1 && 
                                new Date(period.from) > new Date() && (
                                 <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
-                                  <p className="font-medium text-slate-300">What to expect:</p>
+                                  <p className="font-medium text-slate-300">{t.operationalImpacts}:</p>
                                   <ul className="space-y-1.5">
                                     {period.operationalImpacts?.map((impact, idx) => (
                                       <li key={idx} className="text-slate-400">
@@ -676,9 +701,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         onClick={() => setShowAll(!showAll)}
                         className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
                       >
-                        {showAll 
-                          ? 'Show less' 
-                          : `Show ${uniqueForecast.length - 4} more ${uniqueForecast.length - 4 === 1 ? 'period' : 'periods'}`}
+                        {showAll ? t.showLess : t.showMore}
                       </button>
                     )}
                 </div>

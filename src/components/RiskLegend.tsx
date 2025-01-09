@@ -14,171 +14,136 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/lib/translations';
 
 interface RiskLevelProps {
   icon: React.ReactNode;
   color: string;
   title: string;
   description: string;
-  details: string[];
-  recommendations: string[];
+  details: readonly string[];
+  recommendations: readonly string[];
 }
 
-const RiskLevel: React.FC<RiskLevelProps> = ({ icon, color, title, description, details, recommendations }) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <div className="shrink-0">{icon}</div>
-      <span className={cn("font-medium", color)}>{title}</span>
-    </div>
-    <div className="ml-6 space-y-2">
-      <p className="text-sm text-slate-200">{description}</p>
-      
-      <div className="space-y-1">
-        <div className="flex gap-2 items-center text-slate-300">
-          <Info className="h-3 w-3 shrink-0" />
-          <span className="font-medium text-sm">What to expect:</span>
-        </div>
-        <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
-          {details.map((detail, idx) => (
-            <li key={idx}>{detail}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="space-y-1">
-        <div className="flex gap-2 items-center text-slate-300">
-          <HelpCircle className="h-3 w-3 shrink-0" />
-          <span className="font-medium text-sm">What you should do:</span>
-        </div>
-        <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
-          {recommendations.map((rec, idx) => (
-            <li key={idx}>{rec}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  </div>
-);
-
-const RiskLegendContent = () => (
-  <div className="space-y-6">
+const RiskLevel: React.FC<RiskLevelProps> = ({ icon, color, title, description, details, recommendations }) => {
+  const { language } = useLanguage();
+  const t = translations[language].riskLegend;
+  
+  return (
     <div className="space-y-2">
-      <h2 className="font-semibold text-lg text-slate-200">
-        Understanding Weather Impact
-      </h2>
-      <p className="text-sm text-slate-400">
-        This guide helps you understand how weather conditions might affect your flight and what actions to take.
-      </p>
-    </div>
+      <div className="flex items-center gap-2">
+        <div className="shrink-0">{icon}</div>
+        <span className={cn("font-medium", color)}>{title}</span>
+      </div>
+      <div className="ml-6 space-y-2">
+        <p className="text-sm text-slate-200">{description}</p>
+        
+        <div className="space-y-1">
+          <div className="flex gap-2 items-center text-slate-300">
+            <Info className="h-3 w-3 shrink-0" />
+            <span className="font-medium text-sm">{t.whatToExpect}</span>
+          </div>
+          <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
+            {details.map((detail, idx) => (
+              <li key={idx}>{detail}</li>
+            ))}
+          </ul>
+        </div>
 
-    <div className="grid gap-6">
-      <RiskLevel
-        icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-        color="text-emerald-400"
-        title="Good Flying Conditions"
-        description="Weather conditions are favorable for normal flight operations."
-        details={[
-          "Regular flight schedules maintained",
-          "Standard visibility and ceiling conditions",
-          "Normal approach and landing procedures",
-          "Routine ground operations"
-        ]}
-        recommendations={[
-          "Check in at regular time",
-          "Follow standard airport procedures",
-          "No special preparations needed"
-        ]}
-      />
-
-      <RiskLevel
-        icon={<AlertTriangle className="h-5 w-5 text-orange-400" />}
-        color="text-orange-400"
-        title="Minor Weather Impact"
-        description="Some weather-related disruptions possible, but generally manageable."
-        details={[
-          "Possible short delays (15-30 minutes)",
-          "Light precipitation or reduced visibility",
-          "De-icing procedures may be required",
-          "Slight adjustments to flight paths"
-        ]}
-        recommendations={[
-          "Check flight status before leaving",
-          "Allow extra 15-30 minutes for travel",
-          "Keep your phone charged",
-          "Monitor airport/airline updates"
-        ]}
-      />
-
-      <RiskLevel
-        icon={<AlertTriangle className="h-5 w-5 text-red-400" />}
-        color="text-red-400"
-        title="Weather Advisory"
-        description="Significant weather conditions affecting flight operations."
-        details={[
-          "Moderate to long delays (30-90 minutes)",
-          "Possible flight cancellations",
-          "Extended de-icing procedures",
-          "Modified approach procedures",
-          "Reduced airport capacity"
-        ]}
-        recommendations={[
-          "Check flight status frequently",
-          "Arrive 30-45 minutes earlier than usual",
-          "Have airline contact information ready",
-          "Consider flexible booking options",
-          "Monitor weather updates"
-        ]}
-      />
-
-      <RiskLevel
-        icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
-        color="text-red-500"
-        title="Major Weather Impact"
-        description="Severe weather conditions causing significant disruptions."
-        details={[
-          "Extended delays (2+ hours)",
-          "High probability of cancellations",
-          "Possible airport operational changes",
-          "Limited runway availability",
-          "Ground stop programs possible"
-        ]}
-        recommendations={[
-          "Contact airline before traveling to airport",
-          "Check rebooking/refund policies",
-          "Consider alternative travel dates",
-          "Monitor airport operational status",
-          "Have backup travel plans ready"
-        ]}
-      />
-    </div>
-
-    <div className="rounded-lg bg-slate-800/50 p-4 text-sm">
-      <div className="flex gap-3">
-        <Info className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
-        <div className="space-y-2">
-          <p className="font-medium text-slate-200">Pro Tips</p>
-          <ul className="space-y-1.5 text-slate-400">
-            <li className="flex items-center gap-2">
-              <span className="block w-1 h-1 rounded-full bg-slate-600" />
-              Download your airline's mobile app for instant updates
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="block w-1 h-1 rounded-full bg-slate-600" />
-              Save airline contact numbers in your phone
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="block w-1 h-1 rounded-full bg-slate-600" />
-              Take a screenshot of your booking details
-            </li>
+        <div className="space-y-1">
+          <div className="flex gap-2 items-center text-slate-300">
+            <HelpCircle className="h-3 w-3 shrink-0" />
+            <span className="font-medium text-sm">{t.whatToDo}</span>
+          </div>
+          <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
+            {recommendations.map((rec, idx) => (
+              <li key={idx}>{rec}</li>
+            ))}
           </ul>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+const RiskLegendContent = () => {
+  const { language } = useLanguage();
+  const t = translations[language].riskLegend;
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="font-semibold text-lg text-slate-200">
+          {t.title}
+        </h2>
+        <p className="text-sm text-slate-400">
+          {t.description}
+        </p>
+      </div>
+
+      <div className="grid gap-6">
+        <RiskLevel
+          icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+          color="text-emerald-400"
+          title={t.goodConditions.title}
+          description={t.goodConditions.description}
+          details={t.goodConditions.details}
+          recommendations={t.goodConditions.recommendations}
+        />
+
+        <RiskLevel
+          icon={<AlertTriangle className="h-5 w-5 text-orange-400" />}
+          color="text-orange-400"
+          title={t.minorImpact.title}
+          description={t.minorImpact.description}
+          details={t.minorImpact.details}
+          recommendations={t.minorImpact.recommendations}
+        />
+
+        <RiskLevel
+          icon={<AlertTriangle className="h-5 w-5 text-red-400" />}
+          color="text-red-400"
+          title={t.weatherAdvisory.title}
+          description={t.weatherAdvisory.description}
+          details={t.weatherAdvisory.details}
+          recommendations={t.weatherAdvisory.recommendations}
+        />
+
+        <RiskLevel
+          icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
+          color="text-red-500"
+          title={t.majorImpact.title}
+          description={t.majorImpact.description}
+          details={t.majorImpact.details}
+          recommendations={t.majorImpact.recommendations}
+        />
+      </div>
+
+      <div className="rounded-lg bg-slate-800/50 p-4 text-sm">
+        <div className="flex gap-3">
+          <Info className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-2">
+            <p className="font-medium text-slate-200">{t.proTips}</p>
+            <ul className="space-y-1.5 text-slate-400">
+              {t.tips.map((tip, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="block w-1 h-1 rounded-full bg-slate-600" />
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export function RiskLegendDialog() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { language } = useLanguage();
+  const t = translations[language].riskLegend;
 
   if (isDesktop) {
     return (
@@ -189,12 +154,12 @@ export function RiskLegendDialog() {
             className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800/80 hover:text-slate-200 text-slate-300 transition-colors"
           >
             <HelpCircle className="w-4 h-4 mr-2" />
-            Understanding weather impact
+            {t.title}
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] bg-slate-900 border border-slate-800 shadow-xl">
           <DialogHeader className="border-b border-slate-800 pb-4">
-            <DialogTitle className="text-slate-200 px-1">Weather Impact Guide</DialogTitle>
+            <DialogTitle className="text-slate-200 px-1">{t.title}</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto px-2 custom-scrollbar" style={{ maxHeight: "calc(90vh - 120px)" }}>
             <RiskLegendContent />
@@ -212,12 +177,12 @@ export function RiskLegendDialog() {
           className="w-full bg-slate-800/50 border-slate-700 hover:bg-slate-800/80 hover:text-slate-200 text-slate-300 transition-colors"
         >
           <HelpCircle className="w-4 h-4 mr-2" />
-          Understanding weather impact
+          {t.title}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="flex flex-col h-[85vh]">
         <DrawerHeader className="border-b border-slate-800">
-          <DrawerTitle className="text-slate-200 px-1 pl-7">Weather Impact Guide</DrawerTitle>
+          <DrawerTitle className="text-slate-200 px-1 pl-7">{t.title}</DrawerTitle>
         </DrawerHeader>
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="px-6 py-6">
@@ -230,7 +195,7 @@ export function RiskLegendDialog() {
               variant="outline" 
               className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700/80 text-slate-300 transition-colors"
             >
-              Close
+              {t.close}
             </Button>
           </DrawerClose>
         </div>

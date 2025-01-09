@@ -17,8 +17,8 @@ interface CacheConfig {
 }
 
 const DEFAULT_CACHE_CONFIG: CacheConfig = {
-  staleDuration: 10 * 60,  // 10 minutes
-  cacheDuration: 10 * 60,  // 10 minutes
+  staleDuration: 3 * 60,  // 3 minutes
+  cacheDuration: 3 * 60,  // 3 minutesa
 };
 
 export async function getCacheOrFetch<T>(
