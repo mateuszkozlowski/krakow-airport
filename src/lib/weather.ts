@@ -849,10 +849,10 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
     const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData);
     
     // First merge overlapping periods
-    const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast);
+    const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast, language);
     
     // Then merge consecutive similar periods
-    const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping);
+    const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping, language);
 
     const currentAssessment = assessWeatherRisk(currentWeather, language);
     
@@ -1635,7 +1635,7 @@ async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
   };
 }
 
-function mergeOverlappingPeriods(periods: ForecastChange[]): ForecastChange[] {
+function mergeOverlappingPeriods(periods: ForecastChange[], language: 'en' | 'pl'): ForecastChange[] {
   // Group periods by their time ranges
   const periodGroups = new Map<string, ForecastChange[]>();
   
@@ -1649,13 +1649,13 @@ function mergeOverlappingPeriods(periods: ForecastChange[]): ForecastChange[] {
 
   // Merge each group and sort by start time
   const mergedPeriods = Array.from(periodGroups.values())
-    .map(group => group.length > 1 ? mergePeriodGroup(group) : group[0])
+    .map(group => group.length > 1 ? mergePeriodGroup(group, language) : group[0])
     .sort((a, b) => a.from.getTime() - b.from.getTime());
 
   return mergedPeriods;
 }
 
-function mergePeriodGroup(periods: ForecastChange[]): ForecastChange {
+function mergePeriodGroup(periods: ForecastChange[], language: 'en' | 'pl'): ForecastChange {
   if (periods.length === 1) return periods[0];
 
   // Calculate weighted risk level
@@ -1693,39 +1693,42 @@ function mergePeriodGroup(periods: ForecastChange[]): ForecastChange {
     operationalImpacts: Array.from(allImpacts),
     riskLevel: {
       level: finalRiskLevel as 1 | 2 | 3 | 4,
-      title: getRiskLevelTitle(finalRiskLevel),
-      message: getRiskLevelMessage(finalRiskLevel),
-      statusMessage: getRiskLevelStatus(finalRiskLevel),
+      title: getRiskLevelTitle(finalRiskLevel, language),
+      message: getRiskLevelMessage(finalRiskLevel, language),
+      statusMessage: getRiskLevelStatus(finalRiskLevel, language),
       color: getRiskLevelColor(finalRiskLevel)
     }
   };
 }
 
 // Helper functions for risk level text
-function getRiskLevelTitle(level: number): string {
+function getRiskLevelTitle(level: number, language: 'en' | 'pl'): string {
+  const t = translations[language];
   switch (level) {
-    case 4: return "Major Weather Impact";
-    case 3: return "Weather Advisory";
-    case 2: return "Minor Weather Impact";
-    default: return "Good Flying Conditions";
+    case 4: return t.riskLevel4Title;
+    case 3: return t.riskLevel3Title;
+    case 2: return t.riskLevel2Title;
+    default: return t.riskLevel1Title;
   }
 }
 
-function getRiskLevelMessage(level: number): string {
+function getRiskLevelMessage(level: number, language: 'en' | 'pl'): string {
+  const t = translations[language];
   switch (level) {
-    case 4: return "Operations suspended";
-    case 3: return "Operations restricted";
-    case 2: return "Minor operational impacts expected";
-    default: return "Normal operations";
+    case 4: return t.riskLevel4Message;
+    case 3: return t.riskLevel3Message;
+    case 2: return t.riskLevel2Message;
+    default: return t.riskLevel1Message;
   }
 }
 
-function getRiskLevelStatus(level: number): string {
+function getRiskLevelStatus(level: number, language: 'en' | 'pl'): string {
+  const t = translations[language];
   switch (level) {
-    case 4: return "All flights are currently suspended due to severe weather conditions. Check with your airline for updates.";
-    case 3: return "Expect delays of 30+ minutes. Check your flight status.";
-    case 2: return "Flights are operating with possible delays of 20-30 minutes.";
-    default: return "All flights are operating on schedule.";
+    case 4: return t.riskLevel4Status;
+    case 3: return t.riskLevel3Status;
+    case 2: return t.riskLevel2Status;
+    default: return t.riskLevel1Status;
   }
 }
 
@@ -1738,7 +1741,7 @@ function getRiskLevelColor(level: number): "red" | "orange" | "yellow" | "green"
   }
 }
 
-function mergeConsecutiveSimilarPeriods(periods: ForecastChange[]): ForecastChange[] {
+function mergeConsecutiveSimilarPeriods(periods: ForecastChange[], language: 'en' | 'pl'): ForecastChange[] {
   if (periods.length <= 1) return periods;
   
   const result: ForecastChange[] = [];
@@ -1753,7 +1756,14 @@ function mergeConsecutiveSimilarPeriods(periods: ForecastChange[]): ForecastChan
       // Merge by extending the end time
       currentPeriod = {
         ...currentPeriod,
-        to: nextPeriod.to
+        to: nextPeriod.to,
+        riskLevel: {
+          level: currentPeriod.riskLevel.level,
+          title: getRiskLevelTitle(currentPeriod.riskLevel.level, language),
+          message: getRiskLevelMessage(currentPeriod.riskLevel.level, language),
+          statusMessage: getRiskLevelStatus(currentPeriod.riskLevel.level, language),
+          color: getRiskLevelColor(currentPeriod.riskLevel.level)
+        }
       };
     } else {
       result.push(currentPeriod);
@@ -1761,7 +1771,7 @@ function mergeConsecutiveSimilarPeriods(periods: ForecastChange[]): ForecastChan
     }
   }
   
-  // Don't forget to add the last period
+  // Don't forget to push the last period
   result.push(currentPeriod);
   
   return result;
