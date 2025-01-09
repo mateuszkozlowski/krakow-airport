@@ -10,11 +10,12 @@ import { MainNav } from "@/components/MainNav"
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { adjustToWarsawTime } from '@/lib/utils/time';
-import { AlertTriangle, Plane } from "lucide-react";
+import { AlertTriangle, ChevronDown, X, Plane } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
 import { Suspense } from 'react';
+import { Button } from "@/components/ui/button";
 
 function LoadingSkeleton() {
   return (
@@ -101,6 +102,19 @@ export default function Page() {
   const [weather, setWeather] = useState<WeatherResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAlertExpanded, setIsAlertExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('alertExpanded');
+      return stored === null ? true : stored === 'true';
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('alertExpanded', isAlertExpanded.toString());
+    }
+  }, [isAlertExpanded]);
 
   async function fetchData(isRetry = false) {
     try {
@@ -349,60 +363,81 @@ export default function Page() {
         </Alert>
 
         {highRiskPeriods.length > 0 && highRiskPeriods.some(period => period.riskLevel.level >= 3) && (
-          <Alert className={cn(
-            "rounded-none border-0 backdrop-blur py-4",
-            highRiskPeriods.some(p => p.riskLevel.level === 4) 
-              ? "bg-red-950/95"
-              : "bg-red-900/95"
-          )}>
+          <Alert 
+            className={cn(
+              "rounded-none border-0 backdrop-blur py-4",
+              highRiskPeriods.some(p => p.riskLevel.level === 4) 
+                ? "bg-red-950/95"
+                : "bg-red-900/95"
+            )}
+          >
             <div className="max-w-4xl mx-auto w-full">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-5 w-5 text-white" />
-                    <h3 className="font-semibold text-white">
-                      {highRiskPeriods.some(p => p.riskLevel.level === 4)
-                        ? t.importantFlightInfo
-                        : t.weatherAdvisory}
-                    </h3>
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-white" />
+                      <h3 className="font-semibold text-white">
+                        {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                          ? t.importantFlightInfo
+                          : t.weatherAdvisory}
+                      </h3>
+                    </div>
+                    <Button 
+                      onClick={() => setIsAlertExpanded(!isAlertExpanded)}
+                      size="icon"
+                      variant="ghost"
+                      className="text-white hover:text-white hover:bg-white/10"
+                      aria-label={isAlertExpanded ? 'Collapse alert' : 'Expand alert'}
+                    >
+                      {isAlertExpanded ? (
+                        <X className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </Button>
                   </div>
                   
-                  <p className="text-sm leading-relaxed text-white">
-                    {highRiskPeriods.some(p => p.riskLevel.level === 4)
-                      ? t.flightDisruptions
-                      : t.severeWeather}
-                    {formatHighRiskTimes()}
-                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
-                      && `. ${t.laterInDay}`}
-                    {`. ${t.checkStatus}`}
-                    {!highRiskPeriods.some(p => p.riskLevel.level === 4) 
-                      ? ` ${t.withAirline}`
-                      : ` ${t.directlyWithAirline}`}.
-                  </p>
-                </div>
+                  {isAlertExpanded && (
+                    <>
+                      <p className="text-sm leading-relaxed text-white">
+                        {highRiskPeriods.some(p => p.riskLevel.level === 4)
+                          ? t.flightDisruptions
+                          : t.severeWeather}
+                        {formatHighRiskTimes()}
+                        {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
+                          && `. ${t.laterInDay}`}
+                        {`. ${t.checkStatus}`}
+                        {!highRiskPeriods.some(p => p.riskLevel.level === 4) 
+                          ? ` ${t.withAirline}`
+                          : ` ${t.directlyWithAirline}`}.
+                      </p>
 
-                <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center md:justify-start md:min-w-[200px] md:border-l md:border-white/20 md:pl-6">
-                  <a 
-                    href="https://www.krakowairport.pl/en/passenger/flight-information/departures"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
-                      bg-white/20 hover:bg-white/30 text-white transition-colors rounded-md px-4 py-2
-                      focus:outline-none focus:ring-2 focus:ring-white/50"
-                  >
-                    <Plane className="h-4 w-4" />
-                    {t.checkFlightStatus}
-                  </a>
-                  
-                  <Link 
-                    href="/passengerrights"
-                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
-                      bg-white hover:bg-white/90 text-red-900 transition-colors rounded-md px-4 py-2
-                      focus:outline-none focus:ring-2 focus:ring-white/50"
-                  >
-                    <Shield className="h-4 w-4" />
-                    {t.knowYourRights}
-                  </Link>
+                      <div className="flex flex-col sm:flex-row gap-3" style={{ marginTop: "8px" }}>
+                        <a 
+                          href="https://www.krakowairport.pl/en/passenger/flight-information/departures"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
+                            bg-white/20 hover:bg-white/30 text-white transition-colors rounded-md px-4 py-2
+                            focus:outline-none focus:ring-2 focus:ring-white/50"
+                        >
+                          <Plane className="h-4 w-4" />
+                          {t.checkFlightStatus}
+                        </a>
+                        
+                        <Link 
+                          href="/passengerrights"
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
+                            bg-white hover:bg-white/90 text-red-900 transition-colors rounded-md px-4 py-2
+                            focus:outline-none focus:ring-2 focus:ring-white/50"
+                        >
+                          <Shield className="h-4 w-4" />
+                          {t.knowYourRights}
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
