@@ -14,13 +14,33 @@ const BASE_URL = 'https://api.checkwx.com';
 const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
-export interface CheckWXMetarResponse {
+async function fetchFromCheckWX<T>(endpoint: string) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: {
+      'X-API-Key': CHECKWX_API_KEY || '',
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`CheckWX API responded with status ${response.status}`);
+  }
+
+  const data = await response.json() as T;
+  return { data };
+}
+
+// Fix the any types
+interface WeatherCondition {
+  code: string;
+  text?: string;
+}
+
+// Update the type definitions to match CheckWX API response
+interface CheckWXMetarResponse {
   results: number;
   data: [{
-    conditions: Array<{
-      code: string;
-      text?: string;
-    }>;
+    conditions: WeatherCondition[];
     icao: string;
     barometer: {
       hg: number;
@@ -64,7 +84,7 @@ export interface CheckWXMetarResponse {
   }];
 }
 
-export interface CheckWXTafResponse {
+interface CheckWXTafResponse {
   results: number;
   data: [{
     icao: string;
@@ -103,27 +123,6 @@ export interface CheckWXTafResponse {
       };
     }>;
   }];
-}
-
-export async function fetchFromCheckWX<T>(endpoint: string) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY || '',
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`CheckWX API responded with status ${response.status}`);
-  }
-
-  const data = await response.json() as T;
-  return { data };
-}
-
-interface WeatherCondition {
-  code: string;
-  text?: string;
 }
 
 function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetarResponse | null {

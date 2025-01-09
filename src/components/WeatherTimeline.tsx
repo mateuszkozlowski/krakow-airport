@@ -186,7 +186,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
     
-    // First, filter and sort
+    // First, filter and sort as before
     const validPeriods = periods
       .filter(period => {
         const hasContent = period.from.getTime() !== period.to.getTime() && 
@@ -195,8 +195,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
            (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
            (period.visibility && period.visibility.meters < 5000) || 
            (period.ceiling && period.ceiling.feet < 1000) || 
-           period.isTemporary ||
-           period.probability);  // Added probability check
+           period.isTemporary);
 
         return hasContent;
       })
@@ -205,20 +204,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
         const timeCompare = a.from.getTime() - b.from.getTime();
         if (timeCompare !== 0) return timeCompare;
         
-        // If same start time, sort by:
-        // 1. Probability (higher probability first)
-        if (a.probability && b.probability) {
-          return b.probability - a.probability;
-        }
-        // 2. Risk level (higher risk first)
-        if (a.riskLevel.level !== b.riskLevel.level) {
-          return b.riskLevel.level - a.riskLevel.level;
-        }
-        // 3. Temporary conditions after base conditions
+        // If same start time, put temporary conditions after base conditions
         if (a.isTemporary && !b.isTemporary) return 1;
         if (!a.isTemporary && b.isTemporary) return -1;
         
-        return 0;
+        // If both temporary or both base, higher risk level goes first
+        return b.riskLevel.level - a.riskLevel.level;
       });
 
     if (validPeriods.length === 0) return [];
@@ -236,16 +227,10 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     }
 
     const arePeriodsIdentical = (a: ForecastChange, b: ForecastChange) => {
-      // Never merge periods with different probabilities
-      if (a.probability !== b.probability) return false;
-      
-      // Never merge temporary conditions
-      if (a.isTemporary || b.isTemporary) return false;
-      
       // Check if risk levels are the same
       if (a.riskLevel.level !== b.riskLevel.level) return false;
       
-      // Check phenomena
+      // Check if both have NSW or both have the same phenomena
       const aPhenomena = new Set(a.conditions.phenomena);
       const bPhenomena = new Set(b.conditions.phenomena);
       
@@ -263,7 +248,36 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     for (let i = 1; i < validPeriods.length; i++) {
       const nextPeriod = validPeriods[i];
 
-      // If periods can be merged (they're adjacent and identical)
+      // If next period is temporary and overlaps with current
+      if (nextPeriod.isTemporary && 
+          nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
+        
+        // If temporary period starts after current period's start
+        if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
+          // Add the first part of the base period
+          result.push({
+            ...currentPeriod,
+            to: nextPeriod.from,
+            timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+          });
+        }
+        
+        // Add the temporary period
+        result.push(nextPeriod);
+        
+        // If temporary period ends before current period ends
+        if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
+          // Continue with the remainder of the base period
+          currentPeriod = {
+            ...currentPeriod,
+            from: nextPeriod.to,
+            timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
+          };
+          continue;
+        }
+      }
+
+      // Check if periods can be merged
       if (arePeriodsIdentical(currentPeriod, nextPeriod) && 
           currentPeriod.to.getTime() === nextPeriod.from.getTime()) {
         // Merge periods by extending the end time
@@ -273,26 +287,34 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
           timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to)
         };
       } else {
-        // If periods overlap
+        // Handle non-temporary overlapping periods
         if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
-          // For PROB30 TEMPO or any temporary conditions, we want to keep them separate
-          if (nextPeriod.probability || nextPeriod.isTemporary) {
-            result.push(nextPeriod);
-          } else {
-            // For base conditions, split at the overlap
-            currentPeriod.to = new Date(nextPeriod.from.getTime());
-            result.push(currentPeriod);
-            currentPeriod = nextPeriod;
+          if (!nextPeriod.isTemporary) {
+            if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
+              currentPeriod.to = new Date(nextPeriod.from.getTime());
+              result.push(currentPeriod);
+              currentPeriod = nextPeriod;
+            } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
+              const currentSet = new Set(currentPeriod.conditions.phenomena);
+              const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
+              
+              if (hasUniqueConditions) {
+                currentPeriod.to = new Date(nextPeriod.from.getTime());
+                result.push(currentPeriod);
+                currentPeriod = nextPeriod;
+              } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
+                currentPeriod.to = new Date(nextPeriod.to.getTime());
+              }
+            }
           }
         } else {
-          // No overlap, just add the current period and move to next
           result.push(currentPeriod);
           currentPeriod = nextPeriod;
         }
       }
     }
 
-    // Add the last period
+    // Don't forget to push the last period
     result.push(currentPeriod);
 
     return result;
