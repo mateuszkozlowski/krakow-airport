@@ -455,10 +455,10 @@ export const translations = {
         statusMinorDelays: "Możliwe niewielkie opóźnienia. Sprawdź status lotu przed wyjściem.",
         statusNormal: "Warunki pogodowe sprzyjają normalnym operacjom.",
         // Additional alert messages
-        laterInDay: "Tymczasowe trudne warunki pogodowe mogą wystąpić później w ciągu dnia",
-        checkStatus: "Prosimy sprawdzić status lotu",
-        withAirline: "w sprawie ewentualnych zmian",
-        directlyWithAirline: "bezpośrednio u przewoźnika, aby uzyskać najnowsze informacje",
+        laterInDay: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
+        checkStatus: "Zalecamy sprawdzenie statusu lotu",
+        withAirline: "przed wyjściem na lotnisko",
+        directlyWithAirline: "w celu uzyskania informacji o możliwych zmianach",
         // Footer
         disclaimer: "Ta aplikacja nie jest oficjalną usługą Lotniska w Krakowie. Służy wyłącznie celom informacyjnym i nie powinna być używana jako jedyne źródło do planowania lotów lub podejmowania decyzji. Zawsze sprawdzaj oficjalne źródła i informacje od linii lotniczych, aby uzyskać najdokładniejsze i aktualne informacje.",
         builtBy: "Stworzone przez Mateusza Kozłowskiego",
@@ -700,8 +700,8 @@ export const translations = {
             and: "do",
             dueTo: "z powodu",
             thatMayOccur: "które mogą występować okresowo",
-            temporaryConditions: "Tymczasowe trudne warunki pogodowe mogą wystąpić później w ciągu dnia",
-            checkStatus: "Prosimy sprawdzić status lotu bezpośrednio u przewoźnika, aby uzyskać najnowsze informacje"
+            temporaryConditions: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
+            checkStatus: "Zalecamy sprawdzenie statusu lotu w celu uzyskania informacji o możliwych zmianach"
         }
     }
 } as const; 

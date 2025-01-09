@@ -171,7 +171,7 @@ export default function Page() {
       for (const phenomenon of conditions) {
         // Sprawdzamy warunki wiatrowe
         if (phenomenon.includes(weatherMessages.veryStrongWindGusts)) {
-          reasons.push(language === 'pl' ? "niebezpiecznych warunków wiatrowych" : "dangerous wind conditions");
+          reasons.push(language === 'pl' ? "niebezpiecznych podmuchów wiatru" : "dangerous wind conditions");
         } else if (phenomenon.includes(weatherMessages.strongWindGusts)) {
           reasons.push(language === 'pl' ? "silnego wiatru" : "strong winds");
         }
@@ -230,7 +230,7 @@ export default function Page() {
           ? (language === 'pl' 
               ? `z ${period.probability}% prawdopodobieństwem wystąpienia`
               : `with a ${period.probability}% chance of occurring`)
-          : (language === 'pl' ? "które mogą wystąpić" : "that may occur");
+          : (language === 'pl' ? "występujących" : "that may occur");
         
         // Handle different time spans
         const duration = periodEnd.getTime() - periodStart.getTime();
@@ -238,7 +238,7 @@ export default function Page() {
         
         if (hours <= 2) {
           return language === 'pl'
-            ? `${baseReason} ${timeContext} w krótkich okresach`
+            ? `${baseReason} ${timeContext} przejściowo`
             : `${baseReason} ${timeContext} during brief periods`;
         } else if (hours <= 4) {
           return language === 'pl'
