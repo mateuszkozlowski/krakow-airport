@@ -635,10 +635,10 @@ function getOpenMeteoConditions({
 
 // Helper function to get standardized wind description
 function getStandardizedWindDescription(speed: number, gusts?: number): string {
+  if (gusts && gusts >= 40) return "💨 Very Strong Wind Gusts";
   if (gusts && gusts >= 35) return "💨 Strong Wind Gusts";
   if (gusts && gusts >= 25 || speed >= 25) return "💨 Strong Winds";
   if (speed >= 15) return "💨 Moderate Winds";
-  // Remove light and very light wind descriptions
   return "";
 }
 
@@ -741,7 +741,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
   validPeriods.forEach((period, index) => {
     const currentConditions = new Set<string>();
 
-    // Process visibility first - it's critical!
+    // Process visibility first
     if (period.visibility?.meters) {
       const visDesc = formatVisibility(period.visibility.meters);
       if (visDesc) {
@@ -749,14 +749,14 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
       }
     }
 
-    // Process ceiling/clouds next
+    // Process ceiling/clouds
     if (period.clouds && period.clouds.length > 0) {
       const significantCloud = period.clouds
         .filter(cloud => cloud.code === 'BKN' || cloud.code === 'OVC')
         .sort((a, b) => (a.base_feet_agl || 0) - (b.base_feet_agl || 0))[0];
 
       if (significantCloud && significantCloud.base_feet_agl) {
-        if (significantCloud.base_feet_agl < 500) { // Only show if below 500ft
+        if (significantCloud.base_feet_agl < 500) {
           const ceilingDesc = formatCeiling(significantCloud.base_feet_agl);
           if (ceilingDesc) {
             currentConditions.add(ceilingDesc);
@@ -783,7 +783,7 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
       currentConditions.add(windDesc);
     }
 
-    // Determine risk level based on conditions
+    // Determine initial risk level
     let riskLevel: RiskAssessment;
     let operationalImpacts: string[] = [];
 
@@ -811,27 +811,12 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
         level: 3,
         title: "Weather Advisory",
         message: "Operations restricted - poor visibility",
-        statusMessage: "Airport operations are restricted due to poor visibility. Expectdelays.",
+        statusMessage: "Airport operations are restricted due to poor visibility. Expect delays.",
         color: "orange"
       };
       operationalImpacts = ["⚠️ Possible delays", "✈️ Some flights may divert"];
-    } else if (
-      (period.visibility?.meters && period.visibility.meters < 3000) ||
-      (period.clouds?.some(cloud => 
-        (cloud.code === 'BKN' || cloud.code === 'OVC') && 
-        cloud.base_feet_agl && 
-        cloud.base_feet_agl < MINIMUMS.CEILING
-      ))
-    ) {
-      riskLevel = {
-        level: 2,
-        title: "Minor Weather Impact",
-        message: "Minor operational impacts expected",
-        statusMessage: "Weather conditions may cause minor delays. Operations continuing with caution.",
-        color: "yellow"
-      };
-      operationalImpacts = ["⏳ Minor delays possible", "✈️ Operations continuing with caution"];
     } else {
+      // Default to good conditions, then check for wind
       riskLevel = {
         level: 1,
         title: "Good Flying Conditions",
@@ -842,12 +827,52 @@ function processForecast(taf: TAFData | null): ForecastChange[] {
       operationalImpacts = ["✈️ Normal operations"];
     }
 
-    // Add probability to message if it exists
-    if (period.change?.probability) {
-      riskLevel.message = `${period.change.probability}% probability: ${riskLevel.message}`;
-      operationalImpacts = operationalImpacts.map(impact => 
-        `${period.change?.probability ?? 100}% probability: ${impact}`
-      );
+    // Assess wind risk before creating the period
+    if (period.wind) {
+      const { speed_kts, gust_kts } = period.wind;
+      
+      // Increase risk level for strong winds/gusts
+      if (gust_kts && gust_kts >= 40) {
+        riskLevel = {
+          level: 4 as const,
+          title: "Major Weather Impact",
+          message: "Operations severely restricted - dangerous wind gusts",
+          statusMessage: "Strong wind gusts may cause suspensions. Many flights may divert.",
+          color: "red"
+        };
+        operationalImpacts = [
+          "⛔ Operations may be suspended due to strong gusts",
+          "✈️ Many flights may divert",
+          "⚠️ Expect significant delays"
+        ];
+      } else if (gust_kts && gust_kts >= 35) {
+        riskLevel = {
+          level: Math.max(riskLevel.level, 3) as 1 | 2 | 3 | 4,
+          title: "Weather Advisory",
+          message: "Operations restricted - strong wind gusts",
+          statusMessage: "Strong wind gusts causing restrictions. Expect delays.",
+          color: "orange"
+        };
+        operationalImpacts = [
+          "⚠️ Strong wind gusts affecting operations",
+          "⏳ Extended delays likely",
+          "✈️ Some flights may divert"
+        ];
+      } else if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) {
+        if (riskLevel.level < 2) {
+          riskLevel = {
+            level: 2 as const,
+            title: "Minor Weather Impact",
+            message: "Strong winds may affect operations",
+            statusMessage: "Strong winds may cause minor delays.",
+            color: "yellow"
+          };
+          operationalImpacts = [
+            "⚠️ Strong winds affecting approaches",
+            "⏳ Minor delays possible"
+          ];
+        }
+      }
     }
 
     // Only create a period if there are conditions or it's a TEMPO/PROB period
@@ -994,14 +1019,21 @@ function assessWeatherRisk(weather: WeatherData): RiskAssessment {
     }
   }
 
-  // Add wind-related impacts
+  // Enhance wind risk assessment
   if (weather.wind) {
     const windDesc = getStandardizedWindDescription(weather.wind.speed_kts, weather.wind.gust_kts);
     if (windDesc) {
       operationalImpactsSet.add(windDesc);
-      if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
-        finalRiskLevel = Math.max(finalRiskLevel, 3);
-        operationalImpactsSet.add("💨 Strong gusts may affect operations");
+      // Increase risk level for strong gusts
+      if (weather.wind.gust_kts && weather.wind.gust_kts >= 40) {
+        baseRiskLevel = 4 as const; // Explicitly type as 4
+        operationalImpactsSet.add("💨 Dangerous wind gusts - operations may be suspended");
+      } else if (weather.wind.gust_kts && weather.wind.gust_kts >= 35) {
+        baseRiskLevel = Math.max(baseRiskLevel, 3) as 1 | 2 | 3 | 4;
+        operationalImpactsSet.add("💨 Strong gusts affecting operations");
+      } else if (weather.wind.speed_kts >= 25 || (weather.wind.gust_kts && weather.wind.gust_kts >= 25)) {
+        baseRiskLevel = Math.max(baseRiskLevel, 2) as 1 | 2 | 3 | 4;
+        operationalImpactsSet.add("💨 Strong winds may cause delays");
       }
     }
   }

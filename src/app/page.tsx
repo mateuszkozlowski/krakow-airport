@@ -140,16 +140,52 @@ export default function Page() {
         const periodEnd = new Date(firstPeriod.to);
         const now = new Date();
         
+        // Get the main reason for the high risk
+        const getRiskReason = (period: typeof firstPeriod) => {
+            // Check for very strong wind gusts first
+            if (period.conditions.phenomena.some(p => p.includes("Very Strong Wind Gusts"))) {
+                return "due to dangerous wind gusts";
+            }
+            // Check for strong wind gusts
+            if (period.conditions.phenomena.some(p => p.includes("Strong Wind Gusts"))) {
+                return "due to strong wind gusts";
+            }
+            // Check for visibility issues
+            if (period.conditions.phenomena.some(p => p.includes("Visibility Below Minimums"))) {
+                return "due to visibility below minimums";
+            }
+            if (period.conditions.phenomena.some(p => p.includes("Poor Visibility"))) {
+                return "due to poor visibility";
+            }
+            // Check for thunderstorms
+            if (period.conditions.phenomena.some(p => p.includes("⛈️"))) {
+                return "due to thunderstorms";
+            }
+            // Check for snow
+            if (period.conditions.phenomena.some(p => p.includes("🌨️"))) {
+                return "due to snow conditions";
+            }
+            // Check for freezing conditions
+            if (period.conditions.phenomena.some(p => p.includes("❄️"))) {
+                return "due to freezing conditions";
+            }
+            
+            // If no specific reason found, return a generic message
+            return "due to severe weather conditions";
+        };
+
+        const reason = getRiskReason(firstPeriod);
+        
         // If the period has already started
         if (periodStart <= now && periodEnd > now) {
             return `until ${periodEnd.toLocaleTimeString('en-GB', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Europe/Warsaw'
-            })}`;
+            })} ${reason}`;
         }
         
-        // Original logic for future periods
+        // Original logic for future periods with added reason
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -186,7 +222,7 @@ export default function Page() {
             timeZone: 'Europe/Warsaw'
         });
 
-        return `${dayLabel} between ${startTime} and ${endTime}`;
+        return `${dayLabel} between ${startTime} and ${endTime} ${reason}`;
     };
 
     if (isLoading) {
@@ -225,7 +261,7 @@ export default function Page() {
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <p className="text-sm font-medium">
                                     {highRiskPeriods.some(p => p.riskLevel.level === 4)
-                                        ? "🚫 Airport operations may be suspended "
+                                        ? "⚠️ Significant flight disruptions likely "
                                         : "⚠️ Severe weather conditions expected "}
                                     {formatHighRiskTimes()}. 
                                     {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
