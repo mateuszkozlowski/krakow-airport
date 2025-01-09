@@ -21,7 +21,7 @@ export const translations = {
         weatherAdvisory: "Weather Advisory",
         importantFlightInfo: "Important Flight Information",
         flightDisruptions: "Significant flight disruptions are expected ",
-        severeWeather: "Severe weather conditions are expected",
+        severeWeather: "Severe weather conditions are expected ",
         checkFlightStatus: "Check Flight Status",
         knowYourRights: "Know Your Rights",
         // Passenger Rights translations
@@ -365,7 +365,7 @@ export const translations = {
         weatherAdvisory: "Alert pogodowy",
         importantFlightInfo: "Ważna informacja na temat pogody",
         flightDisruptions: "Spodziewane są znaczące zakłócenia lotów ",
-        severeWeather: "Spodziewane są trudne warunki pogodowe",
+        severeWeather: "Spodziewane są trudne warunki pogodowe ",
         checkFlightStatus: "Sprawdź status lotu",
         knowYourRights: "Poznaj swoje prawa",
         // Passenger Rights translations
