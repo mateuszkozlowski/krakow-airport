@@ -899,9 +899,8 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
         conditions: {
           phenomena: [
             ...(currentWeather.conditions?.map(c => {
-              const phenomenon = WEATHER_PHENOMENA[c.code as WeatherPhenomenon];
-              return phenomenon;
-            }).filter((p): p is typeof WEATHER_PHENOMENA[WeatherPhenomenon] => p !== undefined) || []),
+              return getWeatherPhenomenonDescription(c.code, language);
+            }).filter(Boolean) || []),
             ...(currentWeather.wind ? 
               [getStandardizedWindDescription(
                 currentWeather.wind.speed_kts,
