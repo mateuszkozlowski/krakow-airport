@@ -25,6 +25,21 @@ interface WeatherTimelineProps {
   retry: () => Promise<void>;
 }
 
+interface ForecastPeriod {
+  from: Date;
+  to: Date;
+  isTemporary: boolean;
+  phenomena: string[];
+  changeType: string;
+  probability?: number;
+}
+
+interface TimelineEvent {
+  time: Date;
+  type: 'start' | 'end';
+  period: ForecastPeriod;
+}
+
 function hasVisiblePhenomena(period: ForecastChange | { conditions: { phenomena: string[] }, wind?: { speed_kts: number; gust_kts?: number } }): boolean {
   const hasSignificantWind = !!(period.wind?.speed_kts && period.wind.speed_kts >= 15);
   return period.conditions.phenomena.length > 0 || hasSignificantWind;
@@ -183,10 +198,76 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const { language } = useLanguage();
   const t = translations[language];
 
+  function processPeriods(periods: ForecastPeriod[]): ForecastPeriod[] {
+    // Create timeline events
+    const events: TimelineEvent[] = [];
+    periods.forEach(period => {
+      events.push({ time: period.from, type: 'start', period });
+      events.push({ time: period.to, type: 'end', period });
+    });
+
+    // Sort events chronologically
+    events.sort((a, b) => {
+      const timeCompare = a.time.getTime() - b.time.getTime();
+      if (timeCompare === 0) {
+        // If times are equal, process 'end' before 'start'
+        return a.type === 'end' ? -1 : 1;
+      }
+      return timeCompare;
+    });
+
+    const result: ForecastPeriod[] = [];
+    let activeTempo: ForecastPeriod | null = null;
+    let activeBase: ForecastPeriod | null = null;
+    let lastTime: Date | null = null;
+
+    events.forEach(event => {
+      // If we have a previous time and active period, add the interval
+      if (lastTime && (activeTempo || activeBase)) {
+        const activePeriod = activeTempo || activeBase;
+        if (activePeriod && lastTime < event.time) {
+          result.push({
+            ...activePeriod,
+            from: lastTime,
+            to: event.time
+          });
+        }
+      }
+
+      // Update active periods
+      if (event.type === 'start') {
+        if (event.period.isTemporary) {
+          activeTempo = event.period;
+        } else {
+          activeBase = event.period;
+        }
+      } else { // 'end'
+        if (event.period.isTemporary) {
+          activeTempo = null;
+        } else {
+          activeBase = null;
+        }
+      }
+
+      lastTime = event.time;
+    });
+
+    return result;
+  }
+
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
     
-    // First, filter and sort as before
+    console.log('Initial forecast periods:', periods.map(p => ({
+      from: p.from,
+      to: p.to,
+      isTemporary: p.isTemporary,
+      probability: p.probability,
+      changeType: p.changeType,
+      phenomena: p.conditions.phenomena
+    })));
+    
+    // First, filter and sort periods
     const validPeriods = periods
       .filter(period => {
         const hasContent = period.from.getTime() !== period.to.getTime() && 
@@ -197,18 +278,32 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
            (period.ceiling && period.ceiling.feet < 1000) || 
            period.isTemporary);
 
+        // Debug log for filtered periods
+        console.log('Filtering period:', {
+          hasContent,
+          isTemporary: period.isTemporary,
+          probability: period.probability,
+          changeType: period.changeType,
+          phenomena: period.conditions.phenomena
+        });
+
         return hasContent;
       })
       .sort((a, b) => {
         // Sort by start time first
-        const timeCompare = a.from.getTime() - b.from.getTime();
-        if (timeCompare !== 0) return timeCompare;
+        const startTimeCompare = a.from.getTime() - b.from.getTime();
+        if (startTimeCompare !== 0) return startTimeCompare;
         
-        // If same start time, put temporary conditions after base conditions
-        if (a.isTemporary && !b.isTemporary) return 1;
-        if (!a.isTemporary && b.isTemporary) return -1;
+        // If same start time, sort by end time
+        const endTimeCompare = a.to.getTime() - b.to.getTime();
+        if (endTimeCompare !== 0) return endTimeCompare;
         
-        // If both temporary or both base, higher risk level goes first
+        // If same time range, TEMPO/PROB periods go after base periods
+        if (a.isTemporary !== b.isTemporary) {
+          return a.isTemporary ? 1 : -1;
+        }
+        
+        // If both are TEMPO/PROB or both are base, higher risk level goes first
         return b.riskLevel.level - a.riskLevel.level;
       });
 
@@ -226,98 +321,122 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
       };
     }
 
-    const arePeriodsIdentical = (a: ForecastChange, b: ForecastChange) => {
-      // Check if risk levels are the same
-      if (a.riskLevel.level !== b.riskLevel.level) return false;
-      
-      // Check if both have NSW or both have the same phenomena
-      const aPhenomena = new Set(a.conditions.phenomena);
-      const bPhenomena = new Set(b.conditions.phenomena);
-      
-      // If both have NSW, they're identical
-      const aHasNSW = a.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'));
-      const bHasNSW = b.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'));
-      
-      if (aHasNSW && bHasNSW) return true;
-      
-      // Otherwise compare all phenomena
-      if (aPhenomena.size !== bPhenomena.size) return false;
-      return Array.from(aPhenomena).every(p => bPhenomena.has(p));
-    };
-
     for (let i = 1; i < validPeriods.length; i++) {
       const nextPeriod = validPeriods[i];
 
-      // If next period is temporary and overlaps with current
-      if (nextPeriod.isTemporary && 
-          nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
-        
-        // If temporary period starts after current period's start
-        if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
-          // Add the first part of the base period
-          result.push({
-            ...currentPeriod,
-            to: nextPeriod.from,
-            timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
-          });
+      console.log('Processing periods:', {
+        current: {
+          isTemporary: currentPeriod.isTemporary,
+          probability: currentPeriod.probability,
+          changeType: currentPeriod.changeType,
+          phenomena: currentPeriod.conditions.phenomena
+        },
+        next: {
+          isTemporary: nextPeriod.isTemporary,
+          probability: nextPeriod.probability,
+          changeType: nextPeriod.changeType,
+          phenomena: nextPeriod.conditions.phenomena
         }
-        
-        // Add the temporary period
-        result.push(nextPeriod);
-        
-        // If temporary period ends before current period ends
-        if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
-          // Continue with the remainder of the base period
-          currentPeriod = {
-            ...currentPeriod,
-            from: nextPeriod.to,
-            timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
-          };
-          continue;
-        }
-      }
+      });
 
-      // Check if periods can be merged
-      if (arePeriodsIdentical(currentPeriod, nextPeriod) && 
-          currentPeriod.to.getTime() === nextPeriod.from.getTime()) {
-        // Merge periods by extending the end time
-        currentPeriod = {
-          ...currentPeriod,
-          to: nextPeriod.to,
-          timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to)
-        };
-      } else {
-        // Handle non-temporary overlapping periods
-        if (currentPeriod.to.getTime() > nextPeriod.from.getTime()) {
-          if (!nextPeriod.isTemporary) {
-            if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
-              currentPeriod.to = new Date(nextPeriod.from.getTime());
-              result.push(currentPeriod);
-              currentPeriod = nextPeriod;
-            } else if (nextPeriod.riskLevel.level <= currentPeriod.riskLevel.level) {
-              const currentSet = new Set(currentPeriod.conditions.phenomena);
-              const hasUniqueConditions = nextPeriod.conditions.phenomena.some(p => !currentSet.has(p));
-              
-              if (hasUniqueConditions) {
-                currentPeriod.to = new Date(nextPeriod.from.getTime());
-                result.push(currentPeriod);
-                currentPeriod = nextPeriod;
-              } else if (nextPeriod.to.getTime() > currentPeriod.to.getTime()) {
-                currentPeriod.to = new Date(nextPeriod.to.getTime());
-              }
-            }
+      // Handle overlapping periods
+      if (nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
+        if (nextPeriod.isTemporary) {
+          // If temporary period starts after current period's start
+          if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
+            // Add the first part of the base period
+            result.push({
+              ...currentPeriod,
+              to: nextPeriod.from,
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+            });
+          }
+          
+          // Add the temporary period
+          result.push(nextPeriod);
+          
+          // If temporary period ends before current period ends
+          if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
+            // Continue with the remainder of the base period
+            currentPeriod = {
+              ...currentPeriod,
+              from: nextPeriod.to,
+              timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
+            };
+            continue;
           }
         } else {
-          result.push(currentPeriod);
-          currentPeriod = nextPeriod;
+          // For overlapping non-temporary periods
+          if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
+            // Higher risk level takes precedence
+            result.push({
+              ...currentPeriod,
+              to: nextPeriod.from,
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+            });
+            currentPeriod = nextPeriod;
+          } else if (arePeriodsSimilar(currentPeriod, nextPeriod)) {
+            // Merge similar periods
+            currentPeriod = {
+              ...currentPeriod,
+              to: nextPeriod.to,
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to)
+            };
+          } else {
+            // Different conditions, treat as separate periods
+            result.push(currentPeriod);
+            currentPeriod = nextPeriod;
+          }
         }
+      } else {
+        // Non-overlapping periods
+        result.push(currentPeriod);
+        currentPeriod = nextPeriod;
       }
     }
 
     // Don't forget to push the last period
     result.push(currentPeriod);
 
+    console.log('Final deduped periods:', result.map(p => ({
+      isTemporary: p.isTemporary,
+      probability: p.probability,
+      changeType: p.changeType,
+      phenomena: p.conditions.phenomena
+    })));
+
     return result;
+  };
+
+  // Helper function to check if two periods can be merged
+  const arePeriodsSimilar = (a: ForecastChange, b: ForecastChange): boolean => {
+    // Don't merge if they have different types
+    if (a.isTemporary !== b.isTemporary) return false;
+    if (a.probability !== b.probability) return false;
+    if (a.changeType !== b.changeType) return false;
+    
+    // Don't merge if they have different risk levels
+    if (a.riskLevel.level !== b.riskLevel.level) return false;
+    
+    // Compare phenomena
+    const aPhenomena = new Set(a.conditions.phenomena.filter(p => 
+      !p.includes('Brak szczególnych zjawisk') && 
+      !p.includes('No significant weather')
+    ));
+    const bPhenomena = new Set(b.conditions.phenomena.filter(p => 
+      !p.includes('Brak szczególnych zjawisk') && 
+      !p.includes('No significant weather')
+    ));
+    
+    // If either period has phenomena, compare them exactly
+    if (aPhenomena.size > 0 || bPhenomena.size > 0) {
+      if (aPhenomena.size !== bPhenomena.size) return false;
+      return Array.from(aPhenomena).every(p => bPhenomena.has(p)) &&
+             Array.from(bPhenomena).every(p => aPhenomena.has(p));
+    }
+    
+    // If neither has phenomena, they can be merged only if they have the same risk level
+    return true;
   };
 
   // Just use the deduplication result directly
@@ -625,6 +744,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     .map((period, index) => {
                       const colors = getStatusColors(period.riskLevel.level);
                       
+                      // Debug log for period being rendered
+                      console.log('Rendering period:', {
+                        index,
+                        isTemporary: period.isTemporary,
+                        probability: period.probability,
+                        changeType: period.changeType,
+                        phenomena: period.conditions.phenomena,
+                        timeDescription: period.timeDescription
+                      });
+                      
                       return (
                         <Card 
                           key={`${period.from.getTime()}-${period.to.getTime()}-${index}`}
@@ -663,76 +792,101 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 <div className="mt-1.5 border-t border-white/10"> </div>
                               )}
                               <div className="flex flex-wrap items-center gap-2">
-                                {period.isTemporary && (
-                                  <div className="w-full text-xs text-yellow-400 mb-1">
-                                    {t.temporaryConditions}
-                                  </div>
-                                )}
-                                <div className="flex flex-wrap gap-2 w-full">
-                                  {(() => {
-                                    console.log('WeatherTimeline debug:', {
-                                      phenomena: period.conditions.phenomena,
-                                      riskLevel: period.riskLevel.level,
-                                      hasNSW: period.conditions.phenomena.some(p => p.includes('Brak szczególnych zjawisk') || p.includes('No significant weather'))
-                                    });
+                                {(() => {
+                                  // Debug log for rendering phenomena
+                                  console.log('Rendering phenomena for period:', {
+                                    isTemporary: period.isTemporary,
+                                    probability: period.probability,
+                                    changeType: period.changeType,
+                                    phenomena: period.conditions.phenomena
+                                  });
 
-                                    // Helper function to get visibility severity
-                                    const getVisibilitySeverity = (condition: string): number => {
-                                      if (condition.includes('Visibility Below Minimums') || condition.includes('Widoczność poniżej minimów')) return 4;
-                                      if (condition.includes('Very Poor Visibility') || condition.includes('Bardzo słaba widoczność')) return 3;
-                                      if (condition.includes('Poor Visibility') || condition.includes('Słaba widoczność')) return 2;
-                                      if (condition.includes('Reduced Visibility') || condition.includes('Ograniczona widoczność')) return 1;
-                                      return 0;
-                                    };
+                                  // Helper function to get visibility severity
+                                  const getVisibilitySeverity = (condition: string): number => {
+                                    if (condition.includes('Visibility Below Minimums') || condition.includes('Widoczność poniżej minimów')) return 4;
+                                    if (condition.includes('Very Poor Visibility') || condition.includes('Bardzo słaba widoczność')) return 3;
+                                    if (condition.includes('Poor Visibility') || condition.includes('Słaba widoczność')) return 2;
+                                    if (condition.includes('Reduced Visibility') || condition.includes('Ograniczona widoczność')) return 1;
+                                    return 0;
+                                  };
 
-                                    let phenomena = period.conditions.phenomena
-                                      .filter(condition => condition.trim() !== '')
-                                      .filter(condition => !(condition.includes('Brak szczególnych zjawisk') || condition.includes('No significant weather')) || 
-                                              (period.conditions.phenomena.length === 1 && period.riskLevel.level === 1));
+                                  let phenomena = period.conditions.phenomena
+                                    .filter(condition => condition.trim() !== '')
+                                    .filter(condition => !(condition.includes('Brak szczególnych zjawisk') || condition.includes('No significant weather')));
 
-                                    // Deduplicate visibility conditions
-                                    const visibilityConditions = phenomena
-                                      .filter(p => p.includes('👁️'))
-                                      .sort((a, b) => getVisibilitySeverity(b) - getVisibilitySeverity(a));
+                                  // Deduplicate visibility conditions
+                                  const visibilityConditions = phenomena
+                                    .filter(p => p.includes('👁️'))
+                                    .sort((a, b) => getVisibilitySeverity(b) - getVisibilitySeverity(a));
 
-                                    // Keep only the worst visibility condition
-                                    if (visibilityConditions.length > 0) {
-                                      phenomena = phenomena
-                                        .filter(p => !p.includes('👁️'))
-                                        .concat(visibilityConditions[0]);
+                                  // Keep only the worst visibility condition
+                                  if (visibilityConditions.length > 0) {
+                                    phenomena = phenomena
+                                      .filter(p => !p.includes('👁️'))
+                                      .concat(visibilityConditions[0]);
+                                  }
+
+                                  // Deduplicate wind conditions
+                                  phenomena = phenomena.filter((condition, index, array) => {
+                                    if (condition.includes('💨')) {
+                                      return array.indexOf(condition) === index;
                                     }
+                                    return true;
+                                  });
+                                  
+                                  // Only show "No significant weather" if there are truly no phenomena and risk level is 1
+                                  if (phenomena.length === 0 && period.riskLevel.level === 1 && !period.isTemporary) {
+                                    return <span className="text-xs text-slate-500">{t.noPhenomena}</span>;
+                                  }
 
-                                    // Deduplicate wind conditions
-                                    phenomena = phenomena.filter((condition, index, array) => {
-                                      if (condition.includes('💨')) {
-                                        return array.indexOf(condition) === index;
-                                      }
-                                      return true;
-                                    });
-                                    
-                                    if (phenomena.length === 0 && period.riskLevel.level === 1) {
-                                      return <span className="text-xs text-slate-500">{t.noPhenomena}</span>;
-                                    }
+                                  // Filter out "No significant weather" message if there are other phenomena
+                                  const filteredPhenomena = phenomena.filter(condition => 
+                                    !condition.includes('Brak szczególnych zjawisk') && 
+                                    !condition.includes('No significant weather')
+                                  );
 
-                                    return phenomena.map((condition, idx) => (
-                                      <span
-                                        key={idx}
-                                        className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                      >
-                                        {condition}
-                                      </span>
-                                    ));
-                                  })()}
-                                  {period.wind?.speed_kts && 
-                                   !period.conditions.phenomena.some(p => p.includes('💨')) &&
-                                   getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
-                                    <span
-                                      className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
-                                    >
-                                      {getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts)}
-                                    </span>
-                                  )}
-                                </div>
+                                  // Render phenomena with PROB/TEMPO indicator if applicable
+                                  return (
+                                    <div className="flex flex-col gap-2">
+                                      {period.isTemporary && (
+                                        <div className="text-xs text-yellow-400 font-medium flex items-center gap-1">
+                                          <span className="bg-yellow-400/20 px-2 py-0.5 rounded">
+                                            {period.probability ? 
+                                              `PROB${period.probability} TEMPO` : 
+                                              period.changeType}
+                                          </span>
+                                          <span className="text-slate-300">
+                                            {t.temporaryConditions.toLowerCase()}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="flex flex-wrap gap-2">
+                                        {filteredPhenomena.length > 0 ? (
+                                          filteredPhenomena.map((condition, idx) => (
+                                            <span
+                                              key={idx}
+                                              className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                            >
+                                              {condition}
+                                            </span>
+                                          ))
+                                        ) : period.riskLevel.level === 1 && !period.isTemporary ? (
+                                          <span className="text-xs text-slate-500">{t.noPhenomena}</span>
+                                        ) : null}
+                                        {period.wind?.speed_kts && 
+                                         !filteredPhenomena.some(p => p.includes('💨')) &&
+                                         getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
+                                          <span
+                                            className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                          >
+                                            {getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts)}
+                                            {period.wind.gust_kts && ` (${period.wind.speed_kts}G${period.wind.gust_kts}kt)`}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               {period.probability && (
