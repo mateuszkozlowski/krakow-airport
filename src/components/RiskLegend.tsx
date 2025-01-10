@@ -84,8 +84,8 @@ const RiskLegendContent = () => {
 
       <div className="grid gap-6">
         <RiskLevel
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-          color="text-emerald-400"
+          icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />}
+          color="text-emerald-500"
           title={t.goodConditions.title}
           description={t.goodConditions.description}
           details={t.goodConditions.details}
@@ -93,8 +93,8 @@ const RiskLegendContent = () => {
         />
 
         <RiskLevel
-          icon={<AlertTriangle className="h-5 w-5 text-orange-400" />}
-          color="text-orange-400"
+          icon={<AlertTriangle className="h-5 w-5 text-orange-500" />}
+          color="text-orange-500"
           title={t.minorImpact.title}
           description={t.minorImpact.description}
           details={t.minorImpact.details}
@@ -102,8 +102,8 @@ const RiskLegendContent = () => {
         />
 
         <RiskLevel
-          icon={<AlertTriangle className="h-5 w-5 text-red-400" />}
-          color="text-red-400"
+          icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
+          color="text-red-500"
           title={t.weatherAdvisory.title}
           description={t.weatherAdvisory.description}
           details={t.weatherAdvisory.details}

@@ -374,7 +374,7 @@ export interface RiskLevel {
   title: string;
   message: string;
   statusMessage: string;
-  color: "green" | "yellow" | "orange" | "red";
+  color: "green" | "orange" | "red";
 }
 
 export interface OpenMeteoHourly {

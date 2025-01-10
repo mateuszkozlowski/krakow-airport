@@ -211,8 +211,11 @@ const DEICING_CONDITIONS = {
     'FZDZ',    // Freezing drizzle
     'FZFG',    // Freezing fog
     '+SN',     // Heavy snow
+    '+SHSN',   // Heavy snow showers
     'SN',      // Snow
-    'SHSN'     // Snow showers
+    'SHSN',    // Snow showers
+    '-SN',     // Light snow
+    '-SHSN'    // Light snow showers
   ])
 } as const;
 
@@ -228,7 +231,7 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
   const impacts: string[] = [];
   const temp = weather.temperature?.celsius ?? 0;
   
-  // De-icing assessment
+  // De-icing assessment based on temperature
   if (temp <= DEICING_CONDITIONS.TEMPERATURE.BELOW_ZERO) {
     if (temp <= DEICING_CONDITIONS.TEMPERATURE.SEVERE) {
       impacts.push(t.deicingDelay);
@@ -244,9 +247,18 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
     impacts.push(t.activeDeicing);
   }
 
-  // Ground operations impacts
-  if (weather.conditions?.some(c => c.code === 'SN' || c.code === '+SN')) {
+  // Ground operations impacts for snow conditions
+  if (weather.conditions?.some(c => ['+SN', '+SHSN'].includes(c.code))) {
     impacts.push(t.runwayClearing);
+    impacts.push(t.deicingDelay);
+    impacts.push(t.reducedCapacity);
+  } else if (weather.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
+    impacts.push(t.runwayClearing);
+    impacts.push(t.likelyDeicing);
+    impacts.push(t.reducedCapacity);
+  } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
+    impacts.push(t.possibleDeicing);
+    impacts.push(t.reducedCapacity);
   }
 
   // Low visibility procedures
@@ -1270,7 +1282,19 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
     color: "green"
   };
 
-  // Check for severe conditions first
+  // Check for snow showers and heavy snow FIRST
+  if (period.conditions?.some((c: { code: string }) => c.code === '+SHSN')) {
+    riskLevel = {
+      level: 4,
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      statusMessage: t.riskLevel4Status,
+      color: "red"
+    };
+    return riskLevel; // Return immediately for severe conditions
+  }
+
+  // Check for severe conditions
   if (period.visibility?.meters && period.visibility.meters < MINIMUMS.VISIBILITY) {
     riskLevel = {
       level: 4,
@@ -1279,6 +1303,7 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
       statusMessage: t.riskLevel4Status,
       color: "red"
     };
+    return riskLevel; // Return immediately for severe conditions
   } else if (period.conditions?.some((c: { code: string }) => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
     riskLevel = {
       level: 4,
@@ -1287,28 +1312,40 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
       statusMessage: t.riskLevel4Status,
       color: "red"
     };
-  } else if (period.visibility?.meters && period.visibility.meters < 2000) {
+    return riskLevel; // Return immediately for severe conditions
+  }
+
+  // For non-severe conditions, accumulate the highest risk level
+  if (period.visibility?.meters && period.visibility.meters < 2000) {
     riskLevel = {
       level: Math.max(riskLevel.level, 3) as 1 | 2 | 3 | 4,
       title: t.riskLevel3Title,
       message: t.riskLevel3Message,
       statusMessage: t.riskLevel3Status,
-      color: "orange"
+      color: "red"  // Changed from orange to red
     };
   }
 
-  // Check for snow showers and heavy snow
-  if (period.conditions?.some((c: { code: string }) => ['SHSN', '+SHSN'].includes(c.code))) {
+  // Check for moderate snow conditions
+  if (period.conditions?.some((c: { code: string }) => c.code === 'SHSN')) {
     riskLevel = {
       level: Math.max(riskLevel.level, 3) as 1 | 2 | 3 | 4,
       title: t.riskLevel3Title,
       message: t.riskLevel3Message,
       statusMessage: t.riskLevel3Status,
-      color: "orange"
+      color: "red"  // Changed from orange to red
+    };
+  } else if (period.conditions?.some((c: { code: string }) => c.code === '-SHSN')) {
+    riskLevel = {
+      level: Math.max(riskLevel.level, 2) as 1 | 2 | 3 | 4,
+      title: t.riskLevel2Title,
+      message: t.riskLevel2Message,
+      statusMessage: t.riskLevel2Status,
+      color: "orange"  // Changed from yellow to orange
     };
   }
 
-  // Check for low ceiling
+  // Check for low ceiling with CB
   if (period.clouds?.some(cloud => 
     (cloud.code === 'BKN' || cloud.code === 'OVC') && 
     cloud.base_feet_agl && 
@@ -1320,7 +1357,7 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
       title: t.riskLevel3Title,
       message: t.riskLevel3Message,
       statusMessage: t.riskLevel3Status,
-      color: "orange"
+      color: "red"  // Changed from orange to red
     };
   } else if (period.clouds?.some(cloud => 
     (cloud.code === 'BKN' || cloud.code === 'OVC') && 
@@ -1332,38 +1369,54 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
       title: t.riskLevel2Title,
       message: t.riskLevel2Message,
       statusMessage: t.riskLevel2Status,
-      color: "yellow"
+      color: "orange"  // Changed from yellow to orange
     };
   }
 
   // Assess wind risk
   if (period.wind) {
     const { speed_kts, gust_kts } = period.wind;
+    let windRiskLevel = 1;
     
     if (speed_kts >= 35 || (gust_kts && gust_kts >= 40)) {
-      riskLevel = {
-        level: 4,
-        title: t.riskLevel4Title,
-        message: t.riskLevel4Message,
-        statusMessage: t.riskLevel4Status,
-        color: "red"
-      };
+      windRiskLevel = 4;
     } else if (gust_kts && gust_kts >= 35) {
-      riskLevel = {
-        level: Math.max(riskLevel.level, 3) as 1 | 2 | 3 | 4,
-        title: t.riskLevel3Title,
-        message: t.riskLevel3Message,
-        statusMessage: t.riskLevel3Status,
-        color: "orange"
-      };
+      windRiskLevel = 3;
     } else if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) {
-      riskLevel = {
-        level: Math.max(riskLevel.level, 2) as 1 | 2 | 3 | 4,
-        title: t.riskLevel2Title,
-        message: t.riskLevel2Message,
-        statusMessage: t.riskLevel2Status,
-        color: "yellow"
+      windRiskLevel = 2;
+    }
+
+    // If we have both snow and strong winds, increase the risk level
+    if (period.conditions?.some((c: { code: string }) => ['SHSN', '-SHSN'].includes(c.code)) && windRiskLevel >= 2) {
+      windRiskLevel = Math.min(4, windRiskLevel + 1);
+    }
+
+    // Apply the wind risk level
+    if (windRiskLevel > riskLevel.level) {
+      const riskMapping = {
+        4: {
+          level: 4 as const,
+          title: t.riskLevel4Title,
+          message: t.riskLevel4Message,
+          statusMessage: t.riskLevel4Status,
+          color: "red" as const
+        },
+        3: {
+          level: 3 as const,
+          title: t.riskLevel3Title,
+          message: t.riskLevel3Message,
+          statusMessage: t.riskLevel3Status,
+          color: "red" as const
+        },
+        2: {
+          level: 2 as const,
+          title: t.riskLevel2Title,
+          message: t.riskLevel2Message,
+          statusMessage: t.riskLevel2Status,
+          color: "orange" as const
+        }
       };
+      riskLevel = riskMapping[windRiskLevel as 2 | 3 | 4] as RiskLevel;
     }
   }
 
@@ -1515,21 +1568,34 @@ function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAss
   // Base risk calculation
   let baseRiskLevel = 1;
 
-  // Check for severe conditions
-  if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
+  // Check for severe conditions first
+  if (weather.conditions?.some(c => c.code === '+SHSN')) {
     baseRiskLevel = 4;
+    operationalImpactsSet.clear(); // Clear previous impacts
+    operationalImpactsSet.add(warnings.operationsSuspended);
+    operationalImpactsSet.add(warnings.deicingRequired);
+  } else if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
+    baseRiskLevel = 4;
+    operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.operationsSuspended);
     operationalImpactsSet.add(warnings.diversionsLikely);
+  } else if (weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
+    baseRiskLevel = 4;
+    operationalImpactsSet.clear(); // Clear previous impacts
+    operationalImpactsSet.add(warnings.operationsSuspended);
+    operationalImpactsSet.add(warnings.deicingRequired);
   }
 
-  // Check for freezing conditions (level 4)
-  const { score: deicingScore, reason: deicingReason } = calculateDeicingRisk(weather, language);
-  if (deicingScore >= RISK_WEIGHTS.DEICING.BASE_SCORES.CERTAIN || 
-      weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
-    baseRiskLevel = Math.max(baseRiskLevel, 4);
-    if (deicingReason) {
-      operationalImpactsSet.add(deicingReason);
-    }
+  // If we already have severe conditions, return early
+  if (baseRiskLevel === 4) {
+    return {
+      level: 4,
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      statusMessage: t.riskLevel4Status,
+      color: "red",
+      operationalImpacts: Array.from(operationalImpactsSet)
+    };
   }
 
   // Check for poor visibility
@@ -1552,7 +1618,16 @@ function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAss
   // Wind assessment
   if (weather.wind?.gust_kts && weather.wind.gust_kts >= 40) {
     baseRiskLevel = 4;
+    operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.dangerousGusts);
+    return {
+      level: 4,
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      statusMessage: t.riskLevel4Status,
+      color: "red",
+      operationalImpacts: Array.from(operationalImpactsSet)
+    };
   } else if (weather.wind?.gust_kts && weather.wind.gust_kts >= 35) {
     baseRiskLevel = Math.max(baseRiskLevel, 3);
     operationalImpactsSet.add(warnings.strongGustsOperations);
@@ -1569,37 +1644,12 @@ function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAss
     const adjustedRisk = Math.min(4, Math.ceil(baseRiskLevel * timeRiskMultiplier));
     if (adjustedRisk > baseRiskLevel) {
       finalRiskLevel = adjustedRisk;
-      // Don't add any technical messages about risk levels here
+      // Clear previous impacts if risk level increased significantly
+      if (adjustedRisk - baseRiskLevel >= 2) {
+        operationalImpactsSet.clear();
+      }
     }
   }
-
-  // Update the risk mappings with statusMessage
-  const riskMappings = {
-    4: {
-      title: t.riskLevel4Title,
-      message: t.riskLevel4Message,
-      statusMessage: t.riskLevel4Status,
-      color: "red" as const
-    },
-    3: {
-      title: t.riskLevel3Title,
-      message: t.riskLevel3Message,
-      statusMessage: t.riskLevel3Status,
-      color: "orange" as const
-    },
-    2: {
-      title: t.riskLevel2Title,
-      message: t.riskLevel2Message,
-      statusMessage: t.riskLevel2Status,
-      color: "yellow" as const
-    },
-    1: {
-      title: t.riskLevel1Title,
-      message: t.riskLevel1Message,
-      statusMessage: t.riskLevel1Status,
-      color: "green" as const
-    }
-  };
 
   // Update time-based risk messaging
   if (timeRiskMultiplier > 1.0) {
@@ -1613,26 +1663,43 @@ function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAss
     
     if (timeFactors.length > 0) {
       const message = timeFactors.join(". ");
-      // Clear existing impacts if we're adding time-based factors for risk level 1
-      if (finalRiskLevel === 1) {
-        operationalImpactsSet.clear(); // Clear existing impacts
-          operationalImpactsSet.add(`${t.note}${message}`);
-      } else {
-        // For higher risk levels, only add additional consideration if there are no operational impacts
-        if (operationalImpactsSet.size === 0) {
-          operationalImpactsSet.add(`${t.additionalConsideration}${message}`);
-        }
+      if (operationalImpactsSet.size === 0) {
+        operationalImpactsSet.add(`${t.additionalConsideration}${message}`);
       }
     }
   }
 
+  const riskMappings = {
+    4: {
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      statusMessage: t.riskLevel4Status,
+      color: "red" as const
+    },
+    3: {
+      title: t.riskLevel3Title,
+      message: t.riskLevel3Message,
+      statusMessage: t.riskLevel3Status,
+      color: "red" as const  // Changed from orange to red to match UI
+    },
+    2: {
+      title: t.riskLevel2Title,
+      message: t.riskLevel2Message,
+      statusMessage: t.riskLevel2Status,
+      color: "orange" as const  // Changed from yellow to orange to match UI
+    },
+    1: {
+      title: t.riskLevel1Title,
+      message: t.riskLevel1Message,
+      statusMessage: t.riskLevel1Status,
+      color: "green" as const
+    }
+  };
+
   const riskDetails = riskMappings[finalRiskLevel as keyof typeof riskMappings];
 
-  // Convert Set back to array for the final return
-  const operationalImpacts = Array.from(operationalImpactsSet);
-
   // Remove the "Additional consideration" prefix from reasons
-  const cleanedReasons = reasons.map((reason: string) => 
+  const cleanedReasons = reasons.map(reason => 
     reason.replace("Additional consideration: ", "")
   );
 
@@ -1641,7 +1708,6 @@ function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAss
     title: riskDetails.title,
     message: `${riskDetails.message}${cleanedReasons.length ? ` - ${cleanedReasons[0]}` : ''}`,
     statusMessage: riskDetails.statusMessage,
-    explanation: undefined, // Remove the explanation since it's redundant with operationalImpacts
     color: riskDetails.color,
     operationalImpacts: Array.from(operationalImpactsSet)
   };

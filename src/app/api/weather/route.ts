@@ -7,6 +7,7 @@ import type {
   Cloud,
   ForecastLine
 } from './types';
+import { WEATHER_PHENOMENA_TRANSLATIONS } from '@/lib/types/weather';
 
 export const runtime = 'edge';
 
@@ -139,9 +140,17 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
     data: [{
       airport_code: observation.icao,
       clouds,
-      conditions: observation.conditions?.map((c: WeatherCondition) => ({
-        code: c.code
-      })) || [],
+      conditions: observation.conditions?.map((c: WeatherCondition) => {
+        // Handle intensity prefixes for weather phenomena
+        const code = c.code;
+        const hasIntensityPrefix = code.startsWith('+') || code.startsWith('-');
+        const phenomenonCode = hasIntensityPrefix ? code : c.code;
+        
+        return {
+          code: phenomenonCode,
+          text: WEATHER_PHENOMENA_TRANSLATIONS.en[phenomenonCode as keyof typeof WEATHER_PHENOMENA_TRANSLATIONS.en] || phenomenonCode
+        };
+      }) || [],
       pressure: observation.barometer.mb,
       pressure_units: 'mb',
       raw_text: observation.raw_text,
@@ -187,10 +196,17 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
           probability: period.change.indicator.code === 'TEMPO' ? 30 : undefined
         }
       } : undefined,
-      conditions: period.conditions?.map(c => ({
-        code: c.code,
-        text: c.text  // Keep the text for debugging
-      })) || [],
+      conditions: period.conditions?.map(c => {
+        // Handle intensity prefixes for weather phenomena
+        const code = c.code;
+        const hasIntensityPrefix = code.startsWith('+') || code.startsWith('-');
+        const phenomenonCode = hasIntensityPrefix ? code : c.code;
+        
+        return {
+          code: phenomenonCode,
+          text: WEATHER_PHENOMENA_TRANSLATIONS.en[phenomenonCode as keyof typeof WEATHER_PHENOMENA_TRANSLATIONS.en] || phenomenonCode
+        };
+      }) || [],
       clouds: period.clouds?.map(c => ({
         code: c.code,
         base_feet_agl: c.base_feet_agl,

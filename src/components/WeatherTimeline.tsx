@@ -12,7 +12,10 @@ interface WeatherTimelineProps {
   current: {
     riskLevel: RiskAssessment;
     conditions: {
-      phenomena: string[];
+      phenomena: Array<{
+        code: string;
+        text?: string;
+      } | string>;
     };
     observed: string;
     wind?: { speed_kts: number; direction: number; gust_kts?: number };
@@ -453,24 +456,24 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
         };
       case 3:
         return {
-          bg: "bg-red-900/20",
-          text: "text-red-400",
-          icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
-          pill: "bg-red-400/10 text-red-400"
+          bg: "bg-red-900/30",
+          text: "text-red-500",
+          icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+          pill: "bg-red-500/10 text-red-500"
         };
       case 2:
         return {
-          bg: "bg-orange-900/20",
-          text: "text-orange-400",
-          icon: <AlertTriangle className="h-4 w-4 text-orange-400" />,
-          pill: "bg-orange-400/10 text-orange-400"
+          bg: "bg-orange-900/30",
+          text: "text-orange-500",
+          icon: <AlertTriangle className="h-4 w-4 text-orange-500" />,
+          pill: "bg-orange-500/10 text-orange-500"
         };
       default:
         return {
-          bg: "bg-emerald-900/20",
-          text: "text-emerald-400",
-          icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
-          pill: "bg-emerald-400/10 text-emerald-400"
+          bg: "bg-emerald-900/30",
+          text: "text-emerald-500",
+          icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+          pill: "bg-emerald-500/10 text-emerald-500"
         };
     }
   };
@@ -626,17 +629,22 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex flex-wrap gap-2 w-full">
-                        {current.conditions.phenomena.map((phenomenon, index) => (
-                          <span
-                            key={index}
-                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
-                            title={getDetailedDescription(phenomenon)}
-                          >
-                            {phenomenon}
-                          </span>
-                        ))}
+                        {current.conditions.phenomena.map((phenomenon, index) => {
+                          const phenomenonText = typeof phenomenon === 'string' ? phenomenon : phenomenon.text || phenomenon.code;
+                          return (
+                            <span
+                              key={index}
+                              className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                              title={getDetailedDescription(phenomenonText)}
+                            >
+                              {phenomenonText}
+                            </span>
+                          );
+                        })}
 
-                        {current.wind?.speed_kts && !current.conditions.phenomena.some(p => p.includes('Wind')) && (
+                        {current.wind?.speed_kts && !current.conditions.phenomena.some(p => 
+                          typeof p === 'string' ? p.includes('Wind') : p.text?.includes('Wind')
+                        ) && (
                           <span
                             className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
                             title={`Wind ${current.wind.direction}° at ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` (gusts ${current.wind.gust_kts}kt)` : ''}`}
@@ -757,11 +765,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       return (
                         <Card 
                           key={`${period.from.getTime()}-${period.to.getTime()}-${index}`}
-                          className={`border-slate-700/50 ${
-                            period.riskLevel.level > 1 && period.riskLevel.title !== "Good Flying Conditions" 
-                              ? colors.bg 
-                              : 'bg-slate-800/50'
-                          }`}
+                          className={`border-slate-700/50 ${colors.bg}`}
                         >
                           <CardContent className="p-4">
                             <div className="flex flex-col gap-3">
@@ -811,24 +815,38 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   };
 
                                   let phenomena = period.conditions.phenomena
-                                    .filter(condition => condition.trim() !== '')
-                                    .filter(condition => !(condition.includes('Brak szczególnych zjawisk') || condition.includes('No significant weather')));
+                                    .filter(condition => typeof condition === 'string' ? condition.trim() !== '' : (condition as { text?: string; code: string }).text?.trim() !== '')
+                                    .filter(condition => {
+                                      const text = typeof condition === 'string' ? condition : (condition as { text?: string; code: string }).text || (condition as { text?: string; code: string }).code;
+                                      return !(text.includes('Brak szczególnych zjawisk') || text.includes('No significant weather'));
+                                    });
 
                                   // Deduplicate visibility conditions
                                   const visibilityConditions = phenomena
-                                    .filter(p => p.includes('👁️'))
-                                    .sort((a, b) => getVisibilitySeverity(b) - getVisibilitySeverity(a));
+                                    .filter(p => {
+                                      const text = typeof p === 'string' ? p : (p as { text?: string; code: string }).text || (p as { text?: string; code: string }).code;
+                                      return text.includes('👁️');
+                                    })
+                                    .sort((a, b) => {
+                                      const textA = typeof a === 'string' ? a : (a as { text?: string; code: string }).text || (a as { text?: string; code: string }).code;
+                                      const textB = typeof b === 'string' ? b : (b as { text?: string; code: string }).text || (b as { text?: string; code: string }).code;
+                                      return getVisibilitySeverity(textB) - getVisibilitySeverity(textA);
+                                    });
 
                                   // Keep only the worst visibility condition
                                   if (visibilityConditions.length > 0) {
                                     phenomena = phenomena
-                                      .filter(p => !p.includes('👁️'))
+                                      .filter(p => {
+                                        const text = typeof p === 'string' ? p : (p as { text?: string; code: string }).text || (p as { text?: string; code: string }).code;
+                                        return !text.includes('👁️');
+                                      })
                                       .concat(visibilityConditions[0]);
                                   }
 
                                   // Deduplicate wind conditions
                                   phenomena = phenomena.filter((condition, index, array) => {
-                                    if (condition.includes('💨')) {
+                                    const text = typeof condition === 'string' ? condition : (condition as { text?: string; code: string }).text || (condition as { text?: string; code: string }).code;
+                                    if (text.includes('💨')) {
                                       return array.indexOf(condition) === index;
                                     }
                                     return true;
@@ -840,10 +858,11 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                   }
 
                                   // Filter out "No significant weather" message if there are other phenomena
-                                  const filteredPhenomena = phenomena.filter(condition => 
-                                    !condition.includes('Brak szczególnych zjawisk') && 
-                                    !condition.includes('No significant weather')
-                                  );
+                                  const filteredPhenomena = phenomena.filter(condition => {
+                                    const text = typeof condition === 'string' ? condition : (condition as { text?: string; code: string }).text || (condition as { text?: string; code: string }).code;
+                                    return !text.includes('Brak szczególnych zjawisk') && 
+                                           !text.includes('No significant weather');
+                                  });
 
                                   // Render phenomena with PROB/TEMPO indicator if applicable
                                   return (

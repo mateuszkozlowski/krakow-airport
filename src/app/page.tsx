@@ -145,7 +145,7 @@ export default function Page() {
   }, [language]);
 
   const highRiskPeriods = weather?.forecast?.filter(
-    period => period.riskLevel.level >= 3
+    period => period.riskLevel.level >= 3 && new Date(period.to) > new Date()
   ) || [];
 
   const formatHighRiskTimes = () => {
