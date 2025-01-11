@@ -313,7 +313,7 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     
     // Visibility conditions
     FG: '🌫️ Mgła',
-    BR: '🌫️ Zamglenie - ograniczona widoczność',
+    BR: '🌫️ Zamglenie',
     HZ: '🌫️ Lekkie zamglenie',
     
     // Severe conditions
