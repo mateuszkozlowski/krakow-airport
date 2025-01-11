@@ -2649,11 +2649,10 @@ function updateSnowTracking(conditions: { code: string }[] | undefined): void {
 
   if (hasSnow) {
     // Determine snow intensity
-    const intensity = conditions?.find(c => 
-      ['+SN', '+SHSN'].includes(c.code) ? 'heavy' :
-      ['-SN', '-SHSN'].includes(c.code) ? 'light' : 
-      ['SN', 'SHSN'].includes(c.code) ? 'moderate' : null
-    ) ? 'moderate' : null;
+    const intensity = conditions?.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'heavy' :
+                     conditions?.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'light' :
+                     conditions?.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'moderate' :
+                     null;
 
     if (!snowTrackingState.startTime) {
       snowTrackingState.startTime = now;
