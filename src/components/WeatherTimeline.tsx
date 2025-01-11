@@ -129,10 +129,7 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
   return messages;
 }
 
-function formatTimeDescription(start: Date, end: Date): string {
-  const { language } = useLanguage();
-  const t = translations[language];
-  
+function formatTimeDescription(start: Date, end: Date, language: string, t: any): string {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString(language === 'pl' ? 'pl-PL' : 'en-GB', {
       hour: '2-digit',
@@ -362,7 +359,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
       currentPeriod = {
         ...currentPeriod,
         from: now,
-        timeDescription: formatTimeDescription(now, currentPeriod.to)
+        timeDescription: formatTimeDescription(now, currentPeriod.to, language, t)
       };
     }
 
@@ -393,7 +390,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
             result.push({
               ...currentPeriod,
               to: nextPeriod.from,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from, language, t)
             });
           }
           
@@ -406,7 +403,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
             currentPeriod = {
               ...currentPeriod,
               from: nextPeriod.to,
-              timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to)
+              timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to, language, t)
             };
             continue;
           }
@@ -417,7 +414,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
             result.push({
               ...currentPeriod,
               to: nextPeriod.from,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from)
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from, language, t)
             });
             currentPeriod = nextPeriod;
           } else if (arePeriodsSimilar(currentPeriod, nextPeriod)) {
@@ -425,7 +422,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
             currentPeriod = {
               ...currentPeriod,
               to: nextPeriod.to,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to)
+              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to, language, t)
             };
           } else {
             // Different conditions, treat as separate periods

@@ -2337,7 +2337,7 @@ function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnin
   const probability = period.change?.probability || 100;
   
   // Calculate initial operational impacts
-  let impacts = calculateOperationalImpacts(period, language, warnings);
+  const impacts = calculateOperationalImpacts(period, language, warnings);
 
   // More realistic probability scaling
   const probabilityFactor = getProbabilityFactor(probability);
@@ -2481,7 +2481,7 @@ function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefine
   if (!conditions) return 0;
   
   let maxRisk = 0;
-  let hasMultipleSevere = false;
+  const hasMultipleSevere = false;
   let severeCount = 0;
   
   conditions.forEach(condition => {

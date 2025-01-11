@@ -492,7 +492,7 @@ export const translations = {
         // Weather impact messages
         weatherImpactMessages: {
             operationsSuspended: "Operacje zawieszone",
-            visibilityBelowMinimums: "Operacje zawieszone - widoczność poniżej minimów",
+            visibilityBelowMinimums: "Tymczasowe zawieszenie operacji - widoczność poniżej minimów",
             diversionsLikely: "Prawdopodobne przekierowania i odwołania lotów",
             checkStatus: "Sprawdź status swojego lotu",
             freezingConditions: "Operacje znacznie ograniczone",
@@ -575,7 +575,7 @@ export const translations = {
             windDelays: "💨 Silny wiatr może powodować opóźnienia",
             visibilityDecreasing: "📉 Widoczność się pogarsza",
             visibilityImproving: "📈 Widoczność się poprawia",
-            operationsSuspended: "⛔ Operacje zawieszone - poniżej minimów",
+            operationsSuspended: "⛔ Tymczasowe zawieszenie operacji - widoczność poniżej minimów",
             diversionsLikely: "✈️ Prawdopodobne przekierowania",
             reducedVisibilityMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
             winterDeicing: "❄️ Prawdopodobne odladzanie, spodziewaj się 20-30 min opóźnienia",
