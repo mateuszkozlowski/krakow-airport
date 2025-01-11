@@ -129,7 +129,14 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
   return messages;
 }
 
-function formatTimeDescription(start: Date, end: Date, language: string, t: any): string {
+type TranslationType = {
+  today: string;
+  tomorrow: string;
+  nextDay: string;
+  [key: string]: string | Record<string, string>;  // for other translation keys
+};
+
+function formatTimeDescription(start: Date, end: Date, language: string, t: TranslationType): string {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString(language === 'pl' ? 'pl-PL' : 'en-GB', {
       hour: '2-digit',
