@@ -7,6 +7,7 @@ import { adjustToWarsawTime } from '@/lib/utils/time';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/lib/translations';
 import { getStandardizedWindDescription } from '@/lib/weather';
+import { WeatherTimestamps, getWeatherTimestamps } from '@/app/api/weather/route';
 
 interface WeatherTimelineProps {
   current: {
@@ -21,6 +22,34 @@ interface WeatherTimelineProps {
     wind?: { speed_kts: number; direction: number; gust_kts?: number };
     visibility?: { meters: number };
     ceiling?: { feet: number };
+    lastUpdated?: {
+      METAR: {
+        observed: string;
+        lastUpdate?: string;
+      };
+      TOMORROW_IO?: {
+        observed: string;
+        lastUpdate: string;
+      };
+      OPEN_METEO?: {
+        observed: string;
+        lastUpdate: string;
+      };
+      mostRecent: string;
+      byProperty: {
+        temperature: string;
+        dewPoint: string;
+        humidity: string;
+        visibility: string;
+        wind: string;
+        ceiling?: string;
+        pressure: string;
+        precipitation?: string;
+        cloudCover?: string;
+        uvIndex?: string;
+        phenomena: string;
+      };
+    };
   };
   forecast: (ForecastChange & { operationalImpacts?: string[] })[];
   isLoading: boolean;
@@ -211,9 +240,215 @@ function isEnglishPeriodText(text: PeriodText): text is EnglishPeriodText {
 }
 
 const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, isLoading, isError, retry }) => {
+  
+  console.log("DEBUG - Raw current prop:", current);
+  console.log("DEBUG - Current observed:", current?.observed);
+  console.log("DEBUG - Current lastUpdated:", current?.lastUpdated);
+  
   const [showAll, setShowAll] = useState(false);
+  const [timestamps, setTimestamps] = useState<WeatherTimestamps | null>(null);
+  const [timestampError, setTimestampError] = useState<boolean>(false);
   const { language } = useLanguage();
   const t = translations[language];
+
+  // Define getMostRecentTimestamp first
+  const getMostRecentTimestamp = () => {
+    // Start with current.observed if it exists
+    let mostRecent = current?.observed || new Date().toISOString();
+    
+    // Check each potential timestamp and update if it's more recent
+    const checkAndUpdate = (timestamp: string | undefined) => {
+      if (timestamp && !isNaN(new Date(timestamp).getTime())) {
+        if (new Date(timestamp) > new Date(mostRecent)) {
+          mostRecent = timestamp;
+        }
+      }
+    };
+  
+    // Check timestamps API data
+    if (timestamps) {
+      checkAndUpdate(timestamps.metar);
+      checkAndUpdate(timestamps.tomorrow);
+      checkAndUpdate(timestamps.openMeteo);
+    }
+  
+    // Check current data
+    if (current?.lastUpdated) {
+      checkAndUpdate(current.lastUpdated.METAR?.observed);
+      checkAndUpdate(current.lastUpdated.TOMORROW_IO?.observed);
+      checkAndUpdate(current.lastUpdated.OPEN_METEO?.observed);
+      checkAndUpdate(current.lastUpdated.mostRecent);
+    }
+  
+    return mostRecent;
+  };
+
+  // Modified useEffect with typed error
+  useEffect(() => {
+    const fetchTimestamps = async () => {
+      try {
+        const data = await getWeatherTimestamps();
+        setTimestamps(data);
+        setTimestampError(false);
+      } catch (error: unknown) {
+        console.error('Error fetching timestamps:', error);
+        setTimestampError(true);
+      }
+    };
+
+    fetchTimestamps();
+  }, []);
+
+  // Add debug logs for timestamps
+  console.log('Weather Data Analysis:', {
+    // Raw data
+    timestamps,
+    currentLastUpdated: current.lastUpdated,
+    
+    // Processed data
+    sources: {
+      METAR: {
+        fromTimestamps: timestamps?.metar,
+        fromCurrent: current.lastUpdated?.METAR?.observed,
+        mostRecent: timestamps?.metar || current.lastUpdated?.METAR?.observed
+      },
+      TOMORROW_IO: {
+        fromTimestamps: timestamps?.tomorrow,
+        fromCurrent: current.lastUpdated?.TOMORROW_IO?.observed,
+        mostRecent: timestamps?.tomorrow || current.lastUpdated?.TOMORROW_IO?.observed
+      },
+      OPEN_METEO: {
+        fromTimestamps: timestamps?.openMeteo,
+        fromCurrent: current.lastUpdated?.OPEN_METEO?.observed,
+        mostRecent: timestamps?.openMeteo || current.lastUpdated?.OPEN_METEO?.observed
+      }
+    },
+    
+    // Most recent overall
+    mostRecent: getMostRecentTimestamp(),
+    
+    // Current time for reference
+    currentTime: new Date().toISOString()
+  });
+
+  // Calculate age of data for each source
+  const calculateDataAge = (timestamp: string | undefined) => {
+    if (!timestamp) return null;
+    const age = (Date.now() - new Date(timestamp).getTime()) / (1000 * 60); // in minutes
+    return {
+      timestamp,
+      ageMinutes: Math.round(age),
+      ageHuman: age < 1 ? 'less than a minute ago' :
+                age < 60 ? `${Math.round(age)} minutes ago` :
+                `${Math.round(age / 60)} hours ${Math.round(age % 60)} minutes ago`
+    };
+  };
+
+  // Add detailed debug logs for timestamps
+  console.log('Weather Data Sources Analysis:', {
+    METAR: {
+      observed: current.lastUpdated?.METAR ? {
+        timestamp: current.lastUpdated.METAR.observed,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated.METAR.observed),
+        ageHuman: formatAge(current.lastUpdated.METAR.observed)
+      } : null,
+      lastUpdate: current.lastUpdated?.METAR?.lastUpdate ? {
+        timestamp: current.lastUpdated.METAR.lastUpdate,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated.METAR.lastUpdate),
+        ageHuman: formatAge(current.lastUpdated.METAR.lastUpdate)
+      } : null,
+      affectedProperties: current.lastUpdated?.byProperty ? 
+        Object.entries(current.lastUpdated.byProperty)
+          .filter(([_, timestamp]) => timestamp === current.lastUpdated?.METAR?.observed)
+          .map(([prop]) => prop) : 
+        []
+    },
+    TOMORROW_IO: current.lastUpdated?.TOMORROW_IO ? {
+      observed: {
+        timestamp: current.lastUpdated?.TOMORROW_IO?.observed,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated?.TOMORROW_IO?.observed),
+        ageHuman: formatAge(current.lastUpdated?.TOMORROW_IO?.observed)
+      },
+      lastUpdate: {
+        timestamp: current.lastUpdated?.TOMORROW_IO?.lastUpdate,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated?.TOMORROW_IO?.lastUpdate),
+        ageHuman: formatAge(current.lastUpdated?.TOMORROW_IO?.lastUpdate)
+      },
+      affectedProperties: current.lastUpdated?.byProperty ? 
+        Object.entries(current.lastUpdated.byProperty)
+          .filter(([_, timestamp]) => timestamp === current.lastUpdated?.TOMORROW_IO?.observed)
+          .map(([prop]) => prop) : 
+        []
+    } : null,
+    OPEN_METEO: current.lastUpdated?.OPEN_METEO ? {
+      observed: {
+        timestamp: current.lastUpdated?.OPEN_METEO?.observed,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated?.OPEN_METEO?.observed),
+        ageHuman: formatAge(current.lastUpdated?.OPEN_METEO?.observed)
+      },
+      lastUpdate: {
+        timestamp: current.lastUpdated?.OPEN_METEO?.lastUpdate,
+        ageMinutes: calculateAgeInMinutes(current.lastUpdated?.OPEN_METEO?.lastUpdate),
+        ageHuman: formatAge(current.lastUpdated?.OPEN_METEO?.lastUpdate)
+      },
+      affectedProperties: current.lastUpdated?.byProperty ? 
+        Object.entries(current.lastUpdated.byProperty)
+          .filter(([_, timestamp]) => timestamp === current.lastUpdated?.OPEN_METEO?.observed)
+          .map(([prop]) => prop) : 
+        []
+    } : null,
+    mostRecent: current.lastUpdated?.mostRecent ? {
+      timestamp: current.lastUpdated.mostRecent,
+      ageMinutes: calculateAgeInMinutes(current.lastUpdated.mostRecent),
+      ageHuman: formatAge(current.lastUpdated.mostRecent),
+      source: current.lastUpdated?.mostRecent === current.lastUpdated?.METAR?.observed ? 'METAR' :
+             current.lastUpdated?.mostRecent === current.lastUpdated?.TOMORROW_IO?.observed ? 'TOMORROW_IO' :
+             current.lastUpdated?.mostRecent === current.lastUpdated?.OPEN_METEO?.observed ? 'OPEN_METEO' : 'unknown'
+    } : null,
+    propertiesBreakdown: current.lastUpdated?.byProperty ? 
+      Object.entries(current.lastUpdated.byProperty).map(([prop, timestamp]) => ({
+        property: prop,
+        source: timestamp === current.lastUpdated?.METAR?.observed ? 'METAR' :
+               timestamp === current.lastUpdated?.TOMORROW_IO?.observed ? 'TOMORROW_IO' :
+               timestamp === current.lastUpdated?.OPEN_METEO?.observed ? 'OPEN_METEO' : 'unknown',
+        age: {
+          timestamp,
+          ageMinutes: calculateAgeInMinutes(timestamp),
+          ageHuman: formatAge(timestamp)
+        }
+      })) : 
+      [],
+    currentTime: new Date().toISOString()
+  });
+
+  // Helper functions
+  function calculateAgeInMinutes(timestamp: string | undefined): number | null {
+    if (!timestamp) return null;
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return null;
+      return Math.round((Date.now() - date.getTime()) / (1000 * 60));
+    } catch (error) {
+      console.error('Error calculating age:', error);
+      return null;
+    }
+  }
+
+  function formatAge(timestamp: string | undefined): string | null {
+    if (!timestamp) return null;
+    try {
+      const minutes = calculateAgeInMinutes(timestamp);
+      if (minutes === null) return null;
+      if (minutes < 1) return 'just now';
+      if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours} hour${hours !== 1 ? 's' : ''} ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''} ago`;
+    } catch (error) {
+      console.error('Error formatting age:', error);
+      return null;
+    }
+  }
 
   console.log('Current language:', language);
   console.log('Translations object:', t);
@@ -662,11 +897,13 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <span className="text-sm font-medium text-slate-200">
-                          {t.currentConditions} • {t.updated} {adjustToWarsawTime(new Date(current.observed)).toLocaleTimeString('en-GB', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: 'Europe/Warsaw'
-                          })}
+                          {t.currentConditions} • {t.updated} {
+                            adjustToWarsawTime(new Date(getMostRecentTimestamp())).toLocaleTimeString('en-GB', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              timeZone: 'Europe/Warsaw'
+                            })
+                          }
                         </span>
                       </div>
                       <div className="flex items-center gap-2 w-full sm:w-auto">

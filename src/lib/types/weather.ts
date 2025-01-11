@@ -123,6 +123,7 @@ export interface WeatherResponse {
     conditions: ProcessedConditions;
     raw: string;
     observed: string;
+    details?: TomorrowIOValues;
   };
   forecast: ForecastChange[];
   raw_taf: string;
@@ -394,10 +395,47 @@ export interface OpenMeteoResponse {
 }
 
 export interface OpenMeteoDataPoint {
-  time: Date;
+  time: string;
   temperature: number;
-  windSpeed: number;
-  windGusts: number;
-  visibility: number;
+  dewPoint: number;
   precipitation: number;
+  precipitationProbability: number;
+  weatherCode: number;
+  cloudCover: number;
+  visibility: number;
+  windSpeed: number;
+  windDirection: number;
+  windGusts: number;
+}
+
+export interface TomorrowIOValues {
+  cloudBase: number;
+  cloudCeiling: number;
+  cloudCover: number;
+  dewPoint: number;
+  humidity: number;
+  precipitationProbability: number;
+  precipitationIntensity: number;
+  pressure: number;
+  temperature: number;
+  temperatureApparent: number;
+  uvIndex: number;
+  visibility: number;
+  weatherCode: number;
+  windDirection: number;
+  windGust: number;
+  windSpeed: number;
+}
+
+export interface TomorrowIOResponse {
+  data: {
+    time: string;
+    values: TomorrowIOValues;
+  };
+  location: {
+    lat: number;
+    lon: number;
+    name: string;
+    type: string;
+  };
 }

@@ -1,3 +1,5 @@
+import { TomorrowIOValues } from '@/lib/types/weather';
+
 interface BaseCloud {
   altitude: number;
   type: string;
@@ -36,6 +38,7 @@ export interface TransformedMetar {
   wind: Wind;
   ceiling: Ceiling | null;
   observed: string;
+  details?: TomorrowIOValues;
 }
 
 export interface TransformedMetarResponse {
