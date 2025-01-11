@@ -173,6 +173,8 @@ export const translations = {
             activeDeicing: "🧊 Active precipitation requiring de-icing procedures",
             runwayClearing: "🚜 Runway/taxiway snow clearing in progress",
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
+            prolongedSnowOperations: "❄️ Prolonged snow - significant operational impact",
+            extendedSnowOperations: "❄️ Extended snow - increased operational impact",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -518,6 +520,8 @@ export const translations = {
             activeDeicing: "🧊 Aktywne opady wymagające procedur odladzania",
             runwayClearing: "🚜 Odśnieżanie pasa startowego/dróg kołowania",
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
+            prolongedSnowOperations: "❄️ Długotrwałe opady śniegu - znaczący wpływ na operacje",
+            extendedSnowOperations: "❄️ Przedłużające się opady śniegu - zwiększony wpływ na operacje",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {

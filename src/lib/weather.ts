@@ -232,6 +232,9 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
   const impacts: string[] = [];
   const temp = weather.temperature?.celsius ?? 0;
   
+  // Update snow tracking
+  updateSnowTracking(weather.conditions);
+  
   // De-icing assessment based on temperature
   if (temp <= DEICING_CONDITIONS.TEMPERATURE.BELOW_ZERO) {
     if (temp <= DEICING_CONDITIONS.TEMPERATURE.SEVERE) {
@@ -248,26 +251,36 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
     impacts.push(t.activeDeicing);
   }
 
-  // Ground operations impacts for snow conditions
-  if (weather.conditions?.some(c => ['+SN', '+SHSN'].includes(c.code))) {
-    impacts.push(t.runwayClearing);
-    impacts.push(t.deicingDelay);
-    impacts.push(t.reducedCapacity);
-  } else if (weather.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
-    impacts.push(t.runwayClearing);
-    impacts.push(t.likelyDeicing);
-    impacts.push(t.reducedCapacity);
-  } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
-    impacts.push(t.possibleDeicing);
-    impacts.push(t.reducedCapacity);
+  // Ground operations impacts for snow conditions with duration consideration
+  if (snowTrackingState.startTime) {
+    const duration = Date.now() - snowTrackingState.startTime;
+    
+    if (weather.conditions?.some(c => ['+SN', '+SHSN'].includes(c.code))) {
+      impacts.push(t.runwayClearing);
+      impacts.push(t.deicingDelay);
+      impacts.push(t.reducedCapacity);
+      
+      if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
+        impacts.push(t.prolongedSnowOperations);
+      }
+    } else if (weather.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
+      impacts.push(t.runwayClearing);
+      impacts.push(t.likelyDeicing);
+      impacts.push(t.reducedCapacity);
+      
+      if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
+        impacts.push(t.extendedSnowOperations);
+      }
+    } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
+      impacts.push(t.possibleDeicing);
+      impacts.push(t.reducedCapacity);
+    }
   }
 
   // Low visibility procedures
   if (weather.visibility?.meters && weather.visibility.meters < 1500) {
     impacts.push(t.reducedCapacity);
   }
-
-  // Strong winds impact
 
   return impacts;
 }
@@ -2480,8 +2493,10 @@ function calculateVisibilityRisk(meters: number | undefined): number {
 function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefined): number {
   if (!conditions) return 0;
   
+  // Update snow tracking
+  updateSnowTracking(conditions);
+  
   let maxRisk = 0;
-  const hasMultipleSevere = false;
   let severeCount = 0;
   
   conditions.forEach(condition => {
@@ -2492,6 +2507,27 @@ function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefine
     if (risk >= 70) severeCount++;
     maxRisk = Math.max(maxRisk, risk);
   });
+  
+  // Apply snow duration multiplier if applicable
+  if (snowTrackingState.startTime) {
+    const duration = Date.now() - snowTrackingState.startTime;
+    let durationMultiplier = 1;
+
+    if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.PROLONGED;
+    } else if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.EXTENDED;
+    } else if (duration >= SNOW_DURATION.THRESHOLDS.MODERATE) {
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.MODERATE;
+    }
+
+    // Apply intensity factor
+    if (snowTrackingState.intensity === 'heavy') {
+      durationMultiplier *= 1.2;
+    }
+
+    maxRisk = Math.min(100, maxRisk * durationMultiplier);
+  }
   
   // Increase risk if multiple severe conditions
   if (severeCount > 1) {
@@ -2577,4 +2613,59 @@ function getProbabilityMessage(level: 1 | 2 | 3 | 4, probability: number, langua
   }
   
   return baseMessage;
+}
+
+// Add snow duration thresholds
+const SNOW_DURATION = {
+  THRESHOLDS: {
+    PROLONGED: 6 * 60 * 60 * 1000,  // 6 hours in milliseconds
+    EXTENDED: 3 * 60 * 60 * 1000,   // 3 hours in milliseconds
+    MODERATE: 1 * 60 * 60 * 1000    // 1 hour in milliseconds
+  },
+  RISK_MULTIPLIERS: {
+    PROLONGED: 1.5,    // 50% increase in risk for prolonged snow
+    EXTENDED: 1.3,     // 30% increase for extended snow
+    MODERATE: 1.15     // 15% increase for moderate duration
+  }
+} as const;
+
+// Add snow tracking state
+let snowTrackingState: {
+  startTime: number | null;
+  intensity: 'heavy' | 'moderate' | 'light' | null;
+  lastUpdate: number;
+} = {
+  startTime: null,
+  intensity: null,
+  lastUpdate: Date.now()
+};
+
+// Add helper function to track snow duration
+function updateSnowTracking(conditions: { code: string }[] | undefined): void {
+  const now = Date.now();
+  const hasSnow = conditions?.some(c => 
+    ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
+  );
+
+  if (hasSnow) {
+    // Determine snow intensity
+    const intensity = conditions?.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'heavy' :
+                     conditions?.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'light' :
+                     conditions?.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'moderate' :
+                     null;
+
+    if (!snowTrackingState.startTime) {
+      snowTrackingState.startTime = now;
+      snowTrackingState.intensity = intensity;
+    }
+  } else {
+    // Reset tracking if no snow
+    snowTrackingState = {
+      startTime: null,
+      intensity: null,
+      lastUpdate: now
+    };
+  }
+
+  snowTrackingState.lastUpdate = now;
 }
