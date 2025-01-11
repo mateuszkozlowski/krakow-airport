@@ -2522,11 +2522,29 @@ function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefine
     }
 
     // Apply intensity factor
-    if (snowTrackingState.intensity === 'heavy') {
+    if (snowTrackingState.intensity === 'HEAVY') {
       durationMultiplier *= 1.2;
     }
 
     maxRisk = Math.min(100, maxRisk * durationMultiplier);
+  } else if (snowTrackingState.recoveryStartTime) {
+    // Calculate risk during recovery period
+    const now = Date.now();
+    const recoveryDuration = SNOW_RECOVERY.DURATION[snowTrackingState.intensity ?? 'MODERATE'];
+    const timeInRecovery = now - snowTrackingState.recoveryStartTime;
+    const recoveryProgress = Math.min(1, timeInRecovery / recoveryDuration);
+    
+    // Linear interpolation between initial and final risk retention
+    const riskRetention = SNOW_RECOVERY.RISK_REDUCTION.INITIAL_RETAIN -
+      (SNOW_RECOVERY.RISK_REDUCTION.INITIAL_RETAIN - SNOW_RECOVERY.RISK_REDUCTION.FINAL_RETAIN) * recoveryProgress;
+    
+    // Base the recovery risk on the maximum risk that would have been present during snowfall
+    let baseRisk = maxRisk;
+    if (snowTrackingState.intensity === 'HEAVY') {
+      baseRisk = Math.min(100, maxRisk * 1.2);
+    }
+    
+    maxRisk = Math.max(maxRisk, Math.floor(baseRisk * riskRetention));
   }
   
   // Increase risk if multiple severe conditions
@@ -2632,13 +2650,28 @@ const SNOW_DURATION = {
 // Add snow tracking state
 let snowTrackingState: {
   startTime: number | null;
-  intensity: 'heavy' | 'moderate' | 'light' | null;
+  intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;  // Changed to match SNOW_RECOVERY.DURATION keys
   lastUpdate: number;
+  recoveryStartTime: number | null;
 } = {
   startTime: null,
   intensity: null,
-  lastUpdate: Date.now()
+  lastUpdate: Date.now(),
+  recoveryStartTime: null
 };
+
+// Add recovery period constants
+const SNOW_RECOVERY = {
+  DURATION: {
+    HEAVY: 90 * 60 * 1000,    // 90 minutes recovery after heavy snow
+    MODERATE: 60 * 60 * 1000,  // 60 minutes recovery after moderate snow
+    LIGHT: 30 * 60 * 1000     // 30 minutes recovery after light snow
+  },
+  RISK_REDUCTION: {
+    INITIAL_RETAIN: 0.8,  // Retain 80% of risk at start of recovery
+    FINAL_RETAIN: 0.2    // Retain 20% of risk at end of recovery
+  }
+} as const;
 
 // Add helper function to track snow duration
 function updateSnowTracking(conditions: { code: string }[] | undefined): void {
@@ -2649,22 +2682,36 @@ function updateSnowTracking(conditions: { code: string }[] | undefined): void {
 
   if (hasSnow) {
     // Determine snow intensity
-    const intensity = conditions?.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'heavy' :
-                     conditions?.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'light' :
-                     conditions?.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'moderate' :
+    const intensity = conditions?.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'HEAVY' :
+                     conditions?.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'LIGHT' :
+                     conditions?.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'MODERATE' :
                      null;
 
     if (!snowTrackingState.startTime) {
       snowTrackingState.startTime = now;
       snowTrackingState.intensity = intensity;
+      snowTrackingState.recoveryStartTime = null;
     }
-  } else {
-    // Reset tracking if no snow
+  } else if (snowTrackingState.startTime && !snowTrackingState.recoveryStartTime) {
+    // Snow has just stopped - start recovery period
     snowTrackingState = {
       startTime: null,
-      intensity: null,
-      lastUpdate: now
+      intensity: snowTrackingState.intensity,  // Keep the last known intensity for recovery calculation
+      lastUpdate: now,
+      recoveryStartTime: now
     };
+  } else if (!snowTrackingState.startTime && !hasSnow && snowTrackingState.recoveryStartTime) {
+    // In recovery period - check if it's complete
+    const recoveryDuration = SNOW_RECOVERY.DURATION[snowTrackingState.intensity ?? 'MODERATE'];
+    if (now - snowTrackingState.recoveryStartTime >= recoveryDuration) {
+      // Recovery period complete - reset all tracking
+      snowTrackingState = {
+        startTime: null,
+        intensity: null,
+        lastUpdate: now,
+        recoveryStartTime: null
+      };
+    }
   }
 
   snowTrackingState.lastUpdate = now;
