@@ -151,6 +151,7 @@ export const WEATHER_PHENOMENA = {
   '-SHSN': '-SHSN',
   '+SHSN': '+SHSN',
   'BLSN': 'BLSN',
+  'DRSN': 'DRSN',
   '+SHSN BLSN': '+SHSN BLSN',
   'SHSN BLSN': 'SHSN BLSN',
   'SH': 'SH',
@@ -218,6 +219,7 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     '-SHSN': '🌨️ Light Snow Showers',
     '+SHSN': '🌨️ Heavy Snow Showers (De-icing Required)',
     'BLSN': '🌨️ Blowing Snow',
+    'DRSN': '🌨️ Drifting Snow',
     '+SHSN BLSN': '🌨️ Heavy Snow Showers with Blowing Snow',
     'SHSN BLSN': '🌨️ Snow Showers with Blowing Snow',
     'SH': '🌨️ Showers',
@@ -266,64 +268,65 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     TSRA: '⛈️ Burza z deszczem',
     
     // Freezing conditions
-    FZRA: '🌧️❄️ Marznący deszcz',
-    FZDZ: '💧❄️ Marznąca mżawka',
-    FZFG: '🌫️❄️ Marznąca mgła',
-    FZ: '🌨️❄️ Warunki marznące',
+    FZRA: '🌧️❄️ Deszcz marznący',
+    FZDZ: '💧❄️ Mżawka marznąca',
+    FZFG: '🌫️❄️ Mgła marznąca',
+    FZ: '🌨️❄️ Ryzyko oblodzenia',
     
     // Combined freezing conditions
-    'FZRA FZFG': '🌧️❄️ Marznący deszcz z mgłą',
-    'FZDZ FZFG': '💧❄️ Marznąca mżawka z mgłą',
+    'FZRA FZFG': '🌧️❄️ Deszcz i mgła marznąca',
+    'FZDZ FZFG': '💧❄️ Mżawka i mgła marznąca',
     
     // Snow conditions
-    'SN': '🌨️ Śnieg',
-    '-SN': '🌨️ Lekki śnieg',
-    '+SN': '🌨️ Intensywny śnieg',
-    'SHSN': '🌨️ Przelotny śnieg',
-    '-SHSN': '🌨️ Lekki przelotny śnieg',
-    '+SHSN': '🌨️ Intensywny przelotny śnieg',
+    'SN': '🌨️ Opady śniegu',
+    '-SN': '🌨️ Słabe opady śniegu',
+    '+SN': '🌨️ Intensywne opady śniegu',
+    'SHSN': '🌨️ Przelotne opady śniegu',
+    '-SHSN': '🌨️ Słabe przelotne opady śniegu',
+    '+SHSN': '🌨️ Intensywne przelotne opady śniegu',
     'BLSN': '🌨️ Zawieja śnieżna',
-    '+SHSN BLSN': '🌨️ Intensywny przelotny śnieg z zawieją',
-    'SHSN BLSN': '🌨️ Przelotny śnieg z zawieją',
+    'DRSN': '🌨️ Zadymnka śnieżna',
+    '+SHSN BLSN': '🌨️ Intensywne opady śniegu z silnym wiatrem',
+    'SHSN BLSN': '🌨️ Przelotne opady śniegu z silnym wiatrem',
     'SH': '🌨️ Przelotne opady',
     
     // Rain conditions
     RA: '🌧️ Deszcz',
-    '-RA': '🌧️ Lekki deszcz',
+    '-RA': '🌧️ Słaby deszcz',
     '+RA': '🌧️ Silny deszcz',
     SHRA: '🌧️ Przelotny deszcz',
-    '-SHRA': '🌧️ Lekki przelotny deszcz',
-    '+SHRA': '🌧️ Silny przelotny deszcz',
+    '-SHRA': '🌧️ Słaby przelotny deszcz',
+    '+SHRA': '🌧️ Ulewny deszcz',
     
     // Mixed precipitation
     RASN: '🌨️ Deszcz ze śniegiem',
-    '-RASN': '🌨️ Lekki deszcz ze śniegiem',
+    '-RASN': '🌨️ Słaby deszcz ze śniegiem',
     '+RASN': '🌨️ Intensywny deszcz ze śniegiem',
     
     // Other precipitation
     GR: '🌨️ Grad',
-    GS: '🌨️ Mały grad',
-    SG: '🌨️ Ziarna śniegu',
+    GS: '🌨️ Drobny grad',
+    SG: '🌨️ Drobne opady śniegu',
     DZ: '💧 Mżawka',
     '-DZ': '💧 Lekka mżawka',
-    '+DZ': '💧 Intensywna mżawka',
+    '+DZ': '💧 Gęsta mżawka',
     
     // Visibility conditions
     FG: '🌫️ Mgła',
-    BR: '🌫️ Zamglenie',
-    HZ: '🌫️ Zmętnienie',
+    BR: '🌫️ Zamglenie - ograniczona widoczność',
+    HZ: '🌫️ Lekkie zamglenie',
     
     // Severe conditions
-    FC: '🌪️ Lej kondensacyjny',
+    FC: '🌪️ Trąba powietrzna',
     SS: '🏜️ Burza piaskowa',
     
     // Cloud coverage
-    SCT: '⛅ Zachmurzenie małe',
-    BKN: '☁️ Zachmurzenie umiarkowane',
-    OVC: '☁️ Zachmurzenie całkowite',
+    SCT: '⛅ Częściowe zachmurzenie',
+    BKN: '☁️ Duże zachmurzenie',
+    OVC: '☁️ Całkowite zachmurzenie',
     
     // No significant weather
-    NSW: 'Brak szczególnych zjawisk pogodowych'
+    NSW: '✈️ Dobre warunki pogodowe'
   }
 } as const;
 

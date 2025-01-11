@@ -272,8 +272,9 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
         impacts.push(t.extendedSnowOperations);
       }
     } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
+      // For light snow, only add minimal impacts
       impacts.push(t.possibleDeicing);
-      impacts.push(t.reducedCapacity);
+      // Don't add reduced capacity for light snow - airport can handle it
     }
   }
 
@@ -2512,39 +2513,17 @@ function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefine
   if (snowTrackingState.startTime) {
     const duration = Date.now() - snowTrackingState.startTime;
     let durationMultiplier = 1;
+    const intensity = snowTrackingState.intensity ?? 'MODERATE';
 
     if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
-      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.PROLONGED;
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.PROLONGED[intensity];
     } else if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
-      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.EXTENDED;
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.EXTENDED[intensity];
     } else if (duration >= SNOW_DURATION.THRESHOLDS.MODERATE) {
-      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.MODERATE;
-    }
-
-    // Apply intensity factor
-    if (snowTrackingState.intensity === 'HEAVY') {
-      durationMultiplier *= 1.2;
+      durationMultiplier = SNOW_DURATION.RISK_MULTIPLIERS.MODERATE[intensity];
     }
 
     maxRisk = Math.min(100, maxRisk * durationMultiplier);
-  } else if (snowTrackingState.recoveryStartTime) {
-    // Calculate risk during recovery period
-    const now = Date.now();
-    const recoveryDuration = SNOW_RECOVERY.DURATION[snowTrackingState.intensity ?? 'MODERATE'];
-    const timeInRecovery = now - snowTrackingState.recoveryStartTime;
-    const recoveryProgress = Math.min(1, timeInRecovery / recoveryDuration);
-    
-    // Linear interpolation between initial and final risk retention
-    const riskRetention = SNOW_RECOVERY.RISK_REDUCTION.INITIAL_RETAIN -
-      (SNOW_RECOVERY.RISK_REDUCTION.INITIAL_RETAIN - SNOW_RECOVERY.RISK_REDUCTION.FINAL_RETAIN) * recoveryProgress;
-    
-    // Base the recovery risk on the maximum risk that would have been present during snowfall
-    let baseRisk = maxRisk;
-    if (snowTrackingState.intensity === 'HEAVY') {
-      baseRisk = Math.min(100, maxRisk * 1.2);
-    }
-    
-    maxRisk = Math.max(maxRisk, Math.floor(baseRisk * riskRetention));
   }
   
   // Increase risk if multiple severe conditions
@@ -2641,16 +2620,49 @@ const SNOW_DURATION = {
     MODERATE: 1 * 60 * 60 * 1000    // 1 hour in milliseconds
   },
   RISK_MULTIPLIERS: {
-    PROLONGED: 1.5,    // 50% increase in risk for prolonged snow
-    EXTENDED: 1.3,     // 30% increase for extended snow
-    MODERATE: 1.15     // 15% increase for moderate duration
+    PROLONGED: {
+      HEAVY: 1.5,     // 50% increase for prolonged heavy snow
+      MODERATE: 1.3,  // 30% increase for prolonged moderate snow
+      LIGHT: 1.0      // No increase for prolonged light snow - airport can handle it
+    },
+    EXTENDED: {
+      HEAVY: 1.3,     // 30% increase for extended heavy snow
+      MODERATE: 1.2,  // 20% increase for extended moderate snow
+      LIGHT: 1.0      // No increase for extended light snow - airport can handle it
+    },
+    MODERATE: {
+      HEAVY: 1.2,     // 20% increase for moderate duration heavy snow
+      MODERATE: 1.1,  // 10% increase for moderate duration moderate snow
+      LIGHT: 1.0      // No increase for moderate duration light snow - airport can handle it
+    }
+  }
+} as const;
+
+// Update recovery durations to be more intensity-dependent
+const SNOW_RECOVERY = {
+  DURATION: {
+    HEAVY: 90 * 60 * 1000,    // 90 minutes recovery after heavy snow
+    MODERATE: 45 * 60 * 1000, // 45 minutes recovery after moderate snow
+    LIGHT: 10 * 60 * 1000     // Only 10 minutes recovery after light snow - airport is well prepared
+  },
+  RISK_REDUCTION: {
+    INITIAL_RETAIN: {
+      HEAVY: 0.8,    // Retain 80% of risk initially after heavy snow
+      MODERATE: 0.6, // Retain 60% of risk initially after moderate snow
+      LIGHT: 0.2     // Retain only 20% of risk initially after light snow - minimal impact
+    },
+    FINAL_RETAIN: {
+      HEAVY: 0.2,    // Retain 20% of risk at end of recovery after heavy snow
+      MODERATE: 0.1, // Retain 10% of risk at end of recovery after moderate snow
+      LIGHT: 0.0     // No risk retention at end of recovery after light snow
+    }
   }
 } as const;
 
 // Add snow tracking state
 let snowTrackingState: {
   startTime: number | null;
-  intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;  // Changed to match SNOW_RECOVERY.DURATION keys
+  intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;
   lastUpdate: number;
   recoveryStartTime: number | null;
 } = {
@@ -2659,19 +2671,6 @@ let snowTrackingState: {
   lastUpdate: Date.now(),
   recoveryStartTime: null
 };
-
-// Add recovery period constants
-const SNOW_RECOVERY = {
-  DURATION: {
-    HEAVY: 90 * 60 * 1000,    // 90 minutes recovery after heavy snow
-    MODERATE: 60 * 60 * 1000,  // 60 minutes recovery after moderate snow
-    LIGHT: 30 * 60 * 1000     // 30 minutes recovery after light snow
-  },
-  RISK_REDUCTION: {
-    INITIAL_RETAIN: 0.8,  // Retain 80% of risk at start of recovery
-    FINAL_RETAIN: 0.2    // Retain 20% of risk at end of recovery
-  }
-} as const;
 
 // Add helper function to track snow duration
 function updateSnowTracking(conditions: { code: string }[] | undefined): void {
