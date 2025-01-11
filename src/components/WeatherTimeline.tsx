@@ -131,12 +131,16 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
 
 // Update the TranslationType to only include what we need for formatTimeDescription
 type TranslationType = {
-  today: string;
-  tomorrow: string;
-  nextDay: string;
-  until: string;
-  // Add any other translation keys used in formatTimeDescription
-  [key: string]: any; // Allow other properties to exist without strict typing
+  readonly today: string;
+  readonly tomorrow: string;
+  readonly nextDay: string;
+  readonly until: string;
+  // Allow other readonly string properties and nested structures
+  readonly [key: string]: string | 
+    readonly string[] | 
+    { readonly [key: string]: string | readonly string[] } |
+    { readonly [key: string]: { readonly [key: string]: string | readonly string[] } } |
+    Record<string, unknown>;
 };
 
 function formatTimeDescription(start: Date, end: Date, language: string, t: TranslationType): string {
