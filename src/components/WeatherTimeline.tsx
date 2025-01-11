@@ -130,8 +130,11 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
 }
 
 function formatTimeDescription(start: Date, end: Date): string {
+  const { language } = useLanguage();
+  const t = translations[language];
+  
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-GB', {
+    return date.toLocaleTimeString(language === 'pl' ? 'pl-PL' : 'en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Warsaw'
@@ -147,13 +150,13 @@ function formatTimeDescription(start: Date, end: Date): string {
 
   // Same day
   if (start.getDate() === end.getDate()) {
-    const prefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
+    const prefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
     return `${prefix} ${startTime} - ${endTime}`;
   }
   
   // Crosses midnight
-  const startPrefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
-  const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
+  const startPrefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
+  const endPrefix = end.getDate() === tomorrow.getDate() ? t.tomorrow : t.nextDay;
   return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
 }
 
@@ -200,6 +203,40 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const [showAll, setShowAll] = useState(false);
   const { language } = useLanguage();
   const t = translations[language];
+
+  console.log('Current language:', language);
+  console.log('Translations object:', t);
+
+  // Add debug logs for risk level translations
+  console.log('Debug - WeatherTimeline Component:', {
+    language,
+    currentRiskLevel: {
+      level: current.riskLevel.level,
+      title: current.riskLevel.title,
+      statusMessage: current.riskLevel.statusMessage,
+      operationalImpacts: current.riskLevel.operationalImpacts
+    },
+    translationsAvailable: {
+      level4: t.riskLevel4Title,
+      level3: t.riskLevel3Title,
+      level2: t.riskLevel2Title,
+      level1: t.riskLevel1Title
+    }
+  });
+
+  // Add debug logs for forecast periods
+  console.log('Debug - Forecast Periods:', forecast.map(period => ({
+    timeDescription: period.timeDescription,
+    riskLevel: {
+      level: period.riskLevel.level,
+      title: period.riskLevel.title,
+      statusMessage: period.riskLevel.statusMessage,
+      operationalImpacts: period.riskLevel.operationalImpacts
+    },
+    phenomena: period.conditions.phenomena,
+    isTemporary: period.isTemporary,
+    probability: period.probability
+  })));
 
   function processPeriods(periods: ForecastPeriod[]): ForecastPeriod[] {
     // Create timeline events
@@ -261,14 +298,19 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
     
-    console.log('Initial forecast periods:', periods.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    console.log('Debug - Deduplication Process:', {
+      inputPeriods: periods.map(p => ({
+        timeDescription: p.timeDescription,
+        riskLevel: {
+          level: p.riskLevel.level,
+          title: p.riskLevel.title,
+          statusMessage: p.riskLevel.statusMessage
+        },
+        phenomena: p.conditions.phenomena,
+        isTemporary: p.isTemporary,
+        probability: p.probability
+      }))
+    });
     
     // First, filter and sort periods
     const validPeriods = periods

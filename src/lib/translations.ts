@@ -173,7 +173,6 @@ export const translations = {
             activeDeicing: "🧊 Active precipitation requiring de-icing procedures",
             runwayClearing: "🚜 Runway/taxiway snow clearing in progress",
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
-            singleRunway: "💨 Single runway operations possible - reduced capacity",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -517,9 +516,8 @@ export const translations = {
             likelyDeicing: "❄️ Prawdopodobne odladzanie, spodziewaj się 20-30 min opóźnienia",
             possibleDeicing: "❄️ Możliwe odladzanie, spodziewaj się 15-20 min opóźnienia",
             activeDeicing: "🧊 Aktywne opady wymagające procedur odladzania",
-            runwayClearing: "🚜 Trwa odśnieżanie pasa startowego/dróg kołowania",
+            runwayClearing: "🚜 Odśnieżanie pasa startowego/dróg kołowania",
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
-            singleRunway: "💨 Możliwe operacje na jednym pasie - zmniejszona przepustowość",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -590,7 +588,7 @@ export const translations = {
             winterWeatherWarning: "❄️ Warunki zimowe mogą powodować opóźnienia",
         },
         // Risk level messages
-        riskLevel4Title: "Poważny wpływ pogody",
+        riskLevel4Title: "Poważne zakłócenia",
         riskLevel4Message: "Operacje zawieszone",
         riskLevel4Status: "Wszystkie loty są obecnie zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika.",
         
@@ -675,7 +673,7 @@ export const translations = {
                 ]
             },
             majorImpact: {
-                title: "Poważny wpływ pogody",
+                title: "Poważne zakłócenia",
                 description: "Trudne warunki pogodowe powodujące znaczące zakłócenia.",
                 details: [
                     "Długie opóźnienia (2+ godziny)",

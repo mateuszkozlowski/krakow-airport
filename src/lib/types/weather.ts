@@ -56,6 +56,7 @@ export interface ForecastPeriod extends WeatherData {
   timestamp?: WeatherTimestamp;
   change_indicator?: 'TEMPO' | 'BECMG' | 'PERSISTENT';
   change?: Change;
+  language?: 'en' | 'pl';
 }
 
 export interface TAFData {
@@ -107,6 +108,7 @@ export interface ForecastChange {
   isTemporary?: boolean;
   probability?: number;
   operationalImpacts?: string[];
+  language: 'en' | 'pl';
 }
 
 // Example for ProcessedConditions
@@ -375,6 +377,7 @@ export interface RiskLevel {
   message: string;
   statusMessage: string;
   color: "green" | "orange" | "red";
+  operationalImpacts?: string[];
 }
 
 export interface OpenMeteoHourly {
