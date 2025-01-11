@@ -129,11 +129,14 @@ function getImpactsList(phenomena: string[], riskLevel: number): string[] {
   return messages;
 }
 
+// Update the TranslationType to only include what we need for formatTimeDescription
 type TranslationType = {
   today: string;
   tomorrow: string;
   nextDay: string;
-  [key: string]: string | Record<string, string>;  // for other translation keys
+  until: string;
+  // Add any other translation keys used in formatTimeDescription
+  [key: string]: any; // Allow other properties to exist without strict typing
 };
 
 function formatTimeDescription(start: Date, end: Date, language: string, t: TranslationType): string {
