@@ -20,6 +20,7 @@ import {
 import { adjustToWarsawTime } from '@/lib/utils/time';
 import { translations } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { redis, validateRedisConnection } from '@/lib/cache';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 type WeatherPhenomenon = keyof typeof WEATHER_PHENOMENA;
@@ -79,8 +80,8 @@ const RISK_WEIGHTS = {
       LIKELY: 40,       // Higher probability
       CERTAIN: 60       // Guaranteed de-icing need
     }
-  }
-} as const;
+    }
+  } as const;
 
 // Update the condition code map to include gusts
 const CONDITION_CODE_MAP: Record<string, keyof typeof WEATHER_PHENOMENA> = {
@@ -245,12 +246,12 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
       impacts.push(t.possibleDeicing);
     }
   }
-
+  
   // Check for precipitation requiring de-icing
   if (weather.conditions?.some(c => DEICING_CONDITIONS.PHENOMENA.has(c.code))) {
     impacts.push(t.activeDeicing);
   }
-
+  
   // Ground operations impacts for snow conditions with duration consideration
   if (snowTrackingState.startTime) {
     const duration = Date.now() - snowTrackingState.startTime;
@@ -261,7 +262,7 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
       impacts.push(t.reducedCapacity);
       
       if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
-        impacts.push(t.prolongedSnowOperations);
+      impacts.push(t.prolongedSnowOperations);
       }
     } else if (weather.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
       impacts.push(t.runwayClearing);
@@ -269,7 +270,7 @@ function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): 
       impacts.push(t.reducedCapacity);
       
       if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
-        impacts.push(t.extendedSnowOperations);
+      impacts.push(t.extendedSnowOperations);
       }
     } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
       // For light snow, only add minimal impacts
@@ -525,7 +526,7 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
         trend = 'improving';
       } else if (visibilityChange < -1000 || windChange > 5) {
         trend = 'deteriorating';
-      } else {
+    } else {
         trend = 'stable';
       }
     }
@@ -2660,7 +2661,7 @@ const SNOW_RECOVERY = {
 } as const;
 
 // Add snow tracking state
-let snowTrackingState: {
+const snowTrackingState: {
   startTime: number | null;
   intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;
   lastUpdate: number;
@@ -2673,45 +2674,221 @@ let snowTrackingState: {
 };
 
 // Add helper function to track snow duration
-function updateSnowTracking(conditions: { code: string }[] | undefined): void {
-  const now = Date.now();
-  const hasSnow = conditions?.some(c => 
-    ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
-  );
+// Snow tracking state interface
+interface SnowTrackingState {
+  startTime: number | null;
+  intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;
+  lastUpdate: number;
+  recoveryStartTime: number | null;
+}
 
-  if (hasSnow) {
-    // Determine snow intensity
-    const intensity = conditions?.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'HEAVY' :
-                     conditions?.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'LIGHT' :
-                     conditions?.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'MODERATE' :
-                     null;
+const SNOW_TRACKING_KEY = 'snow_tracking_state_epkk';
 
-    if (!snowTrackingState.startTime) {
-      snowTrackingState.startTime = now;
-      snowTrackingState.intensity = intensity;
-      snowTrackingState.recoveryStartTime = null;
+// Helper function to get snow tracking state from Redis
+async function getSnowTrackingState(): Promise<SnowTrackingState> {
+  const defaultState: SnowTrackingState = {
+    startTime: null,
+    intensity: null,
+    lastUpdate: Date.now(),
+    recoveryStartTime: null
+  };
+
+  try {
+    // First check if Redis is available
+    if (!redis) {
+      console.warn('⚠️ Redis not initialized, using in-memory state');
+      return defaultState;
     }
-  } else if (snowTrackingState.startTime && !snowTrackingState.recoveryStartTime) {
-    // Snow has just stopped - start recovery period
-    snowTrackingState = {
-      startTime: null,
-      intensity: snowTrackingState.intensity,  // Keep the last known intensity for recovery calculation
-      lastUpdate: now,
-      recoveryStartTime: now
-    };
-  } else if (!snowTrackingState.startTime && !hasSnow && snowTrackingState.recoveryStartTime) {
-    // In recovery period - check if it's complete
-    const recoveryDuration = SNOW_RECOVERY.DURATION[snowTrackingState.intensity ?? 'MODERATE'];
-    if (now - snowTrackingState.recoveryStartTime >= recoveryDuration) {
-      // Recovery period complete - reset all tracking
-      snowTrackingState = {
-        startTime: null,
-        intensity: null,
-        lastUpdate: now,
-        recoveryStartTime: null
-      };
+
+    if (!await validateRedisConnection()) {
+      console.warn('⚠️ Redis connection failed, using in-memory state');
+      return defaultState;
     }
+
+    // Try to get the state
+    const state = await redis.get<SnowTrackingState>(SNOW_TRACKING_KEY);
+    
+    // Validate the state structure
+    if (state && 
+        typeof state === 'object' && 
+        ('startTime' in state) && 
+        ('intensity' in state) && 
+        ('lastUpdate' in state) && 
+        ('recoveryStartTime' in state)) {
+      console.log('✅ Retrieved snow tracking state from Redis:', state);
+      return state;
+    }
+
+    console.warn('⚠️ Invalid state in Redis, using default state');
+    return defaultState;
+  } catch (error) {
+    console.error('Failed to get snow tracking state from Redis:', error);
+    return defaultState;
+  }
+}
+
+// Helper function to update snow tracking state in Redis
+async function setSnowTrackingState(state: SnowTrackingState): Promise<void> {
+  try {
+    // First check if Redis is available
+    if (!redis) {
+      console.warn('⚠️ Redis not initialized, state update skipped');
+      return;
+    }
+
+    if (!await validateRedisConnection()) {
+      console.warn('⚠️ Redis connection failed, state update skipped');
+      return;
+    }
+
+    // Validate state before saving
+    if (!state || typeof state !== 'object') {
+      console.error('Invalid state object:', state);
+      return;
+    }
+
+    await redis.set(SNOW_TRACKING_KEY, state, { ex: 24 * 60 * 60 }); // 24 hour expiry
+    console.log('✅ Updated snow tracking state in Redis:', state);
+  } catch (error) {
+    console.error('Failed to update snow tracking state in Redis:', error);
+  }
+}
+
+// Update the snow tracking function to handle errors gracefully
+async function updateSnowTracking(conditions: { code: string }[] | undefined): Promise<void> {
+  if (!conditions) {
+    console.log('No conditions provided, skipping snow tracking update');
+    return;
   }
 
-  snowTrackingState.lastUpdate = now;
+  try {
+    const now = Date.now();
+    const hasSnow = conditions.some(c => 
+      ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
+    );
+
+    console.log('Checking snow conditions:', {
+      hasSnow,
+      conditions: conditions.map(c => c.code)
+    });
+
+    let state = await getSnowTrackingState();
+
+    if (hasSnow) {
+      // Determine snow intensity
+      const intensity = conditions.some(c => ['+SN', '+SHSN'].includes(c.code)) ? 'HEAVY' :
+                       conditions.some(c => ['-SN', '-SHSN'].includes(c.code)) ? 'LIGHT' :
+                       conditions.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'MODERATE' :
+                       null;
+
+      console.log('Detected snow conditions:', { intensity });
+
+      if (!state.startTime) {
+        state = {
+          startTime: now,
+          intensity,
+          lastUpdate: now,
+          recoveryStartTime: null
+        };
+        await setSnowTrackingState(state);
+      }
+    } else if (state.startTime && !state.recoveryStartTime) {
+      // Snow has just stopped - start recovery period
+      console.log('Snow has stopped, starting recovery period');
+      state = {
+        startTime: null,
+        intensity: state.intensity,  // Keep the last known intensity for recovery calculation
+        lastUpdate: now,
+        recoveryStartTime: now
+      };
+      await setSnowTrackingState(state);
+    } else if (!state.startTime && !hasSnow && state.recoveryStartTime) {
+      // In recovery period - check if it's complete
+      const recoveryDuration = SNOW_RECOVERY.DURATION[state.intensity ?? 'MODERATE'];
+      const timeInRecovery = now - state.recoveryStartTime;
+      console.log('Checking recovery progress:', {
+        timeInRecovery: Math.floor(timeInRecovery / 1000),
+        recoveryDuration: Math.floor(recoveryDuration / 1000),
+        intensity: state.intensity
+      });
+
+      if (timeInRecovery >= recoveryDuration) {
+        console.log('Recovery period complete, resetting state');
+        state = {
+          startTime: null,
+          intensity: null,
+          lastUpdate: now,
+          recoveryStartTime: null
+        };
+        await setSnowTrackingState(state);
+      }
+    }
+
+    // Update lastUpdate even if no other changes
+    if (state.lastUpdate !== now) {
+      state.lastUpdate = now;
+      await setSnowTrackingState(state);
+    }
+  } catch (error) {
+    console.error('Error in updateSnowTracking:', error);
+  }
+}
+
+// Helper function to get current snow duration and risk multiplier
+async function getSnowDurationInfo(): Promise<{
+  duration: number;
+  riskMultiplier: number;
+  isInRecovery: boolean;
+  recoveryProgress: number;
+}> {
+  const state = await getSnowTrackingState();
+  const now = Date.now();
+
+  if (state.startTime) {
+    // Active snow event
+    const duration = now - state.startTime;
+    const intensity = state.intensity ?? 'MODERATE';
+    
+    let multiplierCategory: keyof typeof SNOW_DURATION.RISK_MULTIPLIERS;
+    if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
+      multiplierCategory = 'PROLONGED';
+    } else if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
+      multiplierCategory = 'EXTENDED';
+    } else {
+      multiplierCategory = 'MODERATE';
+    }
+
+    return {
+      duration,
+      riskMultiplier: SNOW_DURATION.RISK_MULTIPLIERS[multiplierCategory][intensity],
+      isInRecovery: false,
+      recoveryProgress: 0
+    };
+  } else if (state.recoveryStartTime) {
+    // In recovery period
+    const intensity = state.intensity ?? 'MODERATE';
+    const recoveryDuration = SNOW_RECOVERY.DURATION[intensity];
+    const timeInRecovery = now - state.recoveryStartTime;
+    const recoveryProgress = Math.min(1, timeInRecovery / recoveryDuration);
+    
+    // Calculate risk multiplier during recovery
+    const initialRetain = SNOW_RECOVERY.RISK_REDUCTION.INITIAL_RETAIN[intensity];
+    const finalRetain = SNOW_RECOVERY.RISK_REDUCTION.FINAL_RETAIN[intensity];
+    const currentRetain = initialRetain - (initialRetain - finalRetain) * recoveryProgress;
+
+    return {
+      duration: 0,
+      riskMultiplier: currentRetain,
+      isInRecovery: true,
+      recoveryProgress
+    };
+  }
+
+  // No active snow or recovery
+  return {
+    duration: 0,
+    riskMultiplier: 1,
+    isInRecovery: false,
+    recoveryProgress: 0
+  };
 }
