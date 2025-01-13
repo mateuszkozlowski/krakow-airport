@@ -771,20 +771,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         {current.riskLevel.explanation && (
                           <p className="text-slate-300">{current.riskLevel.explanation}</p>
                         )}
-                        
-                        {current.riskLevel.operationalImpacts && 
-                         current.riskLevel.operationalImpacts.length > 0 && (
-                          <div className="mt-2 border-t border-white/10 pt-3">
-                            <p className="font-medium text-slate-200 text-sm">{t.operationalImpacts}:</p>
-                            <ul className="mt-1 space-y-1.5">
-                              {current.riskLevel.operationalImpacts.map((impact, idx) => (
-                                <li key={idx} className="text-slate-300 text-sm">
-                                  {impact}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
                       </div>
                     )}
 
@@ -966,20 +952,6 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                 <span className="text-xs text-slate-400">
                                   {period.probability}{t.probabilityChance}
                                 </span>
-                              )}
-
-                              {period.riskLevel.level > 1 && 
-                               new Date(period.from) > new Date() && (
-                                <div className="mt-0.5 text-xs space-y-2 border-t border-white/10 pt-3">
-                                  <p className="font-medium text-slate-300">{t.operationalImpacts}:</p>
-                                  <ul className="space-y-1.5">
-                                    {period.operationalImpacts?.map((impact, idx) => (
-                                      <li key={idx} className="text-slate-400">
-                                        {impact}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
                               )}
                             </div>
                           </CardContent>
