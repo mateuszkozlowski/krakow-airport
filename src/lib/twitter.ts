@@ -184,10 +184,49 @@ async function postTweet(text: string): Promise<void> {
   }
 }
 
+interface AlertPeriod {
+  start: Date;
+  end: Date;
+  level: number;
+}
+
+function formatTimeRange(periods: AlertPeriod[]): string {
+  if (periods.length === 0) return '';
+  
+  // Group periods by day
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const todayPeriods = periods.filter(p => p.start >= today && p.start < tomorrow);
+  const tomorrowPeriods = periods.filter(p => p.start >= tomorrow);
+
+  const formatPeriod = (p: AlertPeriod) => {
+    const startTime = p.start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const endTime = p.end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `${startTime}–${endTime}`;
+  };
+
+  let timeText = '';
+  if (todayPeriods.length > 0) {
+    timeText += 'Dziś/Today: ';
+    timeText += todayPeriods.map(formatPeriod).join(', ');
+  }
+  
+  if (tomorrowPeriods.length > 0) {
+    if (todayPeriods.length > 0) timeText += '\n';
+    timeText += 'Jutro/Tomorrow: ';
+    timeText += tomorrowPeriods.map(formatPeriod).join(', ');
+  }
+
+  return timeText;
+}
+
 export async function postWeatherAlert(
   assessment: RiskAssessment,
   language: 'en' | 'pl' = 'pl',
-  isFuturePeriod: boolean = false
+  alertPeriods: { start: string; end: string; level: number }[] = []
 ): Promise<void> {
   if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
       !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
@@ -195,10 +234,16 @@ export async function postWeatherAlert(
     return;
   }
 
-  const { level } = assessment;
+  // Filter only high-risk periods (level 3 or 4)
+  const highRiskPeriods = alertPeriods
+    .filter(p => p.level >= 3)
+    .map(p => ({
+      start: new Date(p.start),
+      end: new Date(p.end),
+      level: p.level
+    }));
 
-  // Only post for risk levels 3 and 4
-  if (level < 3) {
+  if (highRiskPeriods.length === 0) {
     return;
   }
 
@@ -207,79 +252,34 @@ export async function postWeatherAlert(
     return;
   }
 
+  // Get the highest risk level
+  const maxRiskLevel = Math.max(...highRiskPeriods.map(p => p.level));
+
   // Check if risk level changed significantly
   const lastPostedRisk = await getLastPostedRisk();
-  if (lastPostedRisk !== null && Math.abs(level - lastPostedRisk) < POST_LIMITS.RISK_CHANGE_THRESHOLD) {
+  if (lastPostedRisk !== null && Math.abs(maxRiskLevel - lastPostedRisk) < POST_LIMITS.RISK_CHANGE_THRESHOLD) {
     console.log('Risk level change not significant enough, skipping tweet');
     return;
   }
 
-  const t = translations[language];
-  const { title, message, operationalImpacts } = assessment;
+  // Format time ranges
+  const timeRanges = formatTimeRange(highRiskPeriods);
 
   // Prepare the tweet text
-  let tweetText = '';
-  const emoji = level === 4 ? '🔴' : '🟠';
+  const emoji = maxRiskLevel === 4 ? '⛔' : '⚠️';
+  const message = maxRiskLevel === 4 
+    ? 'Możliwe odwołania lotów / Possible flight cancellations'
+    : 'Możliwe znaczne opóźnienia / Significant delays possible';
 
-  if (isFuturePeriod) {
-    tweetText = language === 'pl' 
-      ? `${emoji} PROGNOZA: ${title}\n${message}`
-      : `${emoji} FORECAST: ${title}\n${message}`;
-  } else {
-    tweetText = `${emoji} ${title}\n${message}`;
-  }
-
-  // Add operational impacts if any
-  if (operationalImpacts && operationalImpacts.length > 0) {
-    tweetText += '\n\n' + operationalImpacts[0];
-  }
-
-  // Add airport hashtag
-  tweetText += '\n\n#KRK #KrakowAirport';
-
-  // Truncate tweet text to 140 characters
-  if (tweetText.length > 140) {
-    tweetText = tweetText.slice(0, 137) + '...';
-  }
+  const tweetText = `KRK.flights ALERT!\n${timeRanges}\n${emoji} ${message}\nWięcej/More: bit.ly/epkk`;
 
   try {
     await postTweet(tweetText);
     await incrementPostCount();
-    await setLastPostedRisk(level);
+    await setLastPostedRisk(maxRiskLevel);
     await setLastPostTime(Date.now());
     console.log('Weather alert tweet posted successfully');
   } catch (error) {
     console.error('Error posting weather alert tweet:', error);
-  }
-}
-
-export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<void> {
-  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
-      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
-    return;
-  }
-
-  const lastPostedRisk = await getLastPostedRisk();
-  if (!lastPostedRisk || lastPostedRisk < 3) {
-    return;
-  }
-
-  // Check if we can post
-  if (!await canPostTweet()) {
-    return;
-  }
-
-  const tweetText = language === 'pl'
-    ? '✅ Warunki pogodowe uległy poprawie. Operacje lotnicze wracają do normy.\n\n#KRK #KrakowAirport'
-    : '✅ Weather conditions have improved. Flight operations returning to normal.\n\n#KRK #KrakowAirport';
-
-  try {
-    await postTweet(tweetText);
-    await incrementPostCount();
-    await setLastPostedRisk(0);
-    await setLastPostTime(Date.now());
-    console.log('Alert dismissal tweet posted successfully');
-  } catch (error) {
-    console.error('Error posting alert dismissal tweet:', error);
   }
 } 
