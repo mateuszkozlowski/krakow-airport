@@ -19,7 +19,7 @@ const REDIS_KEYS = {
 
 const POST_LIMITS = {
   MAX_MONTHLY_POSTS: 90, // Keep 10 posts as buffer
-  MIN_POST_INTERVAL: 30 * 60 * 1000, // 30 minutes between posts
+  MIN_POST_INTERVAL: 15 * 60 * 1000, // 15 minutes between posts (reduced from 30)
   RISK_CHANGE_THRESHOLD: 1 // Only post if risk level changes by this much
 } as const;
 
