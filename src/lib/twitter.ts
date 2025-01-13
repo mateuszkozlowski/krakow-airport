@@ -182,8 +182,17 @@ async function postTweet(text: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Twitter API error: ${response.status} ${response.statusText} - ${error}`);
+    const error = await response.json().catch(() => response.text());
+    console.error('Twitter API error details:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      error,
+      authHeader: authHeader.replace(/oauth_consumer_key="[^"]+"/g, 'oauth_consumer_key="REDACTED"')
+        .replace(/oauth_token="[^"]+"/g, 'oauth_token="REDACTED"')
+        .replace(/oauth_signature="[^"]+"/g, 'oauth_signature="REDACTED"')
+    });
+    throw new Error(`Twitter API error: ${response.status} ${response.statusText}`);
   }
 }
 
