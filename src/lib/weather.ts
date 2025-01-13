@@ -818,14 +818,16 @@ export function getStandardizedWindDescription(speed: number, language: 'en' | '
 }
 
 // Update the getAirportWeather function
-export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<WeatherResponse | null> {
+export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterCron: boolean = false): Promise<WeatherResponse | null> {
   try {
-    // Use absolute URL for API calls
-    const apiUrl = 'https://krk.flights';
+    // Use absolute URL only for Twitter cron job
+    const weatherUrl = isTwitterCron 
+      ? `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/weather`
+      : '/api/weather';
     
     // Fetch both TAF and Open-Meteo data
     const [weatherResponse, openMeteoData] = await Promise.all([
-      fetch(`${apiUrl}/api/weather`, {
+      fetch(weatherUrl, {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
