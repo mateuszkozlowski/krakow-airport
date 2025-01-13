@@ -94,29 +94,96 @@ async function canPostTweet(): Promise<boolean> {
 }
 
 async function postTweet(text: string): Promise<void> {
-  const oauth1Header = await generateOAuth1Header(
+  // OAuth 1.0a parameters
+  interface OAuthParams {
+    oauth_consumer_key: string;
+    oauth_token: string;
+    oauth_signature_method: string;
+    oauth_timestamp: string;
+    oauth_nonce: string;
+    oauth_version: string;
+    oauth_signature?: string;
+  }
+
+  const oauth: OAuthParams = {
+    oauth_consumer_key: process.env.TWITTER_API_KEY!,
+    oauth_token: process.env.TWITTER_ACCESS_TOKEN!,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_nonce: Math.random().toString(36).substring(2),
+    oauth_version: '1.0'
+  };
+
+  // Parameters for the request
+  const params = {
+    ...oauth,
+    text
+  };
+
+  // Sort parameters
+  const sortedParams = Object.keys(params)
+    .sort()
+    .reduce<Record<string, string>>((acc, key) => {
+      const value = params[key as keyof typeof params];
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+  // Create parameter string
+  const paramString = Object.entries(sortedParams)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+
+  // Create signature base string
+  const signatureBaseString = [
     'POST',
-    TWITTER_API_URL,
-    {
-      text
-    },
-    process.env.TWITTER_API_KEY!,
-    process.env.TWITTER_API_SECRET!,
-    process.env.TWITTER_ACCESS_TOKEN!,
-    process.env.TWITTER_ACCESS_SECRET!
+    encodeURIComponent(TWITTER_API_URL),
+    encodeURIComponent(paramString)
+  ].join('&');
+
+  // Create signing key
+  const signingKey = `${encodeURIComponent(process.env.TWITTER_API_SECRET!)}&${encodeURIComponent(process.env.TWITTER_ACCESS_SECRET!)}`;
+
+  // Generate signature
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(signingKey),
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
   );
+
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(signatureBaseString)
+  );
+
+  const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+
+  // Add signature to OAuth parameters
+  oauth.oauth_signature = signatureBase64;
+
+  // Create Authorization header
+  const authHeader = 'OAuth ' + Object.entries(oauth)
+    .map(([key, value]) => `${encodeURIComponent(key)}="${encodeURIComponent(value)}"`)
+    .join(', ');
 
   const response = await fetch(TWITTER_API_URL, {
     method: 'POST',
     headers: {
-      'Authorization': oauth1Header,
+      'Authorization': authHeader,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ text })
   });
 
   if (!response.ok) {
-    throw new Error(`Twitter API error: ${response.status} ${response.statusText}`);
+    const error = await response.text();
+    throw new Error(`Twitter API error: ${response.status} ${response.statusText} - ${error}`);
   }
 }
 
@@ -125,7 +192,8 @@ export async function postWeatherAlert(
   language: 'en' | 'pl' = 'pl',
   isFuturePeriod: boolean = false
 ): Promise<void> {
-  if (!process.env.TWITTER_API_KEY) {
+  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
+      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
     console.log('Twitter API credentials not configured, skipping tweet');
     return;
   }
@@ -184,7 +252,8 @@ export async function postWeatherAlert(
 }
 
 export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<void> {
-  if (!process.env.TWITTER_API_KEY) {
+  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
+      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
     return;
   }
 
@@ -211,77 +280,4 @@ export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<
   } catch (error) {
     console.error('Error posting alert dismissal tweet:', error);
   }
-}
-
-// OAuth 1.0a signature generation
-async function generateOAuth1Header(
-  method: string,
-  url: string,
-  params: Record<string, string>,
-  apiKey: string,
-  apiSecret: string,
-  accessToken: string,
-  accessSecret: string
-): Promise<string> {
-  interface OAuthParams {
-    oauth_consumer_key: string;
-    oauth_nonce: string;
-    oauth_signature_method: string;
-    oauth_timestamp: string;
-    oauth_token: string;
-    oauth_version: string;
-    oauth_signature?: string;
-  }
-
-  const oauth: OAuthParams = {
-    oauth_consumer_key: apiKey,
-    oauth_nonce: Math.random().toString(36).substring(2),
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-    oauth_token: accessToken,
-    oauth_version: '1.0'
-  };
-
-  const allParams = { ...params, ...oauth };
-  const sortedParams = Object.entries(allParams)
-    .filter(([_, value]) => value !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: value as string
-    }), {} as Record<string, string>);
-
-  const paramString = Object.entries(sortedParams)
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-    .join('&');
-
-  const signatureBaseString = [
-    method.toUpperCase(),
-    encodeURIComponent(url),
-    encodeURIComponent(paramString)
-  ].join('&');
-
-  const signingKey = `${encodeURIComponent(apiSecret)}&${encodeURIComponent(accessSecret)}`;
-  const signature = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(signingKey),
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  ).then(key => 
-    crypto.subtle.sign(
-      'HMAC',
-      key,
-      new TextEncoder().encode(signatureBaseString)
-    )
-  ).then(buffer => 
-    btoa(String.fromCharCode(...new Uint8Array(buffer)))
-  );
-
-  oauth.oauth_signature = signature;
-
-  return 'OAuth ' + Object.entries(oauth)
-    .filter(([_, value]) => value !== undefined)
-    .map(([key, value]) => `${encodeURIComponent(key)}="${encodeURIComponent(value as string)}"`)
-    .join(', ');
 } 
