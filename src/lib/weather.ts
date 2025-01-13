@@ -893,13 +893,23 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
     const currentAssessment = assessWeatherRisk(currentWeather, language);
     
     // Post alert for current conditions if needed
-    await postWeatherAlert(currentAssessment, language, false);
+    await postWeatherAlert(currentAssessment, language, [{
+      start: new Date().toISOString(),
+      end: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Current conditions valid for 30 minutes
+      level: currentAssessment.level
+    }]);
 
     // Check future periods for high risk conditions
-    for (const period of mergedForecast) {
-      if (period.riskLevel.level >= 3) {
-        await postWeatherAlert(period.riskLevel, language, true);
-      }
+    const highRiskPeriods = mergedForecast
+      .filter(period => period.riskLevel.level >= 3)
+      .map(period => ({
+        start: period.from.toISOString(),
+        end: period.to.toISOString(),
+        level: period.riskLevel.level
+      }));
+
+    if (highRiskPeriods.length > 0) {
+      await postWeatherAlert(mergedForecast[0].riskLevel, language, highRiskPeriods);
     }
 
     // Check if conditions improved

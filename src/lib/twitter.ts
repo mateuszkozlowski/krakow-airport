@@ -282,4 +282,25 @@ export async function postWeatherAlert(
   } catch (error) {
     console.error('Error posting weather alert tweet:', error);
   }
+}
+
+export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<void> {
+  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
+      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
+    return;
+  }
+
+  const lastPostedRisk = await getLastPostedRisk();
+  if (!lastPostedRisk || lastPostedRisk < 3) {
+    return;
+  }
+
+  // Check if we can post
+  if (!await canPostTweet()) {
+    return;
+  }
+
+  // Since we're not posting dismissal alerts anymore, just reset the last posted risk
+  await setLastPostedRisk(0);
+  console.log('Alert state reset without posting dismissal tweet');
 } 
