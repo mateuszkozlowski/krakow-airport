@@ -1,13 +1,19 @@
-import { WeatherData, RiskAssessment } from '../types/weather';
+import { WeatherData, ForecastChange } from '../types/weather';
 import { translations } from '../translations';
 import { postWeatherAlert, postAlertDismissal } from '../twitter';
-import { assessWeatherRisk, calculateRiskLevel } from '../weather';
+import { assessWeatherRisk } from '../weather';
 
 export async function processWeatherData(
   currentWeather: WeatherData,
-  forecast: any[],
+  forecast: ForecastChange[],
   language: 'en' | 'pl' = 'pl'
-): Promise<any> {
+): Promise<{
+  current: {
+    riskLevel: ReturnType<typeof assessWeatherRisk>;
+    conditions: WeatherData['conditions'];
+  };
+  forecast: ForecastChange[];
+}> {
   // Assess current weather risk
   const riskAssessment = assessWeatherRisk(currentWeather, language);
 
@@ -16,9 +22,9 @@ export async function processWeatherData(
 
   // Check future periods for high risk conditions
   for (const period of forecast) {
-    const periodRisk = calculateRiskLevel(period, language, translations[language].operationalWarnings);
-    if (periodRisk.level >= 3) {
-      await postWeatherAlert(periodRisk, language, true);
+    // We already have the risk level in the ForecastChange object
+    if (period.riskLevel.level >= 3) {
+      await postWeatherAlert(period.riskLevel, language, true);
     }
   }
 
