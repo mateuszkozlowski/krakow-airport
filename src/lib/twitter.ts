@@ -246,7 +246,7 @@ export async function postWeatherAlert(
   periods: { start: string; end: string; level: number }[]
 ): Promise<void> {
   try {
-    console.log('🐦 Attempting to post Twitter alert:', {
+    console.log('�� Attempting to post Twitter alert:', {
       language,
       riskLevel: assessment.level,
       periodsCount: periods.length,
@@ -257,14 +257,7 @@ export async function postWeatherAlert(
     const message = formatTwitterMessage(assessment, periods, language);
     console.log('📝 Formatted Twitter message:', message);
 
-    // Use absolute URL when running in Edge function
-    const apiUrl = typeof window === 'undefined' 
-      ? `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/twitter/post`
-      : '/api/twitter/post';
-
-    console.log('🔗 Using Twitter API URL:', apiUrl);
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch('/api/twitter/post', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -314,14 +307,7 @@ export async function postAlertDismissal(language: 'en' | 'pl'): Promise<void> {
     const message = t.conditionsImproved;
     console.log('📝 Formatted dismissal message:', message);
 
-    // Use absolute URL when running in Edge function
-    const apiUrl = typeof window === 'undefined' 
-      ? `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/twitter/post`
-      : '/api/twitter/post';
-
-    console.log('🔗 Using Twitter API URL:', apiUrl);
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch('/api/twitter/post', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
