@@ -360,7 +360,7 @@ export default function Page() {
             <MainNav />
             <div className="flex items-center gap-2">
               <a 
-                href="https://bit.ly/epkk"
+                href="https://x.com/KrkFlights"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-md text-sm font-medium 
