@@ -246,15 +246,15 @@ export async function postWeatherAlert(
   periods: { start: string; end: string; level: number }[]
 ): Promise<void> {
   try {
-    console.log('🐦 Attempting to post weather alert:', {
+    console.log('�� Attempting to post Twitter alert:', {
       language,
       riskLevel: assessment.level,
-      periodsCount: periods.length
+      periodsCount: periods.length,
+      timestamp: new Date().toISOString()
     });
 
     const t = translations[language].twitter;
     const message = formatTwitterMessage(assessment, periods, language);
-
     console.log('📝 Formatted Twitter message:', message);
 
     const response = await fetch('/api/twitter/post', {
@@ -262,31 +262,49 @@ export async function postWeatherAlert(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }),
+    });
+
+    const responseData = await response.json();
+    console.log('🐦 Twitter API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: responseData,
+      timestamp: new Date().toISOString()
     });
 
     if (!response.ok) {
-      const error = await response.text();
       console.error('❌ Failed to post Twitter alert:', {
         status: response.status,
-        error
+        statusText: response.statusText,
+        error: responseData,
+        timestamp: new Date().toISOString()
       });
-      throw new Error(`Failed to post Twitter alert: ${error}`);
+      throw new Error(`Failed to post Twitter alert: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ Successfully posted Twitter alert');
+    console.log('✅ Successfully posted Twitter alert', {
+      message,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('❌ Error posting Twitter alert:', error);
+    console.error('❌ Error posting Twitter alert:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
   }
 }
 
 export async function postAlertDismissal(language: 'en' | 'pl'): Promise<void> {
   try {
-    console.log('🐦 Attempting to post alert dismissal:', { language });
+    console.log('🐦 Attempting to post Twitter dismissal:', {
+      language,
+      timestamp: new Date().toISOString()
+    });
 
     const t = translations[language].twitter;
     const message = t.conditionsImproved;
-
     console.log('📝 Formatted dismissal message:', message);
 
     const response = await fetch('/api/twitter/post', {
@@ -294,20 +312,36 @@ export async function postAlertDismissal(language: 'en' | 'pl'): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }),
+    });
+
+    const responseData = await response.json();
+    console.log('🐦 Twitter API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: responseData,
+      timestamp: new Date().toISOString()
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ Failed to post dismissal:', {
+      console.error('❌ Failed to post Twitter dismissal:', {
         status: response.status,
-        error
+        statusText: response.statusText,
+        error: responseData,
+        timestamp: new Date().toISOString()
       });
-      throw new Error(`Failed to post dismissal: ${error}`);
+      throw new Error(`Failed to post Twitter dismissal: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ Successfully posted dismissal');
+    console.log('✅ Successfully posted Twitter dismissal', {
+      message,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('❌ Error posting dismissal:', error);
+    console.error('❌ Error posting Twitter dismissal:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
   }
 } 

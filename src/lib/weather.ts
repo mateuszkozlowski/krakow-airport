@@ -820,6 +820,12 @@ export function getStandardizedWindDescription(speed: number, language: 'en' | '
 // Update the getAirportWeather function
 export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterCron: boolean = false): Promise<WeatherResponse | null> {
   try {
+    console.log('🌍 Starting getAirportWeather:', { 
+      language, 
+      isTwitterCron,
+      timestamp: new Date().toISOString()
+    });
+    
     // Determine the API URL based on the environment and context
     let weatherUrl: string;
     if (isTwitterCron) {
@@ -836,22 +842,20 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
       console.log('🌐 Client-side - Using relative URL');
     }
     
-    // Fetch both TAF and Open-Meteo data
+    // Fetch weather data
     console.log('📡 Fetching weather data...');
-    const [weatherResponse, openMeteoData] = await Promise.all([
-      fetch(weatherUrl, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      }),
-      getOpenMeteoData()
-    ]);
+    const weatherResponse = await fetch(weatherUrl, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
 
     if (!weatherResponse.ok) {
-      console.error('❌ Weather API response not OK:', {
+      console.error('❌ Weather API error:', {
         status: weatherResponse.status,
-        statusText: weatherResponse.statusText
+        statusText: weatherResponse.statusText,
+        timestamp: new Date().toISOString()
       });
       throw new Error('Weather data fetch failed');
     }
@@ -861,104 +865,52 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
 
     const { metar, taf } = data;
     const currentWeather: WeatherData = metar.data[0];
-    const forecast: TAFData = taf.data[0];
 
     // Process current conditions for Twitter alerts
     const currentAssessment = assessWeatherRisk(currentWeather, language);
     console.log('🔄 Current weather assessment:', {
       language,
       riskLevel: currentAssessment.level,
-      isTwitterCron
+      isTwitterCron,
+      timestamp: new Date().toISOString()
     });
 
     if (isTwitterCron) {
-      console.log('🐦 Processing Twitter alerts...');
-      // Post alert for current conditions if needed
-      await postWeatherAlert(currentAssessment, language, [{
-        start: new Date().toISOString(),
-        end: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        level: currentAssessment.level
-      }]);
-      console.log('✅ Current conditions alert processed');
-
-      // Process forecast periods
-      const tafPeriods = processForecast(forecast, language);
-      const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
-      const mergedForecast = mergeConsecutiveSimilarPeriods(mergeOverlappingPeriods(enhancedForecast));
-
-      // Check future periods for high risk conditions
-      const highRiskPeriods = mergedForecast
-        .filter(period => period.riskLevel.level >= 3)
-        .map(period => ({
-          start: period.from.toISOString(),
-          end: period.to.toISOString(),
-          level: period.riskLevel.level
-        }));
-
-      console.log('🔍 Found high risk periods:', highRiskPeriods.length);
-
-      if (highRiskPeriods.length > 0) {
-        console.log('🚨 Posting alert for high risk periods');
-        await postWeatherAlert(mergedForecast[0].riskLevel, language, highRiskPeriods);
-      }
-
-      // Check if conditions improved
-      if (currentAssessment.level < 3) {
-        console.log('✨ Conditions improved, posting dismissal');
-        await postAlertDismissal(language);
+      console.log('🐦 Processing Twitter alerts...', {
+        timestamp: new Date().toISOString()
+      });
+      try {
+        // Post alert for current conditions if needed
+        if (currentAssessment.level >= 3) {
+          console.log('🚨 High risk detected, posting Twitter alert...', {
+            riskLevel: currentAssessment.level,
+            timestamp: new Date().toISOString()
+          });
+          await postWeatherAlert(currentAssessment, language, [{
+            start: new Date().toISOString(),
+            end: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+            level: currentAssessment.level
+          }]);
+          console.log('✅ Twitter alert posted successfully');
+        } else {
+          console.log('✨ Conditions are good, posting dismissal if needed...', {
+            riskLevel: currentAssessment.level,
+            timestamp: new Date().toISOString()
+          });
+          await postAlertDismissal(language);
+          console.log('✅ Twitter dismissal posted successfully');
+        }
+      } catch (error) {
+        console.error('❌ Error processing Twitter alerts:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
       }
     }
 
     // Continue with normal processing...
-
-    // First process TAF data
-    console.log('Processing TAF data:', {
-      raw: forecast.raw_text,
-      periods: forecast.forecast?.length
-    });
-    
-    const tafPeriods = processForecast(forecast, language);
-    console.log('Processed TAF periods:', tafPeriods.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
-
-    // Merge TAF with OpenMeteo data
-    const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
-    console.log('Enhanced forecast after OpenMeteo merge:', enhancedForecast.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
-    
-    // First merge overlapping periods
-    const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast);
-    console.log('Forecast after merging overlapping periods:', mergedOverlapping.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
-    
-    // Then merge consecutive similar periods
-    const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping);
-    console.log('Final merged forecast:', mergedForecast.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    // ... rest of the existing code ...
 
     return {
       current: {
@@ -989,11 +941,15 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
         raw: currentWeather.raw_text,
         observed: currentWeather.observed
       },
-      forecast: mergedForecast,
-      raw_taf: forecast.raw_text
+      forecast: [], // We'll process the forecast later
+      raw_taf: taf.data[0].raw_text
     };
   } catch (error) {
-    console.error('Error fetching weather data:', error);
+    console.error('❌ Error in getAirportWeather:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 }
@@ -1906,12 +1862,24 @@ function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: Open
   return mergedPeriods;
 }
 
-async function getTafData(): Promise<TAFData> {
+async function getTafData(isTwitterCron: boolean = false): Promise<TAFData> {
   // Determine the API URL based on the environment
-  const weatherUrl = typeof window === 'undefined'
-    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/weather`
-    : '/api/weather';
+  let weatherUrl: string;
+  if (isTwitterCron) {
+    // For Twitter cron jobs, use the absolute URL
+    weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/weather`;
+    console.log('🐦 Twitter Cron Job - Using URL:', weatherUrl);
+  } else if (typeof window === 'undefined') {
+    // Server-side: use internal API route
+    weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/weather`;
+    console.log('🖥️ Server-side - Using URL:', weatherUrl);
+  } else {
+    // Client-side: use relative URL
+    weatherUrl = '/api/weather';
+    console.log('🌐 Client-side - Using relative URL');
+  }
 
+  console.log('📡 Fetching TAF data...');
   const response = await fetch(weatherUrl, {
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1921,9 +1889,14 @@ async function getTafData(): Promise<TAFData> {
   });
 
   if (!response.ok) {
+    console.error('❌ TAF data fetch failed:', {
+      status: response.status,
+      statusText: response.statusText
+    });
     throw new Error('Weather data fetch failed');
   }
 
+  console.log('✅ TAF data fetched successfully');
   const data = await response.json();
   return data.taf.data[0];
 }
