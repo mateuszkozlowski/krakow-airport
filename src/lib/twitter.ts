@@ -114,22 +114,13 @@ async function postTweet(text: string): Promise<void> {
     oauth_version: '1.0'
   };
 
-  // Parameters for signature base string
-  const params = {
-    ...oauth,
-    text
-  };
-
-  // Create parameter string
-  const paramString = Object.keys(params)
-    .sort()
-    .map(key => {
-      const value = params[key as keyof typeof params];
-      return `${encodeURIComponent(key)}=${encodeURIComponent(value!)}`;
-    })
+  // Create signature base string
+  const paramString = Object.entries(oauth)
+    .filter(([_, value]) => value !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value!)}`)
     .join('&');
 
-  // Create signature base string
   const signatureBaseString = [
     'POST',
     encodeURIComponent(TWITTER_API_URL),
@@ -157,13 +148,14 @@ async function postTweet(text: string): Promise<void> {
 
   oauth.oauth_signature = btoa(String.fromCharCode(...new Uint8Array(signature)));
 
-  // Create Authorization header (only include OAuth params)
+  // Create Authorization header
   const authHeader = 'OAuth ' + Object.entries(oauth)
     .filter(([_, value]) => value !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}="${encodeURIComponent(value!)}"`)
     .join(', ');
 
-  // Send request with text in body, not in OAuth params
+  // Send request
   const response = await fetch(TWITTER_API_URL, {
     method: 'POST',
     headers: {
@@ -184,7 +176,9 @@ async function postTweet(text: string): Promise<void> {
       paramString,
       authHeader: authHeader.replace(/oauth_consumer_key="[^"]+"/g, 'oauth_consumer_key="REDACTED"')
         .replace(/oauth_token="[^"]+"/g, 'oauth_token="REDACTED"')
-        .replace(/oauth_signature="[^"]+"/g, 'oauth_signature="REDACTED"')
+        .replace(/oauth_signature="[^"]+"/g, 'oauth_signature="REDACTED"'),
+      apiKey: process.env.TWITTER_API_KEY?.slice(0, 5) + '...',
+      accessToken: process.env.TWITTER_ACCESS_TOKEN?.slice(0, 5) + '...'
     });
     throw new Error(`Twitter API error: ${response.status} ${response.statusText}`);
   }
