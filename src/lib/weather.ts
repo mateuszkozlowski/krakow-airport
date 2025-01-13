@@ -820,18 +820,10 @@ export function getStandardizedWindDescription(speed: number, language: 'en' | '
 // Update the getAirportWeather function
 export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterCron: boolean = false): Promise<WeatherResponse | null> {
   try {
-    // Determine the API URL based on the environment and context
-    let weatherUrl: string;
-    if (isTwitterCron) {
-      // For Twitter cron jobs, use the absolute URL
-      weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/weather`;
-    } else if (typeof window === 'undefined') {
-      // Server-side: use internal API route
-      weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/weather`;
-    } else {
-      // Client-side: use relative URL
-      weatherUrl = '/api/weather';
-    }
+    // Use absolute URL only for Twitter cron job
+    const weatherUrl = isTwitterCron 
+      ? `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/weather`
+      : '/api/weather';
     
     // Fetch both TAF and Open-Meteo data
     const [weatherResponse, openMeteoData] = await Promise.all([
@@ -1877,12 +1869,7 @@ function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: Open
 }
 
 async function getTafData(): Promise<TAFData> {
-  // Determine the API URL based on the environment
-  const weatherUrl = typeof window === 'undefined'
-    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/weather`
-    : '/api/weather';
-
-  const response = await fetch(weatherUrl, {
+  const response = await fetch('/api/weather', {
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache'
