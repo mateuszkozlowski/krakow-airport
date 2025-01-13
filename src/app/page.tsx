@@ -357,10 +357,26 @@ export default function Page() {
       <div className="bg-[#1a1f36] bg-cover bg-center" style={{ backgroundImage: "url('/background.png')" }}>
         <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
           <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <MainNav />
+            <MainNav />
+            <div className="flex items-center gap-2">
+              <a 
+                href="https://bit.ly/epkk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium 
+                  hover:bg-white/20 h-9 w-9 transition-colors"
+                aria-label="Twitter"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 fill-current text-white"
+                  aria-hidden="true"
+                >
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+              <LanguageSelector />
             </div>
-            <LanguageSelector />
           </div>
         </Alert>
 

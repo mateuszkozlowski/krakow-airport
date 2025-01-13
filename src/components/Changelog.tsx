@@ -10,6 +10,17 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2024-01-13",
+    version: "0.3.2",
+    changes: [
+      "Enhanced snow monitoring with cumulative impact assessment. The system now tracks snowfall duration and accumulation, automatically increasing risk levels for prolonged snow events. Added airport recovery time predictions based on snowfall intensity and ground operations capacity.",
+      
+      "Integrated X/Twitter alerts via @KrkFlights. The system now automatically posts real-time weather alerts and important updates, keeping passengers informed through social media. Follow us at https://x.com/KrkFlights for instant updates!",
+      
+      "Improved data management with enhanced caching mechanisms. Optimized storage patterns for weather data and implemented more efficient data retrieval systems, resulting in faster load times and reduced server load."
+    ]
+  },
+  {
     date: "2024-01-07",
     version: "0.3.1",
     changes: [
