@@ -1145,6 +1145,17 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
 
     const phenomena = Array.from(conditions);
 
+    // Skip TEMPO periods that don't have any significant changes
+    if (phenomena.length === 0 && riskLevel.level === 1) {
+      console.log('Skipping empty TEMPO period:', {
+        from: period.from,
+        to: period.to,
+        probability,
+        language
+      });
+      return;
+    }
+
     const forecastChange = {
       timeDescription: formatTimeDescription(period.from, period.to, language),
       from: period.from,
@@ -1387,22 +1398,10 @@ function calculateRiskScore(period: WeatherPeriod): number {
 }
 
 function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): string {
-  const t = translations[language];
-  
   const formatTime = (date: Date) => {
-    if (language === 'pl') {
-      const time = date.toLocaleTimeString('pl-PL', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/Warsaw'
-      });
-      return `${time}`;
-    }
-    return date.toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Warsaw'
-    });
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const today = new Date();
@@ -1432,14 +1431,14 @@ function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): s
     // Standardowy format dla różnych dni
     return `${startPrefix} ${startTime} do ${endPrefix} ${endTime}`;
   } else {
-    // Angielski format (bez zmian)
+    // English format
     if (start.getDate() === end.getDate()) {
-      const prefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
+      const prefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
       return `${prefix} ${startTime} - ${endTime}`;
     }
     
-    const startPrefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
-    const endPrefix = end.getDate() === tomorrow.getDate() ? t.tomorrow : t.nextDay;
+    const startPrefix = start.getDate() === today.getDate() ? 'Today' : 'Tomorrow';
+    const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
     return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
   }
 }
@@ -2767,12 +2766,20 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
       ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
     );
 
-    console.log('Checking snow conditions:', {
-      hasSnow,
-      conditions: conditions.map(c => c.code)
+    console.log('🔍 Current conditions:', {
+      timestamp: new Date(now).toISOString(),
+      conditions: conditions.map(c => c.code),
+      hasSnow
     });
 
-    let state = await getSnowTrackingState();
+    const currentState = await getSnowTrackingState();
+    console.log('📊 Current state:', {
+      timestamp: new Date(now).toISOString(),
+      state: { ...currentState }
+    });
+
+    let newState = { ...currentState };
+    let stateChanged = false;
 
     if (hasSnow) {
       // Determine snow intensity
@@ -2781,56 +2788,93 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
                        conditions.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'MODERATE' :
                        null;
 
-      console.log('Detected snow conditions:', { intensity });
+      console.log('❄️ Snow detection:', { 
+        hasSnow, 
+        intensity,
+        currentStartTime: currentState.startTime,
+        currentIntensity: currentState.intensity
+      });
 
-      if (!state.startTime) {
-        state = {
+      // Only start new snow event if we're not already tracking one
+      if (!currentState.startTime) {
+        console.log('🆕 Starting new snow event');
+        newState = {
           startTime: now,
           intensity,
           lastUpdate: now,
           recoveryStartTime: null
         };
-        await setSnowTrackingState(state);
+        stateChanged = true;
+      } else if (currentState.intensity !== intensity) {
+        // Update intensity if it changed
+        console.log('📈 Updating snow intensity:', {
+          from: currentState.intensity,
+          to: intensity
+        });
+        newState.intensity = intensity;
+        stateChanged = true;
       }
-    } else if (state.startTime && !state.recoveryStartTime) {
+    } else if (currentState.startTime && !currentState.recoveryStartTime) {
       // Snow has just stopped - start recovery period
-      console.log('Snow has stopped, starting recovery period');
-      state = {
+      console.log('🔚 Snow has stopped, starting recovery period');
+      newState = {
         startTime: null,
-        intensity: state.intensity,  // Keep the last known intensity for recovery calculation
+        intensity: currentState.intensity,  // Keep the last known intensity for recovery calculation
         lastUpdate: now,
         recoveryStartTime: now
       };
-      await setSnowTrackingState(state);
-    } else if (!state.startTime && !hasSnow && state.recoveryStartTime) {
+      stateChanged = true;
+    } else if (!currentState.startTime && !hasSnow && currentState.recoveryStartTime) {
       // In recovery period - check if it's complete
-      const recoveryDuration = SNOW_RECOVERY.DURATION[state.intensity ?? 'MODERATE'];
-      const timeInRecovery = now - state.recoveryStartTime;
-      console.log('Checking recovery progress:', {
+      const recoveryDuration = SNOW_RECOVERY.DURATION[currentState.intensity ?? 'MODERATE'];
+      const timeInRecovery = now - currentState.recoveryStartTime;
+      
+      console.log('🔄 Checking recovery progress:', {
         timeInRecovery: Math.floor(timeInRecovery / 1000),
         recoveryDuration: Math.floor(recoveryDuration / 1000),
-        intensity: state.intensity
+        intensity: currentState.intensity
       });
 
       if (timeInRecovery >= recoveryDuration) {
-        console.log('Recovery period complete, resetting state');
-        state = {
+        console.log('✅ Recovery period complete, resetting state');
+        newState = {
           startTime: null,
           intensity: null,
           lastUpdate: now,
           recoveryStartTime: null
         };
-        await setSnowTrackingState(state);
+        stateChanged = true;
       }
     }
 
-    // Update lastUpdate even if no other changes
-    if (state.lastUpdate !== now) {
-      state.lastUpdate = now;
-      await setSnowTrackingState(state);
+    // Only update lastUpdate if other changes occurred
+    if (stateChanged) {
+      newState.lastUpdate = now;
+      
+      console.log('💾 State update summary:', {
+        timestamp: new Date(now).toISOString(),
+        changes: {
+          startTime: {
+            from: currentState.startTime ? new Date(currentState.startTime).toISOString() : null,
+            to: newState.startTime ? new Date(newState.startTime).toISOString() : null
+          },
+          intensity: {
+            from: currentState.intensity,
+            to: newState.intensity
+          },
+          recoveryStartTime: {
+            from: currentState.recoveryStartTime ? new Date(currentState.recoveryStartTime).toISOString() : null,
+            to: newState.recoveryStartTime ? new Date(newState.recoveryStartTime).toISOString() : null
+          }
+        }
+      });
+
+      await setSnowTrackingState(newState);
+    } else {
+      console.log('ℹ️ No state changes needed');
     }
   } catch (error) {
-    console.error('Error in updateSnowTracking:', error);
+    console.error('❌ Error in updateSnowTracking:', error);
   }
 }
 

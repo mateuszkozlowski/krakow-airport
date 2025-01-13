@@ -152,22 +152,45 @@ function formatTimeDescription(start: Date, end: Date, language: string, t: Tran
     });
   };
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
+  const now = new Date();
+  
+  // Get dates in Warsaw timezone
   const startTime = formatTime(start);
   const endTime = formatTime(end);
+  
+  // Create dates in Warsaw timezone for comparison
+  const warsawNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+  const warsawTomorrow = new Date(warsawNow);
+  warsawTomorrow.setDate(warsawTomorrow.getDate() + 1);
+  
+  // Get day numbers for comparison
+  const startDay = new Date(start.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' })).getDate();
+  const endDay = new Date(end.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' })).getDate();
+  const nowDay = warsawNow.getDate();
+  const tomorrowDay = warsawTomorrow.getDate();
 
+  // If the period is current (starts before or at current time)
+  if (start.getTime() <= now.getTime()) {
+    if (endDay === nowDay) {
+      return language === 'pl' ? `do ${endTime}` : `until ${endTime}`;
+    } else if (endDay === tomorrowDay) {
+      return language === 'pl' ? `do jutra ${endTime}` : `until tomorrow ${endTime}`;
+    } else {
+      return language === 'pl' ? `do ${t.nextDay} ${endTime}` : `until ${t.nextDay} ${endTime}`;
+    }
+  }
+
+  // For future periods
   // Same day
-  if (start.getDate() === end.getDate()) {
-    const prefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
+  if (startDay === endDay) {
+    const prefix = startDay === nowDay ? t.today : t.tomorrow;
     return `${prefix} ${startTime} - ${endTime}`;
   }
   
   // Crosses midnight
-  const startPrefix = start.getDate() === today.getDate() ? t.today : t.tomorrow;
-  const endPrefix = end.getDate() === tomorrow.getDate() ? t.tomorrow : t.nextDay;
+  const startPrefix = startDay === nowDay ? t.today : t.tomorrow;
+  const endPrefix = endDay === tomorrowDay ? t.tomorrow : t.nextDay;
+
   return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
 }
 
@@ -543,43 +566,39 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   );
 
   const formatDateTime = (date: Date, isEndTime: boolean = false) => {
+    const formatTime = (date: Date) => {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const time = date.toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Warsaw'
-    });
+
+    const time = formatTime(date);
 
     // Convert the input date to Warsaw time for day comparison
     const warsawDate = new Date(date.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
     const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
     const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
 
-    const isToday = warsawDate.getDate() === warsawToday.getDate() &&
-                    warsawDate.getMonth() === warsawToday.getMonth() &&
-                    warsawDate.getFullYear() === warsawToday.getFullYear();
-                    
-    const isTomorrow = warsawDate.getDate() === warsawTomorrow.getDate() &&
-                       warsawDate.getMonth() === warsawTomorrow.getMonth() &&
-                       warsawDate.getFullYear() === warsawTomorrow.getFullYear();
+    const isToday = warsawDate.getDate() === warsawToday.getDate();
+    const isTomorrow = warsawDate.getDate() === warsawTomorrow.getDate();
 
     if (isEndTime) {
       if (isToday) {
-        return `${t.until} ${time}`;
+        return language === 'pl' 
+          ? `do ${time}`
+          : `until ${time}`;
       } else if (isTomorrow) {
-        return `${t.until} ${t.tomorrow} ${time}`;
+        return language === 'pl'
+          ? `do jutra ${time}`
+          : `until tomorrow ${time}`;
       } else {
-        return `${t.until} ${date.toLocaleDateString('en-GB', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Europe/Warsaw'
-        })}`;
+        return language === 'pl'
+          ? `do ${t.nextDay} ${time}`
+          : `until ${t.nextDay} ${time}`;
       }
     }
 
@@ -588,14 +607,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     } else if (isTomorrow) {
       return `${t.tomorrow} ${time}`;
     } else {
-      return date.toLocaleDateString('en-GB', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/Warsaw'
-      });
+      return `${t.nextDay} ${time}`;
     }
   };
 
@@ -825,18 +837,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                   <span className="text-sm font-medium text-slate-200">
-                                    {period.from.getTime() < new Date().getTime()
-                                      ? formatDateTime(period.to, true)
-                                      : `${formatDateTime(period.from)} - ${
-                                          period.from.toDateString() !== period.to.toDateString() 
-                                            ? formatDateTime(period.to)
-                                            : period.to.toLocaleTimeString('en-GB', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                timeZone: 'Europe/Warsaw'
-                                              })
-                                        }`
-                                  }
+                                    {period.timeDescription}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 w-full sm:w-auto">

@@ -479,7 +479,7 @@ export const translations = {
         probabilityChance: "% szans na wystąpienie tych warunków",
         operationalImpacts: "Wpływ na operacje",
         // Time formats
-        nextDay: "Następny dzień",
+        nextDay: "Jutro",
         // Weather phenomena descriptions
         windConditions: "Wiatr",
         visibilityConditions: "Widoczność",

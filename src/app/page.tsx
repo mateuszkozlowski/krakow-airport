@@ -254,13 +254,15 @@ export default function Page() {
     };
 
     const formatTimeRange = () => {
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const now = new Date();
       
-      const warsawDate = new Date(periodStart.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-      const warsawToday = new Date(today.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
-      const warsawTomorrow = new Date(tomorrow.toLocaleString('en-GB', { timeZone: 'Europe/Warsaw' }));
+      // Create dates in Warsaw timezone for comparison
+      const warsawNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+      const warsawTomorrow = new Date(warsawNow);
+      warsawTomorrow.setDate(warsawTomorrow.getDate() + 1);
+      
+      const warsawPeriodStart = new Date(periodStart.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+      const warsawPeriodEnd = new Date(periodEnd.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
       
       // If period is happening now
       if (periodStart <= now && periodEnd > now) {
@@ -271,13 +273,13 @@ export default function Page() {
         });
         
         // If ends today
-        if (periodEnd.getDate() === today.getDate()) {
+        if (warsawPeriodEnd.getDate() === warsawNow.getDate()) {
           return language === 'pl' 
             ? `do ${endTime} dzisiaj`
             : `until ${endTime} today`;
         }
         // If ends tomorrow
-        if (periodEnd.getDate() === tomorrow.getDate()) {
+        if (warsawPeriodEnd.getDate() === warsawTomorrow.getDate()) {
           return language === 'pl'
             ? `do ${endTime} jutro`
             : `until ${endTime} tomorrow`;
@@ -317,12 +319,12 @@ export default function Page() {
       const startTime = periodStart.toLocaleTimeString('en-GB', timeFormat);
       const endTime = periodEnd.toLocaleTimeString('en-GB', timeFormat);
 
-      if (isSameDay(warsawDate, warsawToday)) {
+      if (isSameDay(warsawPeriodStart, warsawNow)) {
         return language === 'pl'
           ? `dzisiaj w godzinach ${startTime} do ${endTime}`
           : `today between ${startTime} and ${endTime}`;
       }
-      if (isSameDay(warsawDate, warsawTomorrow)) {
+      if (isSameDay(warsawPeriodStart, warsawTomorrow)) {
         return language === 'pl'
           ? `jutro w godzinach ${startTime} do ${endTime}`
           : `tomorrow between ${startTime} and ${endTime}`;
