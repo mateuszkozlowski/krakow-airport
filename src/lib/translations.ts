@@ -360,6 +360,9 @@ export const translations = {
             thatMayOccur: "that may occur at times",
             temporaryConditions: "Temporary adverse weather conditions may occur later in the day",
             checkStatus: "Please check your flight status directly with your airline for the latest information"
+        },
+        twitter: {
+            conditionsImproved: "KRK.flights UPDATE: Weather conditions have improved. Normal operations resuming. Check krk.flights for details."
         }
     },
     pl: {
@@ -708,6 +711,9 @@ export const translations = {
             thatMayOccur: "które mogą występować okresowo",
             temporaryConditions: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
             checkStatus: "Zalecamy sprawdzenie statusu lotu w celu uzyskania informacji o możliwych zmianach"
+        },
+        twitter: {
+            conditionsImproved: "KRK.flights AKTUALIZACJA: Warunki pogodowe uległy poprawie. Operacje wracają do normy. Szczegóły na krk.flights"
         }
     }
 } as const; 

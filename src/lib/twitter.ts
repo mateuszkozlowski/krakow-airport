@@ -223,84 +223,91 @@ function formatTimeRange(periods: AlertPeriod[]): string {
   return timeText;
 }
 
+function formatTwitterMessage(
+  assessment: RiskAssessment,
+  periods: { start: string; end: string; level: number }[],
+  language: 'en' | 'pl'
+): string {
+  const emoji = assessment.level === 4 ? '⛔' : '⚠️';
+  const timeRanges = periods
+    .map(p => {
+      const start = new Date(p.start);
+      const end = new Date(p.end);
+      return `${start.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}`;
+    })
+    .join(', ');
+
+  return `KRK.flights ALERT!\n${timeRanges}\n${emoji} ${assessment.message}\nWięcej/More: krk.flights`;
+}
+
 export async function postWeatherAlert(
   assessment: RiskAssessment,
-  language: 'en' | 'pl' = 'pl',
-  alertPeriods: { start: string; end: string; level: number }[] = []
+  language: 'en' | 'pl',
+  periods: { start: string; end: string; level: number }[]
 ): Promise<void> {
-  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
-      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
-    console.log('Twitter API credentials not configured, skipping tweet');
-    return;
-  }
-
-  // Filter only high-risk periods (level 3 or 4)
-  const highRiskPeriods = alertPeriods
-    .filter(p => p.level >= 3)
-    .map(p => ({
-      start: new Date(p.start),
-      end: new Date(p.end),
-      level: p.level
-    }));
-
-  if (highRiskPeriods.length === 0) {
-    return;
-  }
-
-  // Check if we can post
-  if (!await canPostTweet()) {
-    return;
-  }
-
-  // Get the highest risk level
-  const maxRiskLevel = Math.max(...highRiskPeriods.map(p => p.level));
-
-  // Check if risk level changed significantly
-  const lastPostedRisk = await getLastPostedRisk();
-  if (lastPostedRisk !== null && Math.abs(maxRiskLevel - lastPostedRisk) < POST_LIMITS.RISK_CHANGE_THRESHOLD) {
-    console.log('Risk level change not significant enough, skipping tweet');
-    return;
-  }
-
-  // Format time ranges
-  const timeRanges = formatTimeRange(highRiskPeriods);
-
-  // Prepare the tweet text
-  const emoji = maxRiskLevel === 4 ? '⛔' : '⚠️';
-  const message = maxRiskLevel === 4 
-    ? 'Możliwe odwołania lotów / Possible flight cancellations'
-    : 'Możliwe znaczne opóźnienia / Significant delays possible';
-
-  const tweetText = `KRK.flights ALERT!\n${timeRanges}\n${emoji} ${message}\nWięcej/More: bit.ly/epkk`;
-
   try {
-    await postTweet(tweetText);
-    await incrementPostCount();
-    await setLastPostedRisk(maxRiskLevel);
-    await setLastPostTime(Date.now());
-    console.log('Weather alert tweet posted successfully');
+    console.log('🐦 Attempting to post weather alert:', {
+      language,
+      riskLevel: assessment.level,
+      periodsCount: periods.length
+    });
+
+    const t = translations[language].twitter;
+    const message = formatTwitterMessage(assessment, periods, language);
+
+    console.log('📝 Formatted Twitter message:', message);
+
+    const response = await fetch('/api/twitter/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('❌ Failed to post Twitter alert:', {
+        status: response.status,
+        error
+      });
+      throw new Error(`Failed to post Twitter alert: ${error}`);
+    }
+
+    console.log('✅ Successfully posted Twitter alert');
   } catch (error) {
-    console.error('Error posting weather alert tweet:', error);
+    console.error('❌ Error posting Twitter alert:', error);
   }
 }
 
-export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<void> {
-  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || 
-      !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
-    return;
-  }
+export async function postAlertDismissal(language: 'en' | 'pl'): Promise<void> {
+  try {
+    console.log('🐦 Attempting to post alert dismissal:', { language });
 
-  const lastPostedRisk = await getLastPostedRisk();
-  if (!lastPostedRisk || lastPostedRisk < 3) {
-    return;
-  }
+    const t = translations[language].twitter;
+    const message = t.conditionsImproved;
 
-  // Check if we can post
-  if (!await canPostTweet()) {
-    return;
-  }
+    console.log('📝 Formatted dismissal message:', message);
 
-  // Since we're not posting dismissal alerts anymore, just reset the last posted risk
-  await setLastPostedRisk(0);
-  console.log('Alert state reset without posting dismissal tweet');
+    const response = await fetch('/api/twitter/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('❌ Failed to post dismissal:', {
+        status: response.status,
+        error
+      });
+      throw new Error(`Failed to post dismissal: ${error}`);
+    }
+
+    console.log('✅ Successfully posted dismissal');
+  } catch (error) {
+    console.error('❌ Error posting dismissal:', error);
+  }
 } 

@@ -825,15 +825,19 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
     if (isTwitterCron) {
       // For Twitter cron jobs, use the absolute URL
       weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://krk.flights'}/api/weather`;
+      console.log('🐦 Twitter Cron Job - Using URL:', weatherUrl);
     } else if (typeof window === 'undefined') {
       // Server-side: use internal API route
       weatherUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/weather`;
+      console.log('🖥️ Server-side - Using URL:', weatherUrl);
     } else {
       // Client-side: use relative URL
       weatherUrl = '/api/weather';
+      console.log('🌐 Client-side - Using relative URL');
     }
     
     // Fetch both TAF and Open-Meteo data
+    console.log('📡 Fetching weather data...');
     const [weatherResponse, openMeteoData] = await Promise.all([
       fetch(weatherUrl, {
         headers: {
@@ -845,14 +849,67 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
     ]);
 
     if (!weatherResponse.ok) {
+      console.error('❌ Weather API response not OK:', {
+        status: weatherResponse.status,
+        statusText: weatherResponse.statusText
+      });
       throw new Error('Weather data fetch failed');
     }
 
     const data = await weatherResponse.json();
-    const { metar, taf } = data;
+    console.log('✅ Weather data fetched successfully');
 
+    const { metar, taf } = data;
     const currentWeather: WeatherData = metar.data[0];
     const forecast: TAFData = taf.data[0];
+
+    // Process current conditions for Twitter alerts
+    const currentAssessment = assessWeatherRisk(currentWeather, language);
+    console.log('🔄 Current weather assessment:', {
+      language,
+      riskLevel: currentAssessment.level,
+      isTwitterCron
+    });
+
+    if (isTwitterCron) {
+      console.log('🐦 Processing Twitter alerts...');
+      // Post alert for current conditions if needed
+      await postWeatherAlert(currentAssessment, language, [{
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        level: currentAssessment.level
+      }]);
+      console.log('✅ Current conditions alert processed');
+
+      // Process forecast periods
+      const tafPeriods = processForecast(forecast, language);
+      const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
+      const mergedForecast = mergeConsecutiveSimilarPeriods(mergeOverlappingPeriods(enhancedForecast));
+
+      // Check future periods for high risk conditions
+      const highRiskPeriods = mergedForecast
+        .filter(period => period.riskLevel.level >= 3)
+        .map(period => ({
+          start: period.from.toISOString(),
+          end: period.to.toISOString(),
+          level: period.riskLevel.level
+        }));
+
+      console.log('🔍 Found high risk periods:', highRiskPeriods.length);
+
+      if (highRiskPeriods.length > 0) {
+        console.log('🚨 Posting alert for high risk periods');
+        await postWeatherAlert(mergedForecast[0].riskLevel, language, highRiskPeriods);
+      }
+
+      // Check if conditions improved
+      if (currentAssessment.level < 3) {
+        console.log('✨ Conditions improved, posting dismissal');
+        await postAlertDismissal(language);
+      }
+    }
+
+    // Continue with normal processing...
 
     // First process TAF data
     console.log('Processing TAF data:', {
@@ -902,33 +959,6 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
       changeType: p.changeType,
       phenomena: p.conditions.phenomena
     })));
-
-    const currentAssessment = assessWeatherRisk(currentWeather, language);
-    
-    // Post alert for current conditions if needed
-    await postWeatherAlert(currentAssessment, language, [{
-      start: new Date().toISOString(),
-      end: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Current conditions valid for 30 minutes
-      level: currentAssessment.level
-    }]);
-
-    // Check future periods for high risk conditions
-    const highRiskPeriods = mergedForecast
-      .filter(period => period.riskLevel.level >= 3)
-      .map(period => ({
-        start: period.from.toISOString(),
-        end: period.to.toISOString(),
-        level: period.riskLevel.level
-      }));
-
-    if (highRiskPeriods.length > 0) {
-      await postWeatherAlert(mergedForecast[0].riskLevel, language, highRiskPeriods);
-    }
-
-    // Check if conditions improved
-    if (currentAssessment.level < 3) {
-      await postAlertDismissal(language);
-    }
 
     return {
       current: {
