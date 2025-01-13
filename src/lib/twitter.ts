@@ -114,37 +114,25 @@ async function postTweet(text: string): Promise<void> {
     oauth_version: '1.0'
   };
 
-  // Parameters for the request
-  const params = {
+  // Create parameter string for signature
+  const params = new URLSearchParams({
     ...oauth,
     text
-  };
-
-  // Sort parameters
-  const sortedParams = Object.keys(params)
-    .sort()
-    .reduce<Record<string, string>>((acc, key) => {
-      const value = params[key as keyof typeof params];
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-
-  // Create parameter string
-  const paramString = Object.entries(sortedParams)
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-    .join('&');
+  });
+  params.sort();
 
   // Create signature base string
   const signatureBaseString = [
     'POST',
-    encodeURIComponent(TWITTER_API_URL),
-    encodeURIComponent(paramString)
-  ].join('&');
+    TWITTER_API_URL,
+    params.toString()
+  ].map(encodeURIComponent).join('&');
 
   // Create signing key
-  const signingKey = `${encodeURIComponent(process.env.TWITTER_API_SECRET!)}&${encodeURIComponent(process.env.TWITTER_ACCESS_SECRET!)}`;
+  const signingKey = [
+    process.env.TWITTER_API_SECRET!,
+    process.env.TWITTER_ACCESS_SECRET!
+  ].map(encodeURIComponent).join('&');
 
   // Generate signature
   const encoder = new TextEncoder();
@@ -163,13 +151,12 @@ async function postTweet(text: string): Promise<void> {
   );
 
   const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
-
-  // Add signature to OAuth parameters
   oauth.oauth_signature = signatureBase64;
 
   // Create Authorization header
   const authHeader = 'OAuth ' + Object.entries(oauth)
-    .map(([key, value]) => `${encodeURIComponent(key)}="${encodeURIComponent(value)}"`)
+    .filter(([_, value]) => value !== undefined)
+    .map(([key, value]) => `${encodeURIComponent(key)}="${encodeURIComponent(value!)}"`)
     .join(', ');
 
   const response = await fetch(TWITTER_API_URL, {
@@ -188,6 +175,7 @@ async function postTweet(text: string): Promise<void> {
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
       error,
+      signatureBaseString,
       authHeader: authHeader.replace(/oauth_consumer_key="[^"]+"/g, 'oauth_consumer_key="REDACTED"')
         .replace(/oauth_token="[^"]+"/g, 'oauth_token="REDACTED"')
         .replace(/oauth_signature="[^"]+"/g, 'oauth_signature="REDACTED"')
