@@ -272,13 +272,27 @@ export async function postWeatherAlert(
       body: JSON.stringify({ message }),
     });
 
-    const responseData = await response.json();
-    console.log('🐦 Twitter API Response:', {
+    // Log raw response for debugging
+    const rawResponse = await response.text();
+    console.log('🔍 Raw Twitter API Response:', {
       status: response.status,
       statusText: response.statusText,
-      data: responseData,
+      rawResponse,
       timestamp: new Date().toISOString()
     });
+
+    let responseData;
+    try {
+      responseData = JSON.parse(rawResponse);
+    } catch (error: unknown) {
+      const parseError = error instanceof Error ? error : new Error('Unknown parse error');
+      console.error('❌ Failed to parse Twitter API response:', {
+        parseError,
+        rawResponse,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(`Failed to parse Twitter API response: ${parseError.message}`);
+    }
 
     if (!response.ok) {
       console.error('❌ Failed to post Twitter alert:', {
@@ -329,13 +343,27 @@ export async function postAlertDismissal(language: 'en' | 'pl'): Promise<void> {
       body: JSON.stringify({ message }),
     });
 
-    const responseData = await response.json();
-    console.log('🐦 Twitter API Response:', {
+    // Log raw response for debugging
+    const rawResponse = await response.text();
+    console.log('🔍 Raw Twitter API Response:', {
       status: response.status,
       statusText: response.statusText,
-      data: responseData,
+      rawResponse,
       timestamp: new Date().toISOString()
     });
+
+    let responseData;
+    try {
+      responseData = JSON.parse(rawResponse);
+    } catch (error: unknown) {
+      const parseError = error instanceof Error ? error : new Error('Unknown parse error');
+      console.error('❌ Failed to parse Twitter API response:', {
+        parseError,
+        rawResponse,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(`Failed to parse Twitter API response: ${parseError.message}`);
+    }
 
     if (!response.ok) {
       console.error('❌ Failed to post Twitter dismissal:', {
