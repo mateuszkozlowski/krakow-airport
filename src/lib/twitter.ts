@@ -237,6 +237,11 @@ export async function postWeatherAlert(
   // Add airport hashtag
   tweetText += '\n\n#KRK #KrakowAirport';
 
+  // Truncate tweet text to 140 characters
+  if (tweetText.length > 140) {
+    tweetText = tweetText.slice(0, 137) + '...';
+  }
+
   try {
     await postTweet(tweetText);
     await incrementPostCount();
