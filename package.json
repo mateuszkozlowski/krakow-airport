@@ -33,7 +33,6 @@
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "twitter-api-v2": "^1.19.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

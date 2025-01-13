@@ -1,15 +1,8 @@
-import { TwitterApi } from 'twitter-api-v2';
 import { RiskAssessment } from './types/weather';
 import { translations } from './translations';
 import { redis, validateRedisConnection } from './cache';
 
-// Initialize Twitter client
-const twitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY || '',
-  appSecret: process.env.TWITTER_API_SECRET || '',
-  accessToken: process.env.TWITTER_ACCESS_TOKEN || '',
-  accessSecret: process.env.TWITTER_ACCESS_SECRET || '',
-});
+const TWITTER_API_URL = 'https://api.twitter.com/2/tweets';
 
 const REDIS_KEYS = {
   LAST_POSTED_RISK: 'twitter_last_posted_risk',
@@ -19,7 +12,7 @@ const REDIS_KEYS = {
 
 const POST_LIMITS = {
   MAX_MONTHLY_POSTS: 90, // Keep 10 posts as buffer
-  MIN_POST_INTERVAL: 15 * 60 * 1000, // 15 minutes between posts (reduced from 30)
+  MIN_POST_INTERVAL: 15 * 60 * 1000, // 15 minutes between posts
   RISK_CHANGE_THRESHOLD: 1 // Only post if risk level changes by this much
 } as const;
 
@@ -100,6 +93,33 @@ async function canPostTweet(): Promise<boolean> {
   return true;
 }
 
+async function postTweet(text: string): Promise<void> {
+  const oauth1Header = await generateOAuth1Header(
+    'POST',
+    TWITTER_API_URL,
+    {
+      text
+    },
+    process.env.TWITTER_API_KEY!,
+    process.env.TWITTER_API_SECRET!,
+    process.env.TWITTER_ACCESS_TOKEN!,
+    process.env.TWITTER_ACCESS_SECRET!
+  );
+
+  const response = await fetch(TWITTER_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': oauth1Header,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Twitter API error: ${response.status} ${response.statusText}`);
+  }
+}
+
 export async function postWeatherAlert(
   assessment: RiskAssessment,
   language: 'en' | 'pl' = 'pl',
@@ -153,7 +173,7 @@ export async function postWeatherAlert(
   tweetText += '\n\n#KRK #KrakowAirport';
 
   try {
-    await twitterClient.v2.tweet(tweetText);
+    await postTweet(tweetText);
     await incrementPostCount();
     await setLastPostedRisk(level);
     await setLastPostTime(Date.now());
@@ -183,7 +203,7 @@ export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<
     : '✅ Weather conditions have improved. Flight operations returning to normal.\n\n#KRK #KrakowAirport';
 
   try {
-    await twitterClient.v2.tweet(tweetText);
+    await postTweet(tweetText);
     await incrementPostCount();
     await setLastPostedRisk(0);
     await setLastPostTime(Date.now());
@@ -191,4 +211,77 @@ export async function postAlertDismissal(language: 'en' | 'pl' = 'pl'): Promise<
   } catch (error) {
     console.error('Error posting alert dismissal tweet:', error);
   }
+}
+
+// OAuth 1.0a signature generation
+async function generateOAuth1Header(
+  method: string,
+  url: string,
+  params: Record<string, string>,
+  apiKey: string,
+  apiSecret: string,
+  accessToken: string,
+  accessSecret: string
+): Promise<string> {
+  interface OAuthParams {
+    oauth_consumer_key: string;
+    oauth_nonce: string;
+    oauth_signature_method: string;
+    oauth_timestamp: string;
+    oauth_token: string;
+    oauth_version: string;
+    oauth_signature?: string;
+  }
+
+  const oauth: OAuthParams = {
+    oauth_consumer_key: apiKey,
+    oauth_nonce: Math.random().toString(36).substring(2),
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_token: accessToken,
+    oauth_version: '1.0'
+  };
+
+  const allParams = { ...params, ...oauth };
+  const sortedParams = Object.entries(allParams)
+    .filter(([_, value]) => value !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: value as string
+    }), {} as Record<string, string>);
+
+  const paramString = Object.entries(sortedParams)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+
+  const signatureBaseString = [
+    method.toUpperCase(),
+    encodeURIComponent(url),
+    encodeURIComponent(paramString)
+  ].join('&');
+
+  const signingKey = `${encodeURIComponent(apiSecret)}&${encodeURIComponent(accessSecret)}`;
+  const signature = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(signingKey),
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  ).then(key => 
+    crypto.subtle.sign(
+      'HMAC',
+      key,
+      new TextEncoder().encode(signatureBaseString)
+    )
+  ).then(buffer => 
+    btoa(String.fromCharCode(...new Uint8Array(buffer)))
+  );
+
+  oauth.oauth_signature = signature;
+
+  return 'OAuth ' + Object.entries(oauth)
+    .filter(([_, value]) => value !== undefined)
+    .map(([key, value]) => `${encodeURIComponent(key)}="${encodeURIComponent(value as string)}"`)
+    .join(', ');
 } 
