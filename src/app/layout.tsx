@@ -47,11 +47,10 @@ export default function RootLayout({
           src="https://cdn-cookieyes.com/client_data/5b7fbeaf30a93710701352a2/script.js"
           strategy="afterInteractive"
         />
-        
+        <SpeedInsights/>
         <Analytics/>
       </head>
       <body className={inter.className}>
-      <SpeedInsights/>
         <LanguageProvider>
           {children}
         </LanguageProvider>
