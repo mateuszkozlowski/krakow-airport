@@ -7,8 +7,8 @@ export const config = {
 // This function will be called by Vercel Cron
 export default async function handler(req: Request) {
   try {
-    // Only allow POST requests from Vercel Cron
-    if (req.method !== 'POST') {
+    // Allow both GET and POST requests from Vercel Cron
+    if (req.method !== 'POST' && req.method !== 'GET') {
       return new Response('Method not allowed', { status: 405 });
     }
 
