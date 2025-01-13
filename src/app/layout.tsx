@@ -6,6 +6,8 @@ import Clarity from '@microsoft/clarity';
 import { Metadata } from 'next';
 import Script from 'next/script';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 
 const projectId = "ploo7g9ey8"
 
@@ -45,6 +47,8 @@ export default function RootLayout({
           src="https://cdn-cookieyes.com/client_data/5b7fbeaf30a93710701352a2/script.js"
           strategy="afterInteractive"
         />
+        <SpeedInsights/>
+        <Analytics/>
       </head>
       <body className={inter.className}>
         <LanguageProvider>
