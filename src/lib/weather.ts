@@ -2683,52 +2683,74 @@ interface SnowTrackingState {
 
 const SNOW_TRACKING_KEY = 'snow_tracking_state_epkk';
 
-// Add in-memory fallback for snow tracking
-let inMemorySnowTrackingState: SnowTrackingState = {
-  startTime: null,
-  intensity: null,
-  lastUpdate: Date.now(),
-  recoveryStartTime: null
-};
-
-// Update getSnowTrackingState
+// Helper function to get snow tracking state from Redis
 async function getSnowTrackingState(): Promise<SnowTrackingState> {
+  const defaultState: SnowTrackingState = {
+    startTime: null,
+    intensity: null,
+    lastUpdate: Date.now(),
+    recoveryStartTime: null
+  };
+
   try {
-    if (redis && await validateRedisConnection()) {
-      const state = await redis.get<SnowTrackingState>(SNOW_TRACKING_KEY);
-      if (state && isValidSnowTrackingState(state)) {
-        return state;
-      }
+    // First check if Redis is available
+    if (!redis) {
+      console.warn('⚠️ Redis not initialized, using in-memory state');
+      return defaultState;
     }
+
+    if (!await validateRedisConnection()) {
+      console.warn('⚠️ Redis connection failed, using in-memory state');
+      return defaultState;
+    }
+
+    // Try to get the state
+    const state = await redis.get<SnowTrackingState>(SNOW_TRACKING_KEY);
+    
+    // Validate the state structure
+    if (state && 
+        typeof state === 'object' && 
+        ('startTime' in state) && 
+        ('intensity' in state) && 
+        ('lastUpdate' in state) && 
+        ('recoveryStartTime' in state)) {
+      console.log('✅ Retrieved snow tracking state from Redis:', state);
+      return state;
+    }
+
+    console.warn('⚠️ Invalid state in Redis, using default state');
+    return defaultState;
   } catch (error) {
-    console.warn('⚠️ Redis error, using in-memory state:', error);
+    console.error('Failed to get snow tracking state from Redis:', error);
+    return defaultState;
   }
-  
-  return inMemorySnowTrackingState;
 }
 
-// Update setSnowTrackingState
+// Helper function to update snow tracking state in Redis
 async function setSnowTrackingState(state: SnowTrackingState): Promise<void> {
   try {
-    if (redis && await validateRedisConnection()) {
-      await redis.set(SNOW_TRACKING_KEY, state, { ex: 24 * 60 * 60 });
-    } else {
-      inMemorySnowTrackingState = state;
+    // First check if Redis is available
+    if (!redis) {
+      console.warn('⚠️ Redis not initialized, state update skipped');
+      return;
     }
-  } catch (error) {
-    console.warn('⚠️ Failed to persist snow tracking state:', error);
-    inMemorySnowTrackingState = state;
-  }
-}
 
-// Add helper function to validate state structure
-function isValidSnowTrackingState(state: any): state is SnowTrackingState {
-  return state &&
-    typeof state === 'object' &&
-    'startTime' in state &&
-    'intensity' in state &&
-    'lastUpdate' in state &&
-    'recoveryStartTime' in state;
+    if (!await validateRedisConnection()) {
+      console.warn('⚠️ Redis connection failed, state update skipped');
+      return;
+    }
+
+    // Validate state before saving
+    if (!state || typeof state !== 'object') {
+      console.error('Invalid state object:', state);
+      return;
+    }
+
+    await redis.set(SNOW_TRACKING_KEY, state, { ex: 24 * 60 * 60 }); // 24 hour expiry
+    console.log('✅ Updated snow tracking state in Redis:', state);
+  } catch (error) {
+    console.error('Failed to update snow tracking state in Redis:', error);
+  }
 }
 
 // Update the snow tracking function to handle errors gracefully
