@@ -601,26 +601,26 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
   });
 }
 
-// Consolidated calculateWindRisk function that handles both OpenMeteo and TAF data
-function calculateWindRisk(wind: HourlyCondition | { speed_kts: number; gust_kts?: number } | undefined): number {
-  if (!wind) return 0;
+// Helper function to calculate wind risk from both OpenMeteo and TAF data
+function calculateWindRisk(wind: HourlyCondition | { speed_kts: number; gust_kts?: number } | undefined): 1 | 2 | 3 | 4 {
+  if (!wind) return 1; // Return lowest risk level when no wind data
 
   // Handle OpenMeteo data
   if ('windSpeed' in wind && 'windGusts' in wind) {
     const { windSpeed, windGusts } = wind;
-    if (windGusts >= 35 || windSpeed >= MINIMUMS.MAX_WIND) return 100;
-    if (windGusts >= 25 || windSpeed >= 25) return 85;
-    if (windSpeed >= 15) return 50;
-    return 0;
+    if (windGusts >= 35 || windSpeed >= MINIMUMS.MAX_WIND) return 4;
+    if (windGusts >= 25 || windSpeed >= 25) return 3;
+    if (windSpeed >= 15) return 2;
+    return 1;
   }
 
   // Handle TAF/METAR data
   const { speed_kts, gust_kts } = wind;
-  if (gust_kts && gust_kts >= 40 || speed_kts >= 35) return 100;
-  if (gust_kts && gust_kts >= 35) return 85;
-  if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) return 70;
-  if (speed_kts >= 15) return 50;
-  return 0;
+  if (gust_kts && gust_kts >= 40 || speed_kts >= 35) return 4;
+  if (gust_kts && gust_kts >= 35) return 3;
+  if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) return 3;
+  if (speed_kts >= 15) return 2;
+  return 1;
 }
 
 // Helper function to calculate precipitation-specific risk from OpenMeteo data
@@ -1017,7 +1017,6 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
   });
 
   const t = translations[language];
-  const warnings = t.operationalWarnings;
   const changes: ForecastChange[] = [];
   
   // First, get all valid periods and sort them
@@ -1028,38 +1027,55 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
         ...period,
         from: adjustToWarsawTime(new Date(period.timestamp!.from)),
         to: adjustToWarsawTime(new Date(period.timestamp!.to)),
-        language
+        language // Add language to each period
       };
+      console.log('Mapped period:', {
+        from: mappedPeriod.from,
+        to: mappedPeriod.to,
+        isTemporary: period.change?.indicator?.code === 'TEMPO',
+        probability: period.change?.probability,
+        changeType: period.change?.indicator?.code,
+        conditions: period.conditions,
+        language
+      });
       return mappedPeriod;
     })
     .sort((a, b) => a.from.getTime() - b.from.getTime());
 
   if (validPeriods.length === 0) return [];
 
-  // Process each period
-  validPeriods.forEach((period, index) => {
+  // Process base periods (non-TEMPO) including BECMG
+  const basePeriods = validPeriods.filter(p => 
+    !p.change?.indicator?.code || p.change.indicator.code === 'BECMG'
+  );
+
+  // Process each base period
+  basePeriods.forEach((period, index) => {
     const conditions = new Set<string>();
-    const operationalImpacts = new Set<string>();
-    let riskLevel: 1 | 2 | 3 | 4 = 1;
+    console.log(`Processing base period ${index}:`, {
+      from: period.from,
+      to: period.to,
+      isTemporary: false,
+      probability: undefined,
+      changeType: period.change?.indicator?.code || 'PERSISTENT',
+      language
+    });
 
     // Process visibility
     if (period.visibility?.meters) {
-      const meters = period.visibility.meters;
-      const visDesc = formatVisibility(meters, language);
+      const visDesc = formatVisibility(period.visibility.meters, language);
       if (visDesc) conditions.add(visDesc);
+    }
 
-      // Add visibility-based operational impacts
-      if (meters < MINIMUMS.VISIBILITY) {
-        operationalImpacts.add(warnings.operationsSuspended);
-        operationalImpacts.add(warnings.diversionsLikely);
-        riskLevel = 4;
-      } else if (meters < 1000) {
-        operationalImpacts.add(warnings.possibleDelays);
-        operationalImpacts.add(warnings.someFlightsMayDivert);
-        riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-      } else if (meters < 3000) {
-        operationalImpacts.add(warnings.minorDelaysPossible);
-        riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
+    // Process ceiling/clouds
+    if (period.clouds && period.clouds.length > 0) {
+      const significantCloud = period.clouds
+        .filter(cloud => cloud.code === 'BKN' || cloud.code === 'OVC')
+        .sort((a, b) => (a.base_feet_agl || 0) - (b.base_feet_agl || 0))[0];
+
+      if (significantCloud && significantCloud.base_feet_agl) {
+        const ceilingDesc = formatCeiling(significantCloud.base_feet_agl, language);
+        if (ceilingDesc) conditions.add(ceilingDesc);
       }
     }
 
@@ -1068,85 +1084,155 @@ function processForecast(taf: TAFData | null, language: 'en' | 'pl'): ForecastCh
       for (const condition of period.conditions) {
         const translatedPhenomenon = getWeatherPhenomenonDescription(condition.code, language);
         if (translatedPhenomenon) conditions.add(translatedPhenomenon);
-
-        // Add phenomena-based operational impacts
-        if (['BR', 'FG'].includes(condition.code)) {
-          operationalImpacts.add(warnings.minorDelaysPossible);
-          operationalImpacts.add(warnings.reducedVisibilityMorning);
-          riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
-        }
-        if (condition.code.includes('TS')) {
-          operationalImpacts.add(warnings.operationsSuspended);
-          operationalImpacts.add(warnings.possibleDelays);
-          operationalImpacts.add(warnings.diversionsLikely);
-          riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-        }
-        if (['FZRA', 'FZDZ', 'FZFG'].includes(condition.code)) {
-          operationalImpacts.add(warnings.deicingRequired);
-          operationalImpacts.add(warnings.extendedDelays);
-          riskLevel = Math.max(riskLevel, 4) as 1 | 2 | 3 | 4;
-        }
       }
     }
 
-    // Process wind
-    if (period.wind) {
-      const windDesc = getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts);
-      if (windDesc) conditions.add(windDesc);
+    // Add wind if significant
+    const windDesc = period.wind ? 
+      getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) : 
+      null;
+    if (windDesc) conditions.add(windDesc);
 
-      // Add wind-based operational impacts
-      const { speed_kts, gust_kts } = period.wind;
-      if (gust_kts && gust_kts >= 35 || speed_kts >= MINIMUMS.MAX_WIND) {
-        operationalImpacts.add(warnings.dangerousGusts);
-        operationalImpacts.add(warnings.diversionsLikely);
-        riskLevel = Math.max(riskLevel, 4) as 1 | 2 | 3 | 4;
-      } else if (gust_kts && gust_kts >= 25 || speed_kts >= 25) {
-        operationalImpacts.add(warnings.strongGustsOperations);
-        operationalImpacts.add(warnings.extendedDelays);
-        riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-      } else if (speed_kts >= 15) {
-        operationalImpacts.add(warnings.strongWindsApproaches);
-        operationalImpacts.add(warnings.minorDelaysPossible);
-        riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
-      }
-    }
+    // Calculate risk level using the new sophisticated system
+    const riskLevel = calculateRiskLevel(period, language, t.operationalWarnings);
 
+    // Add period
     const phenomena = Array.from(conditions);
-    const forecastChange: ForecastChange = {
+
+    const forecastChange = {
       timeDescription: formatTimeDescription(period.from, period.to, language),
       from: period.from,
       to: period.to,
       conditions: {
-        phenomena: phenomena.length === 0 ? [getWeatherPhenomenonDescription('NSW', language)] : phenomena
+        phenomena: phenomena.length === 0 && riskLevel.level === 1
+          ? [getWeatherPhenomenonDescription('NSW', language)]
+          : phenomena
       },
-      riskLevel: {
-        level: riskLevel,
-        title: getRiskTitle(riskLevel, language),
-        message: getRiskMessage(riskLevel, language),
-        statusMessage: getRiskStatus(riskLevel, language),
-        color: getRiskColor(riskLevel),
-        operationalImpacts: Array.from(operationalImpacts)
-      },
+      riskLevel,
       changeType: (period.change?.indicator?.code || 'PERSISTENT') as 'TEMPO' | 'BECMG' | 'PERSISTENT',
       visibility: period.visibility,
       ceiling: period.ceiling,
-      isTemporary: period.change?.indicator?.code === 'TEMPO',
-      probability: period.change?.probability,
+      isTemporary: false,
+      probability: undefined,
       wind: period.wind,
-      language
+      operationalImpacts: riskLevel.operationalImpacts,
+      language // Add language to the forecast change
     };
+
+    console.log('Created base forecast change:', {
+      timeDescription: forecastChange.timeDescription,
+      isTemporary: forecastChange.isTemporary,
+      probability: forecastChange.probability,
+      changeType: forecastChange.changeType,
+      phenomena: forecastChange.conditions.phenomena,
+      riskLevel: forecastChange.riskLevel,
+      language
+    });
 
     changes.push(forecastChange);
   });
 
+  // Process TEMPO periods with the new risk assessment
+  const tempoPeriods = validPeriods.filter(p => 
+    p.change?.indicator?.code === 'TEMPO'
+  );
+  
+  tempoPeriods.forEach(period => {
+    const conditions = new Set<string>();
+    const probability = period.change?.probability;
+
+    // Process conditions similar to base periods
+    if (period.visibility?.meters) {
+      const visDesc = formatVisibility(period.visibility.meters, language);
+      if (visDesc) conditions.add(visDesc);
+    }
+
+    if (period.clouds && period.clouds.length > 0) {
+      const significantCloud = period.clouds
+        .filter(cloud => cloud.code === 'BKN' || cloud.code === 'OVC')
+        .sort((a, b) => (a.base_feet_agl || 0) - (b.base_feet_agl || 0))[0];
+
+      if (significantCloud && significantCloud.base_feet_agl) {
+        const ceilingDesc = formatCeiling(significantCloud.base_feet_agl, language);
+        if (ceilingDesc) conditions.add(ceilingDesc);
+      }
+    }
+
+    if (period.conditions) {
+      for (const condition of period.conditions) {
+        const translatedPhenomenon = getWeatherPhenomenonDescription(condition.code, language);
+        if (translatedPhenomenon) conditions.add(translatedPhenomenon);
+      }
+    }
+
+    const windDesc = period.wind ? 
+      getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) : 
+      null;
+    if (windDesc) conditions.add(windDesc);
+
+    // Calculate risk level using the new sophisticated system
+    const riskLevel = calculateRiskLevel(period, language, t.operationalWarnings);
+
+    const phenomena = Array.from(conditions);
+
+    // Skip TEMPO periods that don't have any significant changes
+    if (phenomena.length === 0 && riskLevel.level === 1) {
+      console.log('Skipping empty TEMPO period:', {
+        from: period.from,
+        to: period.to,
+        probability,
+        language
+      });
+      return;
+    }
+
+    const forecastChange = {
+      timeDescription: formatTimeDescription(period.from, period.to, language),
+      from: period.from,
+      to: period.to,
+      conditions: {
+        phenomena
+      },
+      riskLevel,
+      changeType: 'TEMPO' as const,
+      visibility: period.visibility,
+      ceiling: period.ceiling,
+      isTemporary: true,
+      probability,
+      wind: period.wind,
+      operationalImpacts: riskLevel.operationalImpacts,
+      language // Add language to the forecast change
+    };
+
+    console.log('Created TEMPO forecast change:', {
+      timeDescription: forecastChange.timeDescription,
+      isTemporary: forecastChange.isTemporary,
+      probability: forecastChange.probability,
+      changeType: forecastChange.changeType,
+      phenomena: forecastChange.conditions.phenomena,
+      riskLevel: forecastChange.riskLevel,
+      language
+    });
+
+    changes.push(forecastChange);
+  });
+
+  // Sort changes by start time, end time, and risk level
   return changes.sort((a, b) => {
+    // First sort by start time
     const startTimeCompare = a.from.getTime() - b.from.getTime();
     if (startTimeCompare !== 0) return startTimeCompare;
     
+    // If same start time, sort by end time
+    const endTimeCompare = a.to.getTime() - b.to.getTime();
+    if (endTimeCompare !== 0) return endTimeCompare;
+    
+    // If same time range, TEMPO/PROB periods go after base periods
     if (a.isTemporary !== b.isTemporary) {
       return a.isTemporary ? 1 : -1;
     }
     
+    // If both are TEMPO/PROB or both are base, higher risk level goes first
     return b.riskLevel.level - a.riskLevel.level;
   });
 }
@@ -2276,18 +2362,167 @@ function calculateTimeMultiplier(date: Date): number {
   return seasonalMultiplier * diurnalMultiplier;
 }
 
-// Consolidated calculateVisibilityRisk function
-function calculateVisibilityRisk(visibility: { meters: number } | number | undefined): number {
-  if (!visibility) return 0;
+// Update calculateRiskLevel function to be less aggressive with moderate conditions and handle probabilities
+export function calculateRiskLevel(
+  period: WeatherPeriod, 
+  language: 'en' | 'pl', 
+  warnings: Record<string, string>
+): RiskLevel {
+  const t = translations[language];
   
-  const meters = typeof visibility === 'number' ? visibility : visibility.meters;
+  console.log('Debug - Risk Level Calculation:', {
+    language,
+    translations: t
+  });
+
+  // Calculate base risks
+  const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
+  const windRisk = calculateWindRisk(period.wind);
+  const weatherRisk = calculateWeatherPhenomenaRisk(period.conditions);
+  const ceilingRisk = calculateCeilingRisk(period.clouds);
+
+  // Get probability from TAF
+  const probability = period.change?.probability || 100;
   
-  if (meters <= MINIMUMS.VISIBILITY) return 100;
-  if (meters <= 1000) return 85;
-  if (meters <= 3000) return 70;
-  if (meters <= 5000) return 50;
+  // Calculate initial operational impacts
+  const impacts = calculateOperationalImpacts(period, language, warnings);
+
+  // More realistic probability scaling
+  const probabilityFactor = getProbabilityFactor(probability);
+
+  // Apply probability scaling to risks
+  const scaledVisibilityRisk = visibilityRisk * probabilityFactor;
+  const scaledWindRisk = windRisk * probabilityFactor;
+  const scaledWeatherRisk = weatherRisk * probabilityFactor;
+  const scaledCeilingRisk = ceilingRisk * probabilityFactor;
+
+  // Count severe and moderate conditions using scaled risks
+  const severeConditions = [
+    visibilityRisk >= 85,
+    windRisk >= 85,
+    weatherRisk >= 85,
+  ].filter(Boolean).length;
+
+  const moderateConditions = [
+    visibilityRisk >= 70,
+    windRisk >= 70,
+    weatherRisk >= 70,
+    ceilingRisk >= 70
+  ].filter(Boolean).length;
+
+  // Determine risk level
+  let riskLevel: 1 | 2 | 3 | 4;
+
+  // Automatic level 4 conditions
+  if (
+    (severeConditions >= 2 && probability >= 30) ||
+    (period.conditions?.some(c => 
+      c.code.includes('TS') && 
+      period.clouds?.some(cloud => cloud.type === 'CB')
+    ) && probability >= 30) ||
+    (period.conditions?.some(c => 
+      (c.code.includes('+SN') || c.code.includes('FZRA')) &&
+      period.temperature?.celsius !== undefined && 
+      period.temperature.celsius <= 0
+    ) && probability >= 30) ||
+    (period.visibility?.meters && 
+     period.visibility.meters <= MINIMUMS.VISIBILITY && 
+     probability >= 30) ||
+    (period.clouds?.some(c => 
+      c.base_feet_agl && 
+      c.base_feet_agl <= MINIMUMS.CEILING
+    ) && probability >= 30)
+  ) {
+    riskLevel = 4;
+  }
+  // Level 3 conditions
+  else if (
+    (severeConditions >= 1 && probability >= 30) ||
+    (moderateConditions >= 3 && probability >= 30) ||
+    Math.max(scaledVisibilityRisk, scaledWindRisk, scaledWeatherRisk, scaledCeilingRisk) >= 85
+  ) {
+    riskLevel = 3;
+  }
+  // Level 2 conditions
+  else if (
+    (moderateConditions >= 1 && probability >= 30) ||
+    Math.max(scaledVisibilityRisk, scaledWindRisk, scaledWeatherRisk, scaledCeilingRisk) >= 70
+  ) {
+    riskLevel = 2;
+  }
+  // Level 1 - good conditions
+  else {
+    riskLevel = 1;
+  }
+
+  // Add additional operational impacts based on specific conditions
+  if (period.visibility?.meters && period.visibility.meters < 1500) {
+    impacts.push(t.operationalImpactMessages.reducedCapacity);
+  }
+
+  if (period.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
+    impacts.push(t.operationalImpactMessages.runwayClearing);
+  }
+
+  // Get translations for the risk level
+  const riskTranslations = {
+    1: {
+      title: t.riskLevel1Title,
+      message: t.riskLevel1Message,
+      status: t.riskLevel1Status
+    },
+    2: {
+      title: t.riskLevel2Title,
+      message: t.riskLevel2Message,
+      status: t.riskLevel2Status
+    },
+    3: {
+      title: t.riskLevel3Title,
+      message: t.riskLevel3Message,
+      status: t.riskLevel3Status
+    },
+    4: {
+      title: t.riskLevel4Title,
+      message: t.riskLevel4Message,
+      status: t.riskLevel4Status
+    }
+  };
+
+  console.log('Debug - Final Risk Level:', {
+    level: riskLevel,
+    translations: riskTranslations[riskLevel],
+    language
+  });
+
+  // Return risk level with proper translations
+  return {
+    level: riskLevel,
+    title: riskTranslations[riskLevel].title,
+    message: riskTranslations[riskLevel].message,
+    statusMessage: riskTranslations[riskLevel].status,
+    color: getRiskColor(riskLevel),
+    operationalImpacts: impacts
+  };
+}
+
+// Add helper function for visibility risk calculation
+function calculateVisibilityRisk(meters: number | undefined): number {
+  if (!meters) return 0;
+  if (meters < MINIMUMS.VISIBILITY) return 100;
+  
+  // Exponential scaling when approaching minimums
+  const visibilityRatio = meters / MINIMUMS.VISIBILITY;
+  if (visibilityRatio < 2) { // Less than 2x minimums
+    return Math.min(100, 100 * Math.pow(1.5, -visibilityRatio + 1));
+  }
+  
+  // Linear scaling for better visibility
+  if (meters < 1000) return 80;
+  if (meters < 3000) return 40;
+  if (meters < 5000) return 20;
   return 0;
 }
+
 
 // Add helper function for weather phenomena risk calculation
 function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefined): number {
@@ -2734,155 +2969,4 @@ async function getSnowDurationInfo(): Promise<{
     isInRecovery: false,
     recoveryProgress: 0
   };
-}
-
-// Add helper functions for risk calculations
-function calculateThunderstormRisk(conditions: Array<{ code: string }> | undefined): number {
-  if (!conditions) return 0;
-  
-  const hasThunderstorm = conditions.some(c => c.code.includes('TS'));
-  if (hasThunderstorm) return 100;
-  return 0;
-}
-
-// Add feedback adjustment function (placeholder - can be enhanced with actual historical data)
-function getFeedbackAdjustment(period: WeatherPeriod): number {
-  // This could be enhanced with actual historical data analysis
-  return 0;
-}
-
-// Consolidated calculateRiskLevel function
-export function calculateRiskLevel(
-  period: WeatherPeriod, 
-  language: 'en' | 'pl', 
-  warnings: Record<string, string>
-): RiskLevel {
-  let riskLevel: 1 | 2 | 3 | 4 = 1;
-  const operationalImpacts = new Set<string>();
-  const t = translations[language];
-
-  // Dynamic probability thresholds
-  const visibilityProbabilityThreshold = 30;
-  const thunderstormProbabilityThreshold = isSummer(period.from) ? 40 : 60;
-
-  // Weighted risk factors
-  let visibilityWeight = 1.5;
-  const windWeight = 0.8;
-  const thunderstormWeight = isSummer(period.from) ? 1.2 : 1.0;
-
-  // Adjust visibility weight based on temperature
-  const temperature = period.temperature?.celsius;
-  if (temperature !== undefined && temperature >= -2 && temperature <= 2) {
-    visibilityWeight *= 1.3;
-  }
-
-  // Calculate weighted risk scores
-  const visibilityRisk = calculateVisibilityRisk(period.visibility) * visibilityWeight;
-  const windRisk = calculateWindRisk(period.wind) * windWeight;
-  const weatherPhenomenaRisk = calculateWeatherPhenomenaRisk(period.conditions);
-  const thunderstormRisk = calculateThunderstormRisk(period.conditions) * thunderstormWeight;
-
-  // Add visibility impacts
-  if (period.visibility) {
-    const meters = period.visibility.meters;
-    if (meters < MINIMUMS.VISIBILITY) {
-      operationalImpacts.add(warnings.operationsSuspended);
-      operationalImpacts.add(warnings.diversionsLikely);
-      riskLevel = 4;
-    } else if (meters < 1000) {
-      operationalImpacts.add(warnings.possibleDelays);
-      operationalImpacts.add(warnings.someFlightsMayDivert);
-      riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-    } else if (meters < 3000) {
-      operationalImpacts.add(warnings.minorDelaysPossible);
-      riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
-    }
-  }
-
-  // Add wind impacts
-  if (period.wind) {
-    const { speed_kts, gust_kts } = period.wind;
-    if (gust_kts && gust_kts >= 35 || speed_kts >= MINIMUMS.MAX_WIND) {
-      operationalImpacts.add(warnings.dangerousGusts);
-      operationalImpacts.add(warnings.diversionsLikely);
-      riskLevel = Math.max(riskLevel, 4) as 1 | 2 | 3 | 4;
-    } else if (gust_kts && gust_kts >= 25 || speed_kts >= 25) {
-      operationalImpacts.add(warnings.strongGustsOperations);
-      operationalImpacts.add(warnings.extendedDelays);
-      riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-    } else if (speed_kts >= 15) {
-      operationalImpacts.add(warnings.strongWindsApproaches);
-      operationalImpacts.add(warnings.minorDelaysPossible);
-      riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
-    }
-  }
-
-  // Add weather phenomena impacts
-  if (period.conditions) {
-    // Check for thunderstorms
-    if (period.conditions.some(c => c.code.includes('TS'))) {
-      operationalImpacts.add(warnings.thunderstormConditions);
-      operationalImpacts.add(warnings.possibleDelays);
-      riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-    }
-
-    // Check for snow conditions
-    if (period.conditions.some(c => ['+SN', '+SHSN'].includes(c.code))) {
-      operationalImpacts.add(warnings.runwayClearing);
-      operationalImpacts.add(warnings.deicingDelay);
-      operationalImpacts.add(warnings.reducedCapacity);
-      riskLevel = Math.max(riskLevel, 4) as 1 | 2 | 3 | 4;
-    } else if (period.conditions.some(c => ['SN', 'SHSN'].includes(c.code))) {
-      operationalImpacts.add(warnings.runwayClearing);
-      operationalImpacts.add(warnings.likelyDeicing);
-      operationalImpacts.add(warnings.reducedCapacity);
-      riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
-    }
-
-    // Check for freezing conditions
-    if (period.conditions.some(c => ['FZRA', 'FZDZ', 'FZFG'].includes(c.code))) {
-      operationalImpacts.add(warnings.deicingRequired);
-      operationalImpacts.add(warnings.extendedDelays);
-      riskLevel = Math.max(riskLevel, 4) as 1 | 2 | 3 | 4;
-    }
-
-    // Check for mist/fog
-    if (period.conditions.some(c => ['BR', 'FG'].includes(c.code))) {
-      operationalImpacts.add(warnings.reducedVisibilityOperations);
-      riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
-    }
-  }
-
-  // Add time-based impacts
-  const timeMultiplier = calculateTimeMultiplier(period.from);
-  if (timeMultiplier > 1.2) {
-    const date = period.from;
-    const month = date.getMonth() + 1;
-    const hour = date.getHours();
-    
-    if (month >= 11 || month <= 1) {
-      operationalImpacts.add(warnings.winterOperations);
-    }
-    if (hour >= 3 && hour <= 7) {
-      operationalImpacts.add(warnings.earlyMorningOperations);
-    }
-  }
-
-  // Apply feedback loop adjustments
-  const feedbackAdjustment = getFeedbackAdjustment(period);
-  riskLevel = Math.max(1, Math.min(4, riskLevel + feedbackAdjustment)) as 1 | 2 | 3 | 4;
-
-  return {
-    level: riskLevel,
-    title: getRiskTitle(riskLevel, language),
-    message: getRiskMessage(riskLevel, language),
-    statusMessage: getRiskStatus(riskLevel, language),
-    color: getRiskColor(riskLevel),
-    operationalImpacts: Array.from(operationalImpacts)
-  };
-}
-
-function isSummer(date: Date): boolean {
-  const month = date.getMonth() + 1;
-  return month >= 6 && month <= 8;
 }
