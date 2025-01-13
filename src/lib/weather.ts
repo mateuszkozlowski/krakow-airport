@@ -21,6 +21,7 @@ import { adjustToWarsawTime } from '@/lib/utils/time';
 import { translations } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { redis, validateRedisConnection } from '@/lib/cache';
+import { postWeatherAlert, postAlertDismissal } from './twitter';
 
 type WeatherPhenomenonValue = typeof WEATHER_PHENOMENA[keyof typeof WEATHER_PHENOMENA];
 type WeatherPhenomenon = keyof typeof WEATHER_PHENOMENA;
@@ -892,6 +893,21 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en'): Promise<W
 
     const currentAssessment = assessWeatherRisk(currentWeather, language);
     
+    // Post alert for current conditions if needed
+    await postWeatherAlert(currentAssessment, language, false);
+
+    // Check future periods for high risk conditions
+    for (const period of mergedForecast) {
+      if (period.riskLevel.level >= 3) {
+        await postWeatherAlert(period.riskLevel, language, true);
+      }
+    }
+
+    // Check if conditions improved
+    if (currentAssessment.level < 3) {
+      await postAlertDismissal(language);
+    }
+
     return {
       current: {
         riskLevel: currentAssessment,
@@ -1463,7 +1479,7 @@ function getWeatherDescription(reasons: string[], impacts: string[], language: '
   return allImpacts.join(" • ");
 }
 
-function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
+export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
   const t = translations[language];
   
   console.log('Debug - Weather Risk Assessment:', {
@@ -2333,7 +2349,11 @@ function calculateTimeMultiplier(date: Date): number {
 }
 
 // Update calculateRiskLevel function to be less aggressive with moderate conditions and handle probabilities
-function calculateRiskLevel(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): RiskLevel {
+export function calculateRiskLevel(
+  period: WeatherPeriod, 
+  language: 'en' | 'pl', 
+  warnings: Record<string, string>
+): RiskLevel {
   const t = translations[language];
   
   console.log('Debug - Risk Level Calculation:', {
