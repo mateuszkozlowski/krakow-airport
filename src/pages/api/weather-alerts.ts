@@ -20,8 +20,8 @@ export default async function handler(req: Request) {
 
     // Get weather data and post alerts if needed
     // The alerts are handled within getAirportWeather
-    await getAirportWeather('pl');  // Polish alerts
-    await getAirportWeather('en');  // English alerts
+    await getAirportWeather('pl', true);  // Polish alerts
+    await getAirportWeather('en', true);  // English alerts
 
     return new Response('Weather alerts processed successfully', { status: 200 });
   } catch (error) {
