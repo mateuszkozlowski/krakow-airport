@@ -46,27 +46,27 @@ const NEAR_MINIMUMS = {
 const RISK_WEIGHTS = {
   // Severe phenomena
   PHENOMENA_SEVERE: {
-    TS: 90,      // Increased from 85
-    TSRA: 95,    // Increased from 90
-    FZRA: 100,   // Increased from 95
-    FZDZ: 90,    // Increased from 80
-    FZFG: 95,    // Increased from 90
-    FC: 100,     // Maximum (unchanged)
-    '+SN': 85,   // Increased from 70
-    '+SHSN': 90, // Increased from 75
-    'SHSN': 80   // Added explicit heavy snow showers
+    TS: 90,      
+    TSRA: 95,    
+    FZRA: 100,   
+    FZDZ: 90,    
+    FZFG: 100,   // Increased from 95 to 100 - freezing fog is extremely dangerous
+    FC: 100,     
+    '+SN': 85,   
+    '+SHSN': 90, 
+    'SHSN': 80   
   },
   
   // Moderate phenomena
   PHENOMENA_MODERATE: {
-    SN: 70,     // Increased from 60
-    BR: 50,     // Increased from 40
-    FG: 85,     // Increased from 80
-    RA: 30,     // Increased from 20
-    SHRA: 40,   // Increased from 30
-    GR: 90,     // Increased from 85
-    GS: 60,     // Increased from 50
-    '+RA': 50   // Increased from 40
+    SN: 70,     
+    BR: 60,     // Increased from 50 to 60 - mist is more significant
+    FG: 85,     
+    RA: 30,     
+    SHRA: 40,   
+    GR: 90,     
+    GS: 60,     
+    '+RA': 50   
   },
   
   // De-icing risk based on temperature and conditions
@@ -771,7 +771,7 @@ function getOpenMeteoConditions({
   // Standardize precipitation descriptions with probability check
   const getPrecipitationDescription = (code: number, probability: number): string | null => {
     // Only add precipitation if probability is significant (>40%)
-    if (probability < 40) return null;
+    if (probability < 30) return null;
 
     const precipMap: Record<number, string> = {
       51: t.lightDrizzle || '🌧️ Light Drizzle',
@@ -2362,7 +2362,7 @@ function calculateTimeMultiplier(date: Date): number {
   return seasonalMultiplier * diurnalMultiplier;
 }
 
-// Update calculateRiskLevel function to be less aggressive with moderate conditions and handle probabilities
+// Update calculateRiskLevel function to handle both automatic conditions and temporary conditions
 export function calculateRiskLevel(
   period: WeatherPeriod, 
   language: 'en' | 'pl', 
@@ -2370,11 +2370,6 @@ export function calculateRiskLevel(
 ): RiskLevel {
   const t = translations[language];
   
-  console.log('Debug - Risk Level Calculation:', {
-    language,
-    translations: t
-  });
-
   // Calculate base risks
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
@@ -2410,11 +2405,18 @@ export function calculateRiskLevel(
     ceilingRisk >= 70
   ].filter(Boolean).length;
 
+  // Special handling for freezing conditions
+  const hasFreezing = period.conditions?.some(c => 
+    c.code.includes('FZ') || // Any freezing condition
+    (c.code === 'FZFG' && period.visibility?.meters && period.visibility.meters <= 1000) // Freezing fog with low visibility
+  );
+
   // Determine risk level
   let riskLevel: 1 | 2 | 3 | 4;
 
   // Automatic level 4 conditions
   if (
+    (hasFreezing && probability >= 40) || // Lower threshold for freezing conditions
     (severeConditions >= 2 && probability >= 30) ||
     (period.conditions?.some(c => 
       c.code.includes('TS') && 
@@ -2438,7 +2440,8 @@ export function calculateRiskLevel(
   // Level 3 conditions
   else if (
     (severeConditions >= 1 && probability >= 30) ||
-    (moderateConditions >= 3 && probability >= 30) ||
+    (moderateConditions >= 2 && probability >= 40) || // More sensitive to multiple moderate conditions
+    (period.visibility?.meters && period.visibility.meters <= 1000 && probability >= 40) || // More sensitive to very low visibility
     Math.max(scaledVisibilityRisk, scaledWindRisk, scaledWeatherRisk, scaledCeilingRisk) >= 85
   ) {
     riskLevel = 3;
@@ -2446,6 +2449,7 @@ export function calculateRiskLevel(
   // Level 2 conditions
   else if (
     (moderateConditions >= 1 && probability >= 30) ||
+    (period.visibility?.meters && period.visibility.meters <= 3000) || // Any visibility <= 3000m is at least level 2
     Math.max(scaledVisibilityRisk, scaledWindRisk, scaledWeatherRisk, scaledCeilingRisk) >= 70
   ) {
     riskLevel = 2;
@@ -2488,13 +2492,6 @@ export function calculateRiskLevel(
     }
   };
 
-  console.log('Debug - Final Risk Level:', {
-    level: riskLevel,
-    translations: riskTranslations[riskLevel],
-    language
-  });
-
-  // Return risk level with proper translations
   return {
     level: riskLevel,
     title: riskTranslations[riskLevel].title,
@@ -2510,16 +2507,16 @@ function calculateVisibilityRisk(meters: number | undefined): number {
   if (!meters) return 0;
   if (meters < MINIMUMS.VISIBILITY) return 100;
   
-  // Exponential scaling when approaching minimums
+  // Use exponential scaling for better sensitivity to near-minimums
   const visibilityRatio = meters / MINIMUMS.VISIBILITY;
-  if (visibilityRatio < 2) { // Less than 2x minimums
-    return Math.min(100, 100 * Math.pow(1.5, -visibilityRatio + 1));
+  if (visibilityRatio < 2.0) {
+    return Math.min(100, 100 * Math.exp(-visibilityRatio + 1)); // Use exponential function
   }
   
-  // Linear scaling for better visibility
-  if (meters < 1000) return 80;
-  if (meters < 3000) return 40;
-  if (meters < 5000) return 20;
+  // Adjust base risks for visibility
+  if (meters < 1000) return 90;
+  if (meters < 3000) return 60;
+  if (meters < 5000) return 30;
   return 0;
 }
 
@@ -2578,14 +2575,14 @@ function calculateCeilingRisk(clouds: { code: string; base_feet_agl?: number; ty
       if (cloud.base_feet_agl < MINIMUMS.CEILING) {
         maxRisk = 100;
       } else {
-        // Exponential scaling when approaching minimums
+        // Use exponential scaling for better sensitivity to near-minimums
         const ceilingRatio = cloud.base_feet_agl / MINIMUMS.CEILING;
-        if (ceilingRatio < 2.5) { // Less than 2.5x minimums
-          maxRisk = Math.max(maxRisk, Math.min(100, 100 * Math.pow(1.5, -ceilingRatio + 1)));
+        if (ceilingRatio < 2.5) {
+          maxRisk = Math.max(maxRisk, Math.min(100, 100 * Math.exp(-ceilingRatio + 1))); // Use exponential function
         } else if (cloud.base_feet_agl < 500) {
-          maxRisk = Math.max(maxRisk, 70);
+          maxRisk = Math.max(maxRisk, 80);
         } else if (cloud.base_feet_agl < 1000) {
-          maxRisk = Math.max(maxRisk, 40);
+          maxRisk = Math.max(maxRisk, 50);
         }
       }
       
@@ -2601,9 +2598,9 @@ function calculateCeilingRisk(clouds: { code: string; base_feet_agl?: number; ty
 
 // Add helper function to apply hysteresis
 function applyHysteresis(riskScore: number): 1 | 2 | 3 | 4 {
-  if (riskScore >= 80) return 4;  // Lowered from 90
-  if (riskScore >= 60) return 3;  // Lowered from 70
-  if (riskScore >= 35) return 2;  // Lowered from 40
+  if (riskScore >= 70) return 4;  // Lowered from 80 - more sensitive to severe conditions
+  if (riskScore >= 50) return 3;  // Lowered from 60 - more sensitive to moderate conditions
+  if (riskScore >= 30) return 2;  // Lowered from 35 - more sensitive to marginal conditions
   return 1;
 }
 
@@ -2623,13 +2620,13 @@ function getOpenMeteoWeight(
   return baseWeight * ageFactor;
 }
 
-// Update probability factor to be more realistic
+// Fine-tune probability factor to ensure PROB40 is more impactful
 function getProbabilityFactor(probability: number): number {
-  if (probability >= 80) return 1.0;     // PROB80 or higher - full impact
-  if (probability >= 60) return 0.85;    // Reduced from 0.9
-  if (probability >= 40) return 0.65;    // Reduced from 0.7
-  if (probability >= 30) return 0.45;    // Reduced from 0.5
-  return 0.25;                           // Reduced from 0.3
+  if (probability >= 80) return 1.0;     
+  if (probability >= 60) return 0.95;    
+  if (probability >= 40) return 0.85;    // Slightly reduced from 0.9 to 0.85 for better balance
+  if (probability >= 30) return 0.7;     
+  return 0.5;                            
 }
 
 // Add helper function to get probability-aware messages
