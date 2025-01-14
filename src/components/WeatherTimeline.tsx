@@ -272,10 +272,33 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
     probability: period.probability
   })));
 
-  function processPeriods(periods: ForecastPeriod[]): ForecastPeriod[] {
+  const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
+    const now = new Date();
+    
+    // First, filter out invalid periods
+    const validPeriods = periods.filter(period => {
+      const hasContent = period.from.getTime() !== period.to.getTime() && 
+        period.to.getTime() > now.getTime() &&
+        (period.conditions.phenomena.length > 0 || 
+         (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
+         (period.visibility && period.visibility.meters < 5000) || 
+         (period.ceiling && period.ceiling.feet < 1000) || 
+         period.isTemporary);
+
+      return hasContent;
+    });
+
+    if (validPeriods.length === 0) return [];
+
     // Create timeline events
+    type TimelineEvent = {
+      time: Date;
+      type: 'start' | 'end';
+      period: ForecastChange;
+    };
+
     const events: TimelineEvent[] = [];
-    periods.forEach(period => {
+    validPeriods.forEach(period => {
       events.push({ time: period.from, type: 'start', period });
       events.push({ time: period.to, type: 'end', period });
     });
@@ -290,187 +313,107 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
       return timeCompare;
     });
 
-    const result: ForecastPeriod[] = [];
-    let activeTempo: ForecastPeriod | null = null;
-    let activeBase: ForecastPeriod | null = null;
+    const result: ForecastChange[] = [];
+    let activeBasePeriods: ForecastChange[] = [];
+    let activeTempoPeriods: ForecastChange[] = [];
     let lastTime: Date | null = null;
 
+    const addPeriodToResult = (period: ForecastChange, start: Date, end: Date) => {
+      if (start.getTime() >= end.getTime()) return;
+      
+      // Check if this period can be merged with the last one
+      const lastPeriod = result[result.length - 1];
+      if (lastPeriod && 
+          arePeriodsSimilar(lastPeriod, period) && 
+          start.getTime() <= lastPeriod.to.getTime() + 60000) {
+        // Merge by extending the end time
+        lastPeriod.to = end;
+        lastPeriod.timeDescription = formatTimeDescription(lastPeriod.from, end, language, t);
+      } else {
+        // Add as new period
+        result.push({
+          ...period,
+          from: start,
+          to: end,
+          timeDescription: formatTimeDescription(start, end, language, t)
+        });
+      }
+    };
+
     events.forEach(event => {
-      // If we have a previous time and active period, add the interval
-      if (lastTime && (activeTempo || activeBase)) {
-        const activePeriod = activeTempo || activeBase;
-        if (activePeriod && lastTime < event.time) {
-          result.push({
-            ...activePeriod,
-            from: lastTime,
-            to: event.time
+      const currentTime = event.time;
+
+      // Process any active periods up to this point
+      if (lastTime) {
+        // Process base periods first
+        if (activeBasePeriods.length > 0) {
+          // Select the most relevant base period based on risk level and duration
+          const selectedBasePeriod = activeBasePeriods.reduce((prev, curr) => {
+            if (curr.riskLevel.level > prev.riskLevel.level) return curr;
+            if (curr.riskLevel.level === prev.riskLevel.level) {
+              // If same risk level, prefer the one with longer duration
+              const prevDuration = curr.to.getTime() - curr.from.getTime();
+              const currDuration = prev.to.getTime() - prev.from.getTime();
+              return prevDuration > currDuration ? curr : prev;
+            }
+            return prev;
           });
+          addPeriodToResult(selectedBasePeriod, lastTime, currentTime);
+        }
+
+        // Then process TEMPO periods, but only if they have higher risk than active base period
+        if (activeTempoPeriods.length > 0) {
+          const highestRiskTempo = activeTempoPeriods.reduce((prev, curr) => 
+            curr.riskLevel.level > prev.riskLevel.level ? curr : prev
+          );
+          
+          const activeBase = activeBasePeriods[0];
+          if (!activeBase || highestRiskTempo.riskLevel.level > activeBase.riskLevel.level) {
+            addPeriodToResult(highestRiskTempo, lastTime, currentTime);
+          }
         }
       }
 
       // Update active periods
       if (event.type === 'start') {
         if (event.period.isTemporary) {
-          activeTempo = event.period;
+          activeTempoPeriods.push(event.period);
         } else {
-          activeBase = event.period;
+          activeBasePeriods.push(event.period);
         }
       } else { // 'end'
         if (event.period.isTemporary) {
-          activeTempo = null;
+          activeTempoPeriods = activeTempoPeriods.filter(p => p !== event.period);
         } else {
-          activeBase = null;
+          activeBasePeriods = activeBasePeriods.filter(p => p !== event.period);
         }
       }
 
-      lastTime = event.time;
+      lastTime = currentTime;
     });
 
-    return result;
-  }
-
-  const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
-    const now = new Date();
-    
-    // First, filter and sort periods
-    const validPeriods = periods
-      .filter(period => {
-        const hasContent = period.from.getTime() !== period.to.getTime() && 
-          period.to.getTime() > now.getTime() &&
-          (period.conditions.phenomena.length > 0 || 
-           (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
-           (period.visibility && period.visibility.meters < 5000) || 
-           (period.ceiling && period.ceiling.feet < 1000) || 
-           period.isTemporary);
-
-        return hasContent;
-      })
-      .sort((a, b) => {
-        // Sort by start time first
-        const startTimeCompare = a.from.getTime() - b.from.getTime();
-        if (startTimeCompare !== 0) return startTimeCompare;
-        
-        // If same start time, sort by duration (longer periods go last)
-        const aDuration = a.to.getTime() - a.from.getTime();
-        const bDuration = b.to.getTime() - b.from.getTime();
-        if (aDuration !== bDuration) {
-          return aDuration - bDuration;
-        }
-        
-        // If same duration, TEMPO/PROB periods go before base periods
-        if (a.isTemporary !== b.isTemporary) {
-          return a.isTemporary ? -1 : 1;
-        }
-        
-        // If both are TEMPO/PROB or both are base, higher risk level goes first
+    // Final sort considering all factors
+    return result.sort((a, b) => {
+      // First by start time
+      const startCompare = a.from.getTime() - b.from.getTime();
+      if (startCompare !== 0) return startCompare;
+      
+      // For same start time:
+      // 1. Base periods before TEMPO
+      if (a.isTemporary !== b.isTemporary) {
+        return a.isTemporary ? 1 : -1;
+      }
+      
+      // 2. Higher risk level first
+      if (a.riskLevel.level !== b.riskLevel.level) {
         return b.riskLevel.level - a.riskLevel.level;
-      });
-
-    if (validPeriods.length === 0) return [];
-
-    // Separate periods into categories
-    const currentGoodPeriods = validPeriods.filter(period => 
-      period.riskLevel.level === 1 && 
-      period.from.getTime() <= now.getTime() &&
-      !period.isTemporary
-    );
-
-    const longBasePeriods = validPeriods.filter(period => {
-      const duration = period.to.getTime() - period.from.getTime();
-      const isLongPeriod = duration > 6 * 3600 * 1000; // 6 hours or longer
-      return !period.isTemporary && isLongPeriod && period.from.getTime() > now.getTime();
-    });
-
-    const shortPeriods = validPeriods.filter(period => {
-      const duration = period.to.getTime() - period.from.getTime();
-      const isLongPeriod = duration > 6 * 3600 * 1000;
-      const isCurrent = period.from.getTime() <= now.getTime() && period.riskLevel.level === 1;
-      return (period.isTemporary || !isLongPeriod) && !isCurrent;
-    });
-
-    const result: ForecastChange[] = [];
-
-    // Add current good conditions first
-    if (currentGoodPeriods.length > 0) {
-      const currentPeriod = currentGoodPeriods[0];
-      result.push({
-        ...currentPeriod,
-        from: now,
-        timeDescription: formatTimeDescription(now, currentPeriod.to, language, t)
-      });
-    }
-
-    // Process short periods with intelligent merging
-    let currentShortPeriod: ForecastChange | null = null;
-
-    for (let i = 0; i < shortPeriods.length; i++) {
-      const period = shortPeriods[i];
+      }
       
-      if (!currentShortPeriod) {
-        currentShortPeriod = { ...period };
-        continue;
-      }
-
-      // Check if periods can be merged
-      if (arePeriodsSimilar(currentShortPeriod, period) && 
-          period.from.getTime() <= currentShortPeriod.to.getTime() + 60000) {
-        // Merge periods
-        currentShortPeriod = {
-          ...currentShortPeriod,
-          to: period.to,
-          timeDescription: formatTimeDescription(currentShortPeriod.from, period.to, language, t)
-        };
-      } else {
-        // Add current period to result and start new one
-        result.push({
-          ...currentShortPeriod,
-          timeDescription: formatTimeDescription(currentShortPeriod.from, currentShortPeriod.to, language, t)
-        });
-        currentShortPeriod = { ...period };
-      }
-    }
-
-    // Don't forget to add the last short period
-    if (currentShortPeriod) {
-      result.push({
-        ...currentShortPeriod,
-        timeDescription: formatTimeDescription(currentShortPeriod.from, currentShortPeriod.to, language, t)
-      });
-    }
-
-    // Process long base periods with overlap handling
-    for (const longPeriod of longBasePeriods) {
-      let shouldAdd = true;
-      
-      // Check for overlaps with existing periods
-      for (let i = 0; i < result.length; i++) {
-        const existingPeriod = result[i];
-        
-        // If periods overlap and have similar conditions
-        if (arePeriodsSimilar(existingPeriod, longPeriod) &&
-            longPeriod.from.getTime() <= existingPeriod.to.getTime() + 60000) {
-          // Extend the existing period
-          result[i] = {
-            ...existingPeriod,
-            to: longPeriod.to,
-            timeDescription: formatTimeDescription(existingPeriod.from, longPeriod.to, language, t)
-          };
-          shouldAdd = false;
-          break;
-        }
-      }
-
-      // Add the long period if it wasn't merged
-      if (shouldAdd) {
-        result.push({
-          ...longPeriod,
-          timeDescription: formatTimeDescription(longPeriod.from, longPeriod.to, language, t)
-        });
-      }
-    }
-
-    // Final sort to ensure chronological order
-    return result.sort((a, b) => a.from.getTime() - b.from.getTime());
+      // 3. Longer duration first
+      const aDuration = a.to.getTime() - a.from.getTime();
+      const bDuration = b.to.getTime() - b.from.getTime();
+      return bDuration - aDuration;
+    });
   };
 
   // Helper function to check if two periods can be merged
@@ -992,3 +935,4 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 };
 
 export default WeatherTimeline;
+
