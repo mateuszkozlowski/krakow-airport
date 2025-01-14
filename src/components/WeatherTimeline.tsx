@@ -332,39 +332,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
   const deduplicateForecastPeriods = (periods: ForecastChange[]): ForecastChange[] => {
     const now = new Date();
     
-    console.log('Debug - Deduplication Process:', {
-      inputPeriods: periods.map(p => ({
-        timeDescription: p.timeDescription,
-        riskLevel: {
-          level: p.riskLevel.level,
-          title: p.riskLevel.title,
-          statusMessage: p.riskLevel.statusMessage
-        },
-        phenomena: p.conditions.phenomena,
-        isTemporary: p.isTemporary,
-        probability: p.probability
-      }))
-    });
-    
     // First, filter and sort periods
     const validPeriods = periods
       .filter(period => {
         const hasContent = period.from.getTime() !== period.to.getTime() && 
-          period.to.getTime() > now.getTime() && 
+          period.to.getTime() > now.getTime() &&
           (period.conditions.phenomena.length > 0 || 
            (period.wind?.speed_kts && period.wind.speed_kts >= 15) || 
            (period.visibility && period.visibility.meters < 5000) || 
            (period.ceiling && period.ceiling.feet < 1000) || 
            period.isTemporary);
-
-        // Debug log for filtered periods
-        console.log('Filtering period:', {
-          hasContent,
-          isTemporary: period.isTemporary,
-          probability: period.probability,
-          changeType: period.changeType,
-          phenomena: period.conditions.phenomena
-        });
 
         return hasContent;
       })
@@ -373,13 +350,16 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
         const startTimeCompare = a.from.getTime() - b.from.getTime();
         if (startTimeCompare !== 0) return startTimeCompare;
         
-        // If same start time, sort by end time
-        const endTimeCompare = a.to.getTime() - b.to.getTime();
-        if (endTimeCompare !== 0) return endTimeCompare;
+        // If same start time, sort by duration (longer periods go last)
+        const aDuration = a.to.getTime() - a.from.getTime();
+        const bDuration = b.to.getTime() - b.from.getTime();
+        if (aDuration !== bDuration) {
+          return aDuration - bDuration;
+        }
         
-        // If same time range, TEMPO/PROB periods go after base periods
+        // If same duration, TEMPO/PROB periods go before base periods
         if (a.isTemporary !== b.isTemporary) {
-          return a.isTemporary ? 1 : -1;
+          return a.isTemporary ? -1 : 1;
         }
         
         // If both are TEMPO/PROB or both are base, higher risk level goes first
@@ -388,103 +368,109 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
     if (validPeriods.length === 0) return [];
 
-    const result: ForecastChange[] = [];
-    let currentPeriod = validPeriods[0];
+    // Separate periods into categories
+    const currentGoodPeriods = validPeriods.filter(period => 
+      period.riskLevel.level === 1 && 
+      period.from.getTime() <= now.getTime() &&
+      !period.isTemporary
+    );
 
-    // Adjust start time of first period if it's in the past
-    if (currentPeriod.from.getTime() < now.getTime()) {
-      currentPeriod = {
+    const longBasePeriods = validPeriods.filter(period => {
+      const duration = period.to.getTime() - period.from.getTime();
+      const isLongPeriod = duration > 6 * 3600 * 1000; // 6 hours or longer
+      return !period.isTemporary && isLongPeriod && period.from.getTime() > now.getTime();
+    });
+
+    const shortPeriods = validPeriods.filter(period => {
+      const duration = period.to.getTime() - period.from.getTime();
+      const isLongPeriod = duration > 6 * 3600 * 1000;
+      const isCurrent = period.from.getTime() <= now.getTime() && period.riskLevel.level === 1;
+      return (period.isTemporary || !isLongPeriod) && !isCurrent;
+    });
+
+    const result: ForecastChange[] = [];
+
+    // Add current good conditions first
+    if (currentGoodPeriods.length > 0) {
+      const currentPeriod = currentGoodPeriods[0];
+      result.push({
         ...currentPeriod,
         from: now,
         timeDescription: formatTimeDescription(now, currentPeriod.to, language, t)
-      };
+      });
     }
 
-    for (let i = 1; i < validPeriods.length; i++) {
-      const nextPeriod = validPeriods[i];
+    // Process short periods with intelligent merging
+    let currentShortPeriod: ForecastChange | null = null;
 
-      console.log('Processing periods:', {
-        current: {
-          isTemporary: currentPeriod.isTemporary,
-          probability: currentPeriod.probability,
-          changeType: currentPeriod.changeType,
-          phenomena: currentPeriod.conditions.phenomena
-        },
-        next: {
-          isTemporary: nextPeriod.isTemporary,
-          probability: nextPeriod.probability,
-          changeType: nextPeriod.changeType,
-          phenomena: nextPeriod.conditions.phenomena
-        }
-      });
+    for (let i = 0; i < shortPeriods.length; i++) {
+      const period = shortPeriods[i];
+      
+      if (!currentShortPeriod) {
+        currentShortPeriod = { ...period };
+        continue;
+      }
 
-      // Handle overlapping periods
-      if (nextPeriod.from.getTime() < currentPeriod.to.getTime()) {
-        if (nextPeriod.isTemporary) {
-          // If temporary period starts after current period's start
-          if (nextPeriod.from.getTime() > currentPeriod.from.getTime()) {
-            // Add the first part of the base period
-            result.push({
-              ...currentPeriod,
-              to: nextPeriod.from,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from, language, t)
-            });
-          }
-          
-          // Add the temporary period
-          result.push(nextPeriod);
-          
-          // If temporary period ends before current period ends
-          if (nextPeriod.to.getTime() < currentPeriod.to.getTime()) {
-            // Continue with the remainder of the base period
-            currentPeriod = {
-              ...currentPeriod,
-              from: nextPeriod.to,
-              timeDescription: formatTimeDescription(nextPeriod.to, currentPeriod.to, language, t)
-            };
-            continue;
-          }
-        } else {
-          // For overlapping non-temporary periods
-          if (nextPeriod.riskLevel.level > currentPeriod.riskLevel.level) {
-            // Higher risk level takes precedence
-            result.push({
-              ...currentPeriod,
-              to: nextPeriod.from,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.from, language, t)
-            });
-            currentPeriod = nextPeriod;
-          } else if (arePeriodsSimilar(currentPeriod, nextPeriod)) {
-            // Merge similar periods
-            currentPeriod = {
-              ...currentPeriod,
-              to: nextPeriod.to,
-              timeDescription: formatTimeDescription(currentPeriod.from, nextPeriod.to, language, t)
-            };
-          } else {
-            // Different conditions, treat as separate periods
-            result.push(currentPeriod);
-            currentPeriod = nextPeriod;
-          }
-        }
+      // Check if periods can be merged
+      if (arePeriodsSimilar(currentShortPeriod, period) && 
+          period.from.getTime() <= currentShortPeriod.to.getTime() + 60000) {
+        // Merge periods
+        currentShortPeriod = {
+          ...currentShortPeriod,
+          to: period.to,
+          timeDescription: formatTimeDescription(currentShortPeriod.from, period.to, language, t)
+        };
       } else {
-        // Non-overlapping periods
-        result.push(currentPeriod);
-        currentPeriod = nextPeriod;
+        // Add current period to result and start new one
+        result.push({
+          ...currentShortPeriod,
+          timeDescription: formatTimeDescription(currentShortPeriod.from, currentShortPeriod.to, language, t)
+        });
+        currentShortPeriod = { ...period };
       }
     }
 
-    // Don't forget to push the last period
-    result.push(currentPeriod);
+    // Don't forget to add the last short period
+    if (currentShortPeriod) {
+      result.push({
+        ...currentShortPeriod,
+        timeDescription: formatTimeDescription(currentShortPeriod.from, currentShortPeriod.to, language, t)
+      });
+    }
 
-    console.log('Final deduped periods:', result.map(p => ({
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    // Process long base periods with overlap handling
+    for (const longPeriod of longBasePeriods) {
+      let shouldAdd = true;
+      
+      // Check for overlaps with existing periods
+      for (let i = 0; i < result.length; i++) {
+        const existingPeriod = result[i];
+        
+        // If periods overlap and have similar conditions
+        if (arePeriodsSimilar(existingPeriod, longPeriod) &&
+            longPeriod.from.getTime() <= existingPeriod.to.getTime() + 60000) {
+          // Extend the existing period
+          result[i] = {
+            ...existingPeriod,
+            to: longPeriod.to,
+            timeDescription: formatTimeDescription(existingPeriod.from, longPeriod.to, language, t)
+          };
+          shouldAdd = false;
+          break;
+        }
+      }
 
-    return result;
+      // Add the long period if it wasn't merged
+      if (shouldAdd) {
+        result.push({
+          ...longPeriod,
+          timeDescription: formatTimeDescription(longPeriod.from, longPeriod.to, language, t)
+        });
+      }
+    }
+
+    // Final sort to ensure chronological order
+    return result.sort((a, b) => a.from.getTime() - b.from.getTime());
   };
 
   // Helper function to check if two periods can be merged

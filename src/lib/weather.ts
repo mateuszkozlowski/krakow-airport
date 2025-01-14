@@ -2784,32 +2784,102 @@ async function setSnowTrackingState(state: SnowTrackingState): Promise<void> {
   }
 }
 
-// Update the snow tracking function to handle errors gracefully
+// Add debounce constant at the top with other constants
+const SNOW_TRACKING_DEBOUNCE = 5000; // 5 seconds
+let lastSnowTrackingUpdate = 0;
+
+// Add lock key constant
+const SNOW_TRACKING_LOCK_KEY = 'snow_tracking_lock_epkk';
+const LOCK_TIMEOUT = 10000; // 10 seconds
+
+// Add lock helper functions
+async function acquireLock(): Promise<boolean> {
+  if (!redis || !await validateRedisConnection()) {
+    return true; // If no Redis, proceed without lock
+  }
+  
+  try {
+    const lockAcquired = await redis.set(SNOW_TRACKING_LOCK_KEY, 'locked', {
+      nx: true, // Only set if key doesn't exist
+      ex: 10 // 10 second expiry
+    });
+    return !!lockAcquired;
+  } catch (error) {
+    console.error('Error acquiring lock:', error);
+    return false;
+  }
+}
+
+async function releaseLock(): Promise<void> {
+  if (!redis || !await validateRedisConnection()) {
+    return;
+  }
+  
+  try {
+    await redis.del(SNOW_TRACKING_LOCK_KEY);
+  } catch (error) {
+    console.error('Error releasing lock:', error);
+  }
+}
+
+// Update the snow tracking function to use locking
 async function updateSnowTracking(conditions: { code: string }[] | undefined): Promise<void> {
   if (!conditions) {
     console.log('No conditions provided, skipping snow tracking update');
     return;
   }
 
+  const now = Date.now();
+  
+  // Get current state first to check if update is needed
+  const currentState = await getSnowTrackingState();
+  const hasSnow = conditions.some(c => 
+    ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
+  );
+
+  console.log('🔍 Current conditions:', {
+    timestamp: new Date(now).toISOString(),
+    conditions: conditions.map(c => c.code),
+    hasSnow
+  });
+
+  // Determine if we need to update based on current conditions
+  const needsUpdate = (
+    // Start snow event
+    (hasSnow && !currentState.startTime) ||
+    // Stop snow event
+    (!hasSnow && currentState.startTime && !currentState.recoveryStartTime) ||
+    // Check recovery completion
+    (!hasSnow && !currentState.startTime && currentState.recoveryStartTime)
+  );
+
+  if (!needsUpdate) {
+    console.log('ℹ️ No state update needed based on current conditions');
+    return;
+  }
+
+  // Add debounce check
+  if (now - lastSnowTrackingUpdate < SNOW_TRACKING_DEBOUNCE) {
+    console.log('🔄 Skipping snow tracking update - too soon since last update');
+    return;
+  }
+
+  // Try to acquire lock
+  const lockAcquired = await acquireLock();
+  if (!lockAcquired) {
+    console.log('🔒 Could not acquire lock, skipping update');
+    return;
+  }
+
   try {
-    const now = Date.now();
-    const hasSnow = conditions.some(c => 
-      ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
-    );
-
-    console.log('🔍 Current conditions:', {
-      timestamp: new Date(now).toISOString(),
-      conditions: conditions.map(c => c.code),
-      hasSnow
-    });
-
-    const currentState = await getSnowTrackingState();
+    // Re-fetch state after acquiring lock to ensure we have latest data
+    const lockedState = await getSnowTrackingState();
     console.log('📊 Current state:', {
       timestamp: new Date(now).toISOString(),
-      state: { ...currentState }
+      state: { ...lockedState }
     });
 
-    let newState = { ...currentState };
+    let newState = { ...lockedState };
     let stateChanged = false;
 
     if (hasSnow) {
@@ -2822,12 +2892,12 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
       console.log('❄️ Snow detection:', { 
         hasSnow, 
         intensity,
-        currentStartTime: currentState.startTime,
-        currentIntensity: currentState.intensity
+        currentStartTime: lockedState.startTime,
+        currentIntensity: lockedState.intensity
       });
 
       // Only start new snow event if we're not already tracking one
-      if (!currentState.startTime) {
+      if (!lockedState.startTime) {
         console.log('🆕 Starting new snow event');
         newState = {
           startTime: now,
@@ -2836,34 +2906,34 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
           recoveryStartTime: null
         };
         stateChanged = true;
-      } else if (currentState.intensity !== intensity) {
+      } else if (lockedState.intensity !== intensity) {
         // Update intensity if it changed
         console.log('📈 Updating snow intensity:', {
-          from: currentState.intensity,
+          from: lockedState.intensity,
           to: intensity
         });
         newState.intensity = intensity;
         stateChanged = true;
       }
-    } else if (currentState.startTime && !currentState.recoveryStartTime) {
+    } else if (lockedState.startTime && !lockedState.recoveryStartTime) {
       // Snow has just stopped - start recovery period
       console.log('🔚 Snow has stopped, starting recovery period');
       newState = {
         startTime: null,
-        intensity: currentState.intensity,  // Keep the last known intensity for recovery calculation
+        intensity: lockedState.intensity,  // Keep the last known intensity for recovery calculation
         lastUpdate: now,
         recoveryStartTime: now
       };
       stateChanged = true;
-    } else if (!currentState.startTime && !hasSnow && currentState.recoveryStartTime) {
+    } else if (!lockedState.startTime && !hasSnow && lockedState.recoveryStartTime) {
       // In recovery period - check if it's complete
-      const recoveryDuration = SNOW_RECOVERY.DURATION[currentState.intensity ?? 'MODERATE'];
-      const timeInRecovery = now - currentState.recoveryStartTime;
+      const recoveryDuration = SNOW_RECOVERY.DURATION[lockedState.intensity ?? 'MODERATE'];
+      const timeInRecovery = now - lockedState.recoveryStartTime;
       
       console.log('🔄 Checking recovery progress:', {
         timeInRecovery: Math.floor(timeInRecovery / 1000),
         recoveryDuration: Math.floor(recoveryDuration / 1000),
-        intensity: currentState.intensity
+        intensity: lockedState.intensity
       });
 
       if (timeInRecovery >= recoveryDuration) {
@@ -2886,26 +2956,30 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
         timestamp: new Date(now).toISOString(),
         changes: {
           startTime: {
-            from: currentState.startTime ? new Date(currentState.startTime).toISOString() : null,
+            from: lockedState.startTime ? new Date(lockedState.startTime).toISOString() : null,
             to: newState.startTime ? new Date(newState.startTime).toISOString() : null
           },
           intensity: {
-            from: currentState.intensity,
+            from: lockedState.intensity,
             to: newState.intensity
           },
           recoveryStartTime: {
-            from: currentState.recoveryStartTime ? new Date(currentState.recoveryStartTime).toISOString() : null,
+            from: lockedState.recoveryStartTime ? new Date(lockedState.recoveryStartTime).toISOString() : null,
             to: newState.recoveryStartTime ? new Date(newState.recoveryStartTime).toISOString() : null
           }
         }
       });
 
       await setSnowTrackingState(newState);
+      lastSnowTrackingUpdate = now;
     } else {
       console.log('ℹ️ No state changes needed');
     }
   } catch (error) {
     console.error('❌ Error in updateSnowTracking:', error);
+  } finally {
+    // Always release the lock
+    await releaseLock();
   }
 }
 
