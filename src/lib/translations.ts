@@ -175,8 +175,6 @@ export const translations = {
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
             prolongedSnowOperations: "❄️ Prolonged snow - significant operational impact",
             extendedSnowOperations: "❄️ Extended snow - increased operational impact",
-            rvrBelowMinimums: "Operations suspended - RVR below minimums",
-            rvrNearMinimums: "Low RVR - possible approach restrictions",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -224,8 +222,6 @@ export const translations = {
             thunderstorm: "⛈️ Thunderstorm",
             thunderstormWithHail: "⛈️ Thunderstorm with Hail",
             severeThunderstorm: "⛈️ Severe Thunderstorm",
-            rvrBelowMinimums: "👁️ RVR Below Minimums ({meters}m)",
-            rvrNearMinimums: "👁️ RVR Near Minimums ({meters}m)",
         },
         // Operational warnings and impacts
         operationalWarnings: {
@@ -247,8 +243,6 @@ export const translations = {
             possibleDelays: "⚠️ Possible delays",
             someFlightsMayDivert: "✈️ Some flights may divert",
             winterWeatherWarning: "❄️ Winter weather conditions may cause delays",
-            rvrBelowMinimums: "⛔ Operations suspended - RVR below minimums",
-            rvrNearMinimums: "⚠️ RVR near minimums - approach restrictions possible",
         },
         // Risk level messages
         riskLevel4Title: "Major Weather Impact",
@@ -528,8 +522,6 @@ export const translations = {
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
             prolongedSnowOperations: "❄️ Długotrwałe opady śniegu - znaczący wpływ na operacje",
             extendedSnowOperations: "❄️ Przedłużające się opady śniegu - zwiększony wpływ na operacje",
-            rvrBelowMinimums: "Operacje zawieszone - RVR poniżej minimów",
-            rvrNearMinimums: "Niski RVR - możliwe ograniczenia w podejściach",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -577,8 +569,6 @@ export const translations = {
             thunderstorm: "⛈️ Burza",
             thunderstormWithHail: "⛈️ Burza z gradem",
             severeThunderstorm: "⛈️ Silna burza",
-            rvrBelowMinimums: "👁️ RVR poniżej minimów ({meters}m)",
-            rvrNearMinimums: "👁️ RVR blisko minimów ({meters}m)",
         },
         // Operational warnings and impacts
         operationalWarnings: {
@@ -600,8 +590,6 @@ export const translations = {
             possibleDelays: "⚠️ Możliwe opóźnienia",
             someFlightsMayDivert: "✈️ Niektóre loty mogą zostać przekierowane",
             winterWeatherWarning: "❄️ Warunki zimowe mogą powodować opóźnienia",
-            rvrBelowMinimums: "⛔ Operacje zawieszone - RVR poniżej minimów",
-            rvrNearMinimums: "⚠️ RVR blisko minimów - możliwe ograniczenia w podejściach",
         },
         // Risk level messages
         riskLevel4Title: "Poważne zakłócenia",

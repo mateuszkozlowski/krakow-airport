@@ -29,8 +29,8 @@ type WeatherPhenomenon = keyof typeof WEATHER_PHENOMENA;
 // CAT I approach minimums for EPKK with enhanced parameters
 const MINIMUMS = {
   VISIBILITY: 550,    // meters
-  RVR: 550,          // meters - CAT I minimum RVR
   CEILING: 200,       // feet
+  RVR: 550,          // meters
   VERTICAL_VISIBILITY: 200,  // feet
   MAX_WIND: 30,      // knots
   CROSSWIND: 20      // knots
@@ -39,8 +39,7 @@ const MINIMUMS = {
 // Add a constant for "close to minimums" threshold
 const NEAR_MINIMUMS = {
   CEILING: MINIMUMS.CEILING * 1.5, // 300ft for CAT I minimums of 200ft
-  VISIBILITY: MINIMUMS.VISIBILITY * 1.5, // 825m for CAT I minimums of 550m
-  RVR: MINIMUMS.RVR * 1.5 // 825m for CAT I minimums of 550m
+  VISIBILITY: MINIMUMS.VISIBILITY * 1.5 // 825m for CAT I minimums of 550m
 } as const;
 
 // Risk weights for different conditions tailored to Kraków's usual conditions
@@ -1545,12 +1544,36 @@ function getWeatherDescription(reasons: string[], impacts: string[], language: '
 
 export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
   const t = translations[language];
+  
+  console.log('Debug - Weather Risk Assessment:', {
+    language,
+    translations: {
+      level4: {
+        title: t.riskLevel4Title,
+        message: t.riskLevel4Message,
+        status: t.riskLevel4Status
+      },
+      level3: {
+        title: t.riskLevel3Title,
+        message: t.riskLevel3Message,
+        status: t.riskLevel3Status
+      },
+      level2: {
+        title: t.riskLevel2Title,
+        message: t.riskLevel2Message,
+        status: t.riskLevel2Status
+      },
+      level1: {
+        title: t.riskLevel1Title,
+        message: t.riskLevel1Message,
+        status: t.riskLevel1Status
+      }
+    }
+  });
+
   const warnings = t.operationalWarnings;
   const operationalImpactsSet = new Set<string>();
   const reasons: string[] = [];
-  
-  // Get effective visibility (RVR if available, otherwise regular visibility)
-  const effectiveVisibility = getEffectiveVisibility(weather);
   
   // Time-based risk factors
   const hour = new Date(weather.observed).getHours();
@@ -1575,22 +1598,17 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
   // Check for severe conditions first
   if (weather.conditions?.some(c => c.code === '+SHSN')) {
     baseRiskLevel = 4;
-    operationalImpactsSet.clear();
+    operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.operationsSuspended);
     operationalImpactsSet.add(warnings.deicingRequired);
-  } else if (effectiveVisibility < MINIMUMS.RVR) {
+  } else if (weather.visibility?.meters && weather.visibility.meters < MINIMUMS.VISIBILITY) {
     baseRiskLevel = 4;
-    operationalImpactsSet.clear();
+    operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.operationsSuspended);
     operationalImpactsSet.add(warnings.diversionsLikely);
-    
-    // Add specific RVR warning if it's RVR that triggered this
-    if (weather.runway_visual_range?.[0]?.visibility?.meters !== undefined) {
-      operationalImpactsSet.add(warnings.rvrBelowMinimums);
-    }
   } else if (weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
     baseRiskLevel = 4;
-    operationalImpactsSet.clear();
+    operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.operationsSuspended);
     operationalImpactsSet.add(warnings.deicingRequired);
   }
@@ -1608,13 +1626,13 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
   }
 
   // Check for poor visibility
-  if (effectiveVisibility < 2000) {
+  if (weather.visibility?.meters && weather.visibility.meters < 2000) {
     baseRiskLevel = Math.max(baseRiskLevel, 3);
     operationalImpactsSet.add(warnings.poorVisibilityOps);
   }
 
   // Check for moderate impacts
-  if (effectiveVisibility < 3000 ||
+  if ((weather.visibility?.meters && weather.visibility.meters < 3000) ||
       (weather.clouds?.some(cloud => 
         (cloud.code === 'BKN' || cloud.code === 'OVC') && 
         cloud.base_feet_agl && 
@@ -1801,29 +1819,20 @@ function calculateDeicingRisk(weather: WeatherData, language: 'en' | 'pl'): { sc
 }
 
 // Add this helper function for formatting visibility
-function formatVisibility(meters: number, language: 'en' | 'pl', isRVR: boolean = false): string {
+function formatVisibility(meters: number, language: 'en' | 'pl'): string {
   const t = translations[language].weatherConditionMessages;
   
-  if (isRVR) {
-    if (meters < MINIMUMS.RVR) {
-      return t.rvrBelowMinimums.replace('{meters}', meters.toString());
-    }
-    if (meters < MINIMUMS.RVR * 1.5) {
-      return t.rvrNearMinimums.replace('{meters}', meters.toString());
-    }
-  } else {
-    if (meters < MINIMUMS.VISIBILITY) {
-      return t.visibilityBelowMinimumsMeters.replace('{meters}', meters.toString());
-    }
-    if (meters < 1000) {
-      return t.veryPoorVisibilityMeters.replace('{meters}', meters.toString());
-    }
-    if (meters < 3000) {
-      return t.poorVisibility;
-    }
-    if (meters < 5000) {
-      return t.reducedVisibilitySimple;
-    }
+  if (meters < MINIMUMS.VISIBILITY) {
+    return t.visibilityBelowMinimumsMeters.replace('{meters}', meters.toString());
+  }
+  if (meters < 1000) {
+    return t.veryPoorVisibilityMeters.replace('{meters}', meters.toString());
+  }
+  if (meters < 3000) {
+    return t.poorVisibility;
+  }
+  if (meters < 5000) {
+    return t.reducedVisibilitySimple;
   }
   return '';
 }
@@ -3082,14 +3091,4 @@ async function getSnowDurationInfo(): Promise<{
     isInRecovery: false,
     recoveryProgress: 0
   };
-}
-
-// Add helper function to get effective visibility
-function getEffectiveVisibility(weather: WeatherData): number {
-  // If RVR is available, use it
-  if (weather.runway_visual_range?.[0]?.visibility?.meters !== undefined) {
-    return weather.runway_visual_range[0].visibility.meters;
-  }
-  // Fallback to regular visibility
-  return weather.visibility?.meters ?? Infinity;
 }
