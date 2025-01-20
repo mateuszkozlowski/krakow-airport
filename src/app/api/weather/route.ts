@@ -15,17 +15,49 @@ const BASE_URL = 'https://api.checkwx.com';
 const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
-async function fetchFromCheckWX<T>(endpoint: string) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY || '',
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`CheckWX API responded with status ${response.status}`);
+// Add the fetchWithRetry utility function
+async function fetchWithRetry(
+  url: string, 
+  options: RequestInit = {}, 
+  retries = 3, 
+  delay = 1000
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      if (i === retries - 1) break;
+      
+      console.warn(`Attempt ${i + 1} failed, retrying in ${delay}ms...`, {
+        url,
+        error: lastError.message
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
+  
+  throw new Error(`Failed after ${retries} attempts: ${lastError?.message}`);
+}
+
+// Update the fetchFromCheckWX function
+async function fetchFromCheckWX<T>(endpoint: string) {
+  const response = await fetchWithRetry(
+    `${BASE_URL}${endpoint}`,
+    {
+      headers: {
+        'X-API-Key': CHECKWX_API_KEY || '',
+        'Accept': 'application/json',
+      },
+    }
+  );
 
   const data = await response.json() as T;
   return { data };
