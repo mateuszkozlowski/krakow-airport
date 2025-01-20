@@ -395,69 +395,23 @@ function filterForecastPeriods(forecast: ForecastChange[], language: 'en' | 'pl'
     });
 }
 
-// Add these utility functions at the top of the file
-async function fetchWithRetry(
-  url: string, 
-  options: RequestInit = {}, 
-  retries = 3, 
-  delay = 1000
-): Promise<Response> {
-  let lastError: Error | null = null;
-  
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown error');
-      if (i === retries - 1) break;
-      
-      console.warn(`Attempt ${i + 1} failed, retrying in ${delay}ms...`, {
-        url,
-        error: lastError.message
-      });
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw new Error(`Failed after ${retries} attempts: ${lastError?.message}`);
-}
-
-// Update the fetchOpenMeteoForecast function
+// Add this function to fetch Open-Meteo data
 async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   try {
-    const response = await fetchWithRetry(
+    const response = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=50.07778&longitude=19.78472&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&forecast_days=2'
     );
 
-    const data = await response.json();
-    return data;
+    if (!response.ok) {
+      throw new Error('Failed to fetch Open-Meteo data');
+    }
+
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching Open-Meteo data:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
-    });
+    console.error('Error fetching Open-Meteo data:', error);
     return null;
   }
 }
-
-// Add a helper function to validate Open-Meteo response
-function isValidOpenMeteoResponse(data: any): data is OpenMeteoResponse {
-  return (
-    data &&
-    typeof data === 'object' &&
-    'hourly' in data &&
-    Array.isArray(data.hourly?.time) &&
-    data.hourly.time.length > 0
-  );
-}
-
-// Update the getOpenMeteoData function (if it exists)
-
 
 interface HourlyCondition {
     visibility: number;
@@ -907,9 +861,6 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
       changeType: p.changeType,
       phenomena: p.conditions.phenomena
     })));
-    if (openMeteoData === null) {
-      throw new Error('OpenMeteo data fetch failed');
-    }
 
     // Merge TAF with OpenMeteo data
     const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
@@ -2020,23 +1971,21 @@ async function getTafData(): Promise<TAFData> {
   return data.taf.data[0];
 }
 
-async function getOpenMeteoData(): Promise<OpenMeteoForecast | null> {
-  try {
-    const data = await fetchOpenMeteoForecast();
-    
-    if (!data || !isValidOpenMeteoResponse(data)) {
-      console.error('Invalid Open-Meteo response format:', data);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Failed to fetch Open-Meteo data:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
-    });
-    return null;
+async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
+  const data = await fetchOpenMeteoForecast();
+  if (!data) {
+    throw new Error('Failed to fetch OpenMeteo data');
   }
+  return {
+    hourly: {
+      time: data.hourly.time,
+      temperature_2m: data.hourly.temperature_2m,
+      wind_speed_10m: data.hourly.wind_speed_10m,
+      wind_gusts_10m: data.hourly.wind_gusts_10m,
+      visibility: data.hourly.visibility,
+      precipitation: data.hourly.precipitation
+    }
+  };
 }
 
 interface ForecastPeriod {
