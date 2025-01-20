@@ -446,16 +446,29 @@ async function fetchOpenMeteoForecast(): Promise<OpenMeteoForecast | null> {
   }
 }
 
-// Add a helper function to validate Open-Meteo response
-function isValidOpenMeteoResponse(data: any): data is OpenMeteoResponse {
-  return (
-    data &&
-    typeof data === 'object' &&
-    'hourly' in data &&
-    Array.isArray(data.hourly?.time) &&
-    data.hourly.time.length > 0
+// Add this interface to define the expected shape of the response
+interface UnvalidatedOpenMeteoResponse {
+  hourly?: {
+    time?: unknown;
+    [key: string]: unknown;  // Allow other hourly properties
+  };
+  [key: string]: unknown;  // Allow other top-level properties
+}
+
+// Update the validation function with proper typing
+function isValidOpenMeteoResponse(data: unknown): data is OpenMeteoResponse {
+  const candidate = data as UnvalidatedOpenMeteoResponse;
+  
+  return Boolean(
+    candidate &&
+    typeof candidate === 'object' &&
+    'hourly' in candidate &&
+    candidate.hourly &&
+    Array.isArray(candidate.hourly.time) &&
+    candidate.hourly.time.length > 0
   );
 }
+
 
 // Update the getOpenMeteoData function (if it exists)
 
