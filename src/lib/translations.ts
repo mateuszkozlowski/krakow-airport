@@ -47,8 +47,9 @@ export const translations = {
         askAboutRights: "Ask about EU261 rights",
         askAboutRightsDesc: "Staff must inform you about care and assistance you're entitled to.",
         // Before Security section
-        visitAirlineDesk: "Visit airline desk",
-        visitAirlineDeskDesc: "If you haven't passed security yet, airline desks in Terminal 1 can help with rebooking and assistance.",
+        visitAirlineDesk: "If your flight is canceled, visit your airline's desk. In case of a delay, proceed to security control.",  
+        visitAirlineDeskDesc: "If you have not yet passed security control, airline desks in Terminal 1 can assist with rebooking and provide support. If your flight is delayed, proceed directly to security control and ask the staff at your gate for assistance—they are the ones who can help with rebooking and provide support.",  
+
         getInWriting: "Get everything in writing",
         getInWritingDesc: "Request written confirmation of any arrangements or promises made.",
         // Document Everything section
@@ -147,7 +148,7 @@ export const translations = {
         // Weather impact messages
         weatherImpactMessages: {
             operationsSuspended: "Operations suspended",
-            visibilityBelowMinimums: "Operations suspended - visibility below minimums",
+            visibilityBelowMinimums: "Visibility below minimums",
             diversionsLikely: "Diversions and cancellations likely",
             checkStatus: "Check your flight status",
             freezingConditions: "Operations severely restricted",
@@ -232,7 +233,7 @@ export const translations = {
             windDelays: "💨 Strong winds may cause delays",
             visibilityDecreasing: "📉 Visibility decreasing",
             visibilityImproving: "📈 Visibility improving",
-            operationsSuspended: "⛔ Operations suspended - below minimums",
+            operationsSuspended: "⛔ Below visibility minimums",
             diversionsLikely: "✈️ Diversions likely",
             reducedVisibilityMorning: "⏰ Possible reduced visibility during early morning hours",
             winterDeicing: "❄️ Likely de-icing required",
@@ -247,15 +248,15 @@ export const translations = {
         // Risk level messages
         riskLevel4Title: "Major Weather Impact",
         riskLevel4Message: "Operations may be suspended",
-        riskLevel4Status: "All flights may be suspended due to severe weather conditions. Check for updates with your airline. Unless you receive official cancellation information, it is recommended to arrive at the airport at least 2 hours before departure.",
+            riskLevel4Status: "All flights may be suspended due to severe weather conditions. Check for updates with your airline. Unless you receive official cancellation information, you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
         
         riskLevel3Title: "Weather Advisory",
         riskLevel3Message: "Operations may be restricted",
-        riskLevel3Status: "Delays of more than 30 minutes are possible. Check your flight status with your airline. It is recommended to arrive at the airport at least 2 hours before departure.",
+        riskLevel3Status: "Delays of more than 30 minutes are possible. Check your flight status with your airline. Remember that you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
         
         riskLevel2Title: "Minor Weather Impact",
         riskLevel2Message: "Minor operational impacts expected",
-        riskLevel2Status: "Flights are operating, but delays of 10 to 20 minutes are possible. Check your flight status with your airline. It is recommended to arrive at the airport at least 2 hours before departure.",
+        riskLevel2Status: "Flights are operating, but delays of 10 to 20 minutes are possible. Check your flight status with your airline. Remember that you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
         
         riskLevel1Title: "Good Flying Conditions",
         riskLevel1Message: "Normal operations",
@@ -394,8 +395,8 @@ export const translations = {
         askAboutRights: "Zapytaj o prawa EU261",
         askAboutRightsDesc: "Personel musi poinformować Cię o przysługującej Ci opiece i pomocy.",
         // Before Security section
-        visitAirlineDesk: "Odwiedź stanowisko linii lotniczej",
-        visitAirlineDeskDesc: "Jeśli nie przeszedłeś jeszcze kontroli bezpieczeństwa, stanowiska linii lotniczych w Terminalu 1 mogą pomóc w zmianie rezerwacji i udzielić pomocy.",
+        visitAirlineDesk: "Jeśli Twój lot został odwołany, odwiedź stanowisko linii lotniczej. W przypadku opóźnienia, przejdź do kontroli bezpieczeństwa.",  
+        visitAirlineDeskDesc: "Jeśli nie przeszedłeś jeszcze kontroli bezpieczeństwa, stanowiska linii lotniczych w Terminalu 1 mogą pomóc w zmianie rezerwacji i udzielić wsparcia. Jeśli Twój lot jest opóźniony, przejdź bezpośrednio do kontroli bezpieczeństwa i zapytaj personel przy Twojej bramce o pomoc – to oni mogą pomóc w zmianie rezerwacji i udzielić wsparcia.",
         getInWriting: "Wszystko na piśmie",
         getInWritingDesc: "Poproś o pisemne potwierdzenie wszelkich ustaleń lub obietnic.",
         // Document Everything section
@@ -463,7 +464,7 @@ export const translations = {
         withAirline: "przed wyjściem na lotnisko",
         directlyWithAirline: "w celu uzyskania informacji o możliwych zmianach",
         // Footer
-        disclaimer: "Ta aplikacja nie jest oficjalną usługą Lotniska w Krakowie. Służy wyłącznie celom informacyjnym i nie powinna być używana jako jedyne źródło do planowania lotów lub podejmowania decyzji. Zawsze sprawdzaj oficjalne źródła i informacje od linii lotniczych, aby uzyskać najdokładniejsze i aktualne informacje.",
+        disclaimer: "Ta aplikacja nie jest powiązana z Lotniskiem w Krakowie. Służy wyłącznie celom informacyjnym i nie powinna być używana jako jedyne źródło do planowania lotów lub podejmowania decyzji. Zawsze sprawdzaj oficjalne źródła i informacje od linii lotniczych, aby uzyskać najdokładniejsze i aktualne informacje.",
         builtBy: "Stworzone przez Mateusza Kozłowskiego",
         changelog: "Historia zmian",
         email: "Email",
@@ -494,7 +495,7 @@ export const translations = {
         // Weather impact messages
         weatherImpactMessages: {
             operationsSuspended: "Operacje zawieszone",
-            visibilityBelowMinimums: "Tymczasowe zawieszenie operacji - widoczność poniżej minimów",
+            visibilityBelowMinimums: "Widoczność poniżej minimów",
             diversionsLikely: "Prawdopodobne przekierowania i odwołania lotów",
             checkStatus: "Sprawdź status swojego lotu",
             freezingConditions: "Operacje znacznie ograniczone",
@@ -579,7 +580,7 @@ export const translations = {
             windDelays: "💨 Silny wiatr może powodować opóźnienia",
             visibilityDecreasing: "📉 Widoczność się pogarsza",
             visibilityImproving: "📈 Widoczność się poprawia",
-            operationsSuspended: "⛔ Tymczasowe zawieszenie operacji - widoczność poniżej minimów",
+            operationsSuspended: "⛔ Widoczność poniżej minimów",
             diversionsLikely: "✈️ Prawdopodobne przekierowania",
             reducedVisibilityMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
             winterDeicing: "❄️ Prawdopodobne odladzanie",
@@ -594,15 +595,16 @@ export const translations = {
         // Risk level messages
         riskLevel4Title: "Poważne zakłócenia",
         riskLevel4Message: "Operacje prawdopodobnie zawieszone",
-        riskLevel4Status: "Wszystkie loty mogą być zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika. Jeśli nie otrzymałeś oficjalnej informacji o anulacji lotu, zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
+        riskLevel4Status: "Wszystkie loty mogą być zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika. \n\nJeśli nie otrzymałeś oficjalnej informacji o anulacji lotu wraz z nową rezerwacją, Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.",
         
         riskLevel3Title: "Alert pogodowy",
         riskLevel3Message: "Operacje mogą być ograniczone",
-        riskLevel3Status: "Możliwe opóźnienia powyżej 30 minut. Sprawdź status swojego lotu u przewoźnika. Zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
+        riskLevel3Status: `Możliwe opóźnienia powyżej 30 minut. Sprawdź status swojego lotu u przewoźnika. Pamiętaj, że Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.`,
         
         riskLevel2Title: "Niewielki wpływ pogody",
         riskLevel2Message: "Spodziewane niewielkie utrudnienia",
-        riskLevel2Status: "Loty odbywają się, ale możliwe są opóźnienia od 10 do 20 minut. Sprawdź status swojego lotu u przewoźnika. Zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
+        riskLevel2Status: `Loty odbywają się, ale możliwe są opóźnienia od 10 do 20 minut. Sprawdź status swojego lotu u przewoźnika.
+        \n\nPamiętaj, że Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.`,
         
         riskLevel1Title: "Dobre warunki do lotów",
         riskLevel1Message: "Normalne operacje",

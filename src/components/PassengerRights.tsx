@@ -105,10 +105,7 @@ export function PassengerRights() {
                       <div className="font-medium text-slate-700">{t.keepDocuments}</div>
                       <div className="text-slate-600">{t.keepDocumentsDesc}</div>
                     </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.noteStaffDetails}</div>
-                      <div className="text-slate-600">{t.noteStaffDetailsDesc}</div>
-                    </li>
+                
                   </ul>
                 </AccordionContent>
               </AccordionItem>
@@ -162,10 +159,6 @@ export function PassengerRights() {
                     <li>
                       <div className="font-medium text-slate-700">{t.reroutingOptions}</div>
                       <div className="text-slate-600">{t.reroutingOptionsDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.loungeAccess}</div>
-                      <div className="text-slate-600">{t.loungeAccessDesc}</div>
                     </li>
                   </ul>
                 </AccordionContent>
