@@ -167,9 +167,9 @@ export const translations = {
         },
         // Operational impacts
         operationalImpactMessages: {
-            deicingDelay: "❄️ Mandatory de-icing, expect 30-45 min delay",
-            likelyDeicing: "❄️ Likely de-icing required, expect 20-30 min delay",
-            possibleDeicing: "❄️ Possible de-icing, expect 15-20 min delay",
+            deicingDelay: "❄️ Mandatory de-icing",
+            likelyDeicing: "❄️ Likely de-icing required",
+            possibleDeicing: "❄️ Possible de-icing",
             activeDeicing: "🧊 Active precipitation requiring de-icing procedures",
             runwayClearing: "🚜 Runway/taxiway snow clearing in progress",
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
@@ -182,7 +182,7 @@ export const translations = {
             reducedVisibility: "👁️ Poor visibility conditions",
             marginalConditions: "☁️ Marginal conditions",
             earlyMorning: "⏰ Possible reduced visibility during early morning hours",
-            winterDeicing: "❄️ Likely de-icing required, expect 20-30 min delay",
+            winterDeicing: "❄️ Likely de-icing required",
             visibilityBelowMinimums: "👁️ Visibility below minimums",
             
             // De-icing messages
@@ -235,7 +235,7 @@ export const translations = {
             operationsSuspended: "⛔ Operations suspended - below minimums",
             diversionsLikely: "✈️ Diversions likely",
             reducedVisibilityMorning: "⏰ Possible reduced visibility during early morning hours",
-            winterDeicing: "❄️ Likely de-icing required, expect 20-30 min delay",
+            winterDeicing: "❄️ Likely de-icing required",
             poorVisibilityOps: "👁️ Poor visibility conditions",
             marginalConditions: "☁️ Marginal conditions",
             extendedDelays: "⏳ Extended delays likely",
@@ -246,16 +246,16 @@ export const translations = {
         },
         // Risk level messages
         riskLevel4Title: "Major Weather Impact",
-        riskLevel4Message: "Operations suspended",
-        riskLevel4Status: "All flights are currently suspended due to severe weather conditions. Check with your airline for updates.",
+        riskLevel4Message: "Operations may be suspended",
+        riskLevel4Status: "All flights may be suspended due to severe weather conditions. Check for updates with your airline. Unless you receive official cancellation information, it is recommended to arrive at the airport at least 2 hours before departure.",
         
         riskLevel3Title: "Weather Advisory",
-        riskLevel3Message: "Operations restricted",
-        riskLevel3Status: "Expect delays of 30+ minutes. Check your flight status.",
+        riskLevel3Message: "Operations may be restricted",
+        riskLevel3Status: "Delays of more than 30 minutes are possible. Check your flight status with your airline. It is recommended to arrive at the airport at least 2 hours before departure.",
         
         riskLevel2Title: "Minor Weather Impact",
         riskLevel2Message: "Minor operational impacts expected",
-        riskLevel2Status: "Flights are operating with possible delays of 20-30 minutes.",
+        riskLevel2Status: "Flights are operating, but delays of 10 to 20 minutes are possible. Check your flight status with your airline. It is recommended to arrive at the airport at least 2 hours before departure.",
         
         riskLevel1Title: "Good Flying Conditions",
         riskLevel1Message: "Normal operations",
@@ -514,9 +514,9 @@ export const translations = {
         },
         // Operational impacts
         operationalImpactMessages: {
-            deicingDelay: "❄️ Wymagane odladzanie, spodziewaj się 30-45 min opóźnienia",
-            likelyDeicing: "❄️ Prawdopodobne odladzanie, spodziewaj się 20-30 min opóźnienia",
-            possibleDeicing: "❄️ Możliwe odladzanie, spodziewaj się 15-20 min opóźnienia",
+            deicingDelay: "❄️ Wymagane odladzanie",
+            likelyDeicing: "❄️ Prawdopodobne odladzanie",
+            possibleDeicing: "❄️ Możliwe odladzanie",
             activeDeicing: "🧊 Aktywne opady wymagające procedur odladzania",
             runwayClearing: "🚜 Odśnieżanie pasa startowego/dróg kołowania",
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
@@ -529,7 +529,7 @@ export const translations = {
             reducedVisibility: "👁️ Słaba widoczność",
             marginalConditions: "☁️ Graniczne warunki",
             earlyMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
-            winterDeicing: "❄️ Prawdopodobne odladzanie, spodziewaj się 20-30 min opóźnienia",
+            winterDeicing: "❄️ Prawdopodobne odladzanie",
             visibilityBelowMinimums: "👁️ Widoczność poniżej minimów",
             
             // De-icing messages
@@ -582,7 +582,7 @@ export const translations = {
             operationsSuspended: "⛔ Tymczasowe zawieszenie operacji - widoczność poniżej minimów",
             diversionsLikely: "✈️ Prawdopodobne przekierowania",
             reducedVisibilityMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
-            winterDeicing: "❄️ Prawdopodobne odladzanie, spodziewaj się 20-30 min opóźnienia",
+            winterDeicing: "❄️ Prawdopodobne odladzanie",
             poorVisibilityOps: "👁️ Słaba widoczność",
             marginalConditions: "☁️ Graniczne warunki",
             extendedDelays: "⏳ Prawdopodobne dłuższe opóźnienia",
@@ -593,16 +593,16 @@ export const translations = {
         },
         // Risk level messages
         riskLevel4Title: "Poważne zakłócenia",
-        riskLevel4Message: "Operacje zawieszone",
-        riskLevel4Status: "Wszystkie loty są obecnie zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika.",
+        riskLevel4Message: "Operacje prawdopodobnie zawieszone",
+        riskLevel4Status: "Wszystkie loty mogą być zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika. Jeśli nie otrzymałeś oficjalnej informacji o anulacji lotu, zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
         
         riskLevel3Title: "Alert pogodowy",
-        riskLevel3Message: "Operacje ograniczone",
-        riskLevel3Status: "Spodziewaj się opóźnień powyżej 30 minut. Sprawdź status swojego lotu.",
+        riskLevel3Message: "Operacje mogą być ograniczone",
+        riskLevel3Status: "Możliwe opóźnienia powyżej 30 minut. Sprawdź status swojego lotu u przewoźnika. Zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
         
         riskLevel2Title: "Niewielki wpływ pogody",
         riskLevel2Message: "Spodziewane niewielkie utrudnienia",
-        riskLevel2Status: "Loty odbywają się z możliwymi opóźnieniami 20-30 minut.",
+        riskLevel2Status: "Loty odbywają się, ale możliwe są opóźnienia od 10 do 20 minut. Sprawdź status swojego lotu u przewoźnika. Zaleca się przybycie na lotnisko co najmniej 2 godziny przed planowanym wylotem.",
         
         riskLevel1Title: "Dobre warunki do lotów",
         riskLevel1Message: "Normalne operacje",
