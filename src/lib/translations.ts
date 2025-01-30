@@ -27,7 +27,7 @@ export const translations = {
         // Passenger Rights translations
         delayedFlight: "Delayed Flight? We're Here to Help",
         supportAvailable: "Find out what support is available and where to get immediate assistance at Kraków Airport",
-        proTip: "Pro tip: Join forces with other passengers - airlines are more responsive to group requests. Document everything and get all promises in writing.",
+        proTip: "Tip: If you encounter difficulties, remember that airport staff is working under challenging conditions and may be overwhelmed with a large number of passengers. Be patient, cooperate, and understand that doing everything you can to make their job easier will help resolve the situation more quickly.",
         whatToDoNow: "What to Do Right Now",
         stayAtGate: "Important: If you've already passed security, stay at your gate! Ask gate staff for assistance first.",
         atYourGate: "At Your Gate",
@@ -47,9 +47,8 @@ export const translations = {
         askAboutRights: "Ask about EU261 rights",
         askAboutRightsDesc: "Staff must inform you about care and assistance you're entitled to.",
         // Before Security section
-        visitAirlineDesk: "If your flight is canceled, visit your airline's desk. In case of a delay, proceed to security control.",  
-        visitAirlineDeskDesc: "If you have not yet passed security control, airline desks in Terminal 1 can assist with rebooking and provide support. If your flight is delayed, proceed directly to security control and ask the staff at your gate for assistance—they are the ones who can help with rebooking and provide support.",  
-
+        visitAirlineDesk: "If you do not have information about your new flight, proceed immediately to security control and approach the staff at your gate for assistance.",  
+        visitAirlineDeskDesc: "Go directly to security control and ask the staff at your gate for help – they are the ones who can assist with rebooking and provide support.",
         getInWriting: "Get everything in writing",
         getInWritingDesc: "Request written confirmation of any arrangements or promises made.",
         // Document Everything section
@@ -375,7 +374,7 @@ export const translations = {
         // Passenger Rights translations
         delayedFlight: "Opóźniony lot? Jesteśmy tu, aby pomóc",
         supportAvailable: "Dowiedz się, jakie wsparcie jest dostępne i gdzie uzyskać natychmiastową pomoc na lotnisku w Krakowie",
-        proTip: "Wskazówka: Działaj wspólnie z innymi pasażerami - linie lotnicze są bardziej responsywne na grupowe prośby. Dokumentuj wszystko i proś o pisemne potwierdzenia.",
+        proTip: "Wskazówka: Jeśli napotkałeś trudności, pamiętaj, że personel lotniska działa w trudnych warunkach i może być obciążony dużą liczbą pasażerów. Bądź cierpliwy, współpracuj i zrozum, że zrobienie wszystkiego, co w Twojej mocy, aby ułatwić pracę personelu, pomoże w szybszym rozwiązaniu sytuacji.",
         whatToDoNow: "Co zrobić teraz",
         stayAtGate: "Ważne: Jeśli przeszedłeś już kontrolę bezpieczeństwa, pozostań przy bramce! Najpierw poproś o pomoc personel przy bramce.",
         atYourGate: "Przy bramce",
@@ -395,8 +394,8 @@ export const translations = {
         askAboutRights: "Zapytaj o prawa EU261",
         askAboutRightsDesc: "Personel musi poinformować Cię o przysługującej Ci opiece i pomocy.",
         // Before Security section
-        visitAirlineDesk: "Jeśli Twój lot został odwołany, odwiedź stanowisko linii lotniczej. W przypadku opóźnienia, przejdź do kontroli bezpieczeństwa.",  
-        visitAirlineDeskDesc: "Jeśli nie przeszedłeś jeszcze kontroli bezpieczeństwa, stanowiska linii lotniczych w Terminalu 1 mogą pomóc w zmianie rezerwacji i udzielić wsparcia. Jeśli Twój lot jest opóźniony, przejdź bezpośrednio do kontroli bezpieczeństwa i zapytaj personel przy Twojej bramce o pomoc – to oni mogą pomóc w zmianie rezerwacji i udzielić wsparcia.",
+        visitAirlineDesk: "Jeśli nie masz informacji o nowym locie, przejdź natychmiast do kontroli bezpieczeństwa i zwróć się do personelu przy swojej bramce.",  
+        visitAirlineDeskDesc: "Udaj się bezpośrednio do kontroli bezpieczeństwa i zapytaj personel przy bramce o pomoc – to oni mogą pomóc w zmianie rezerwacji i udzielić wsparcia.",
         getInWriting: "Wszystko na piśmie",
         getInWritingDesc: "Poproś o pisemne potwierdzenie wszelkich ustaleń lub obietnic.",
         // Document Everything section

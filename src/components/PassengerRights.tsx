@@ -56,10 +56,6 @@ export function PassengerRights() {
                       <div className="text-slate-600">{t.speakWithStaffDesc}</div>
                     </li>
                     <li>
-                      <div className="font-medium text-slate-700">{t.requestConfirmation}</div>
-                      <div className="text-slate-600">{t.requestConfirmationDesc}</div>
-                    </li>
-                    <li>
                       <div className="font-medium text-slate-700">{t.askAboutRights}</div>
                       <div className="text-slate-600">{t.askAboutRightsDesc}</div>
                     </li>
