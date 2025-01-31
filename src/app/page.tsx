@@ -432,17 +432,7 @@ export default function Page() {
                       </p>
 
                       <div className="flex flex-col sm:flex-row gap-3" style={{ marginTop: "8px" }}>
-                        <a 
-                          href="https://www.krakowairport.pl/en/passenger/flight-information/departures"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium 
-                            bg-white/20 hover:bg-white/30 text-white transition-colors rounded-md px-4 py-2
-                            focus:outline-none focus:ring-2 focus:ring-white/50"
-                        >
-                          <Plane className="h-4 w-4" />
-                          {t.checkFlightStatus}
-                        </a>
+
                         
                         <Link 
                           href="/passengerrights"

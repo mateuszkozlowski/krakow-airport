@@ -108,7 +108,7 @@ export const translations = {
         // Status messages
         statusSuspended: "Airport operations may be suspended. Check your flight status.",
         statusMajorDisruption: "Significant disruptions are likely. Check your flight status.",
-        statusMinorDelays: "Minor delays are possible. Check flight status before leaving.",
+        statusMinorDelays: "Minor delays are possible. Check your flight status regularly.",
         statusNormal: "Weather conditions are favorable for normal operations.",
         // Additional alert messages
         laterInDay: "Temporary severe weather conditions could also happen later in the day",
@@ -455,12 +455,12 @@ export const translations = {
         // Status messages
         statusSuspended: "Operacje lotniska mogą zostać zawieszone. Sprawdź status swojego lotu.",
         statusMajorDisruption: "Prawdopodobne są znaczące zakłócenia. Sprawdź status swojego lotu.",
-        statusMinorDelays: "Możliwe niewielkie opóźnienia. Sprawdź status lotu przed wyjściem.",
+        statusMinorDelays: "Możliwe niewielkie opóźnienia. Sprawdzaj regularnie status swojego lotu.",
         statusNormal: "Warunki pogodowe sprzyjają normalnym operacjom.",
         // Additional alert messages
         laterInDay: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
-        checkStatus: "Zalecamy sprawdzenie statusu lotu",
-        withAirline: "przed wyjściem na lotnisko",
+        checkStatus: "Zalecamy sprawdzanie statusu lotu",
+        withAirline: "regularnie",
         directlyWithAirline: "w celu uzyskania informacji o możliwych zmianach",
         // Footer
         disclaimer: "Ta aplikacja nie jest powiązana z Lotniskiem w Krakowie. Służy wyłącznie celom informacyjnym i nie powinna być używana jako jedyne źródło do planowania lotów lub podejmowania decyzji. Zawsze sprawdzaj oficjalne źródła i informacje od linii lotniczych, aby uzyskać najdokładniejsze i aktualne informacje.",

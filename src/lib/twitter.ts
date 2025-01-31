@@ -271,7 +271,7 @@ export async function postWeatherAlert(
     ? 'Możliwe odwołania lotów / Possible flight cancellations'
     : 'Możliwe znaczne opóźnienia / Significant delays possible';
 
-  const tweetText = `KRK.flights ALERT!\n${timeRanges}\n${emoji} ${message}\nWięcej/More: bit.ly/epkk #KrakowAirport`;
+  const tweetText = `KRK.flights ALERT!\n${timeRanges}\n${emoji} ${message}\nWięcej/More: bit.ly/epkk`;
 
   try {
     await postTweet(tweetText);
