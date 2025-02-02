@@ -232,7 +232,7 @@ export const translations = {
             windDelays: "💨 Strong winds may cause delays",
             visibilityDecreasing: "📉 Visibility decreasing",
             visibilityImproving: "📈 Visibility improving",
-            operationsSuspended: "⛔ Below visibility minimums",
+            operationsSuspended: "⛔ Low visibility",
             diversionsLikely: "✈️ Diversions likely",
             reducedVisibilityMorning: "⏰ Possible reduced visibility during early morning hours",
             winterDeicing: "❄️ Likely de-icing required",
@@ -530,7 +530,7 @@ export const translations = {
             marginalConditions: "☁️ Graniczne warunki",
             earlyMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
             winterDeicing: "❄️ Prawdopodobne odladzanie",
-            visibilityBelowMinimums: "👁️ Widoczność poniżej minimów",
+            visibilityBelowMinimums: "👁️ Słaba widoczność",
             
             // De-icing messages
             severeIcing: "❄️ Poważne warunki oblodzeniowe",
@@ -579,7 +579,7 @@ export const translations = {
             windDelays: "💨 Silny wiatr może powodować opóźnienia",
             visibilityDecreasing: "📉 Widoczność się pogarsza",
             visibilityImproving: "📈 Widoczność się poprawia",
-            operationsSuspended: "⛔ Widoczność poniżej minimów",
+            operationsSuspended: "⛔ Słaba widoczność",
             diversionsLikely: "✈️ Prawdopodobne przekierowania",
             reducedVisibilityMorning: "⏰ Możliwa ograniczona widoczność we wczesnych godzinach porannych",
             winterDeicing: "❄️ Prawdopodobne odladzanie",
