@@ -852,13 +852,8 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                     <div className="flex flex-col gap-2">
                                       {period.isTemporary && (
                                         <div className="text-xs text-yellow-400 font-medium flex items-center gap-1">
-                                          <span className="bg-yellow-400/20 px-2 py-0.5 rounded">
-                                            {period.probability ? 
-                                              `PROB${period.probability} TEMPO` : 
-                                              period.changeType}
-                                          </span>
                                           <span className="text-slate-300">
-                                            {t.temporaryConditions.toLowerCase()}
+                                            {t.temporaryConditions}
                                           </span>
                                         </div>
                                       )}
