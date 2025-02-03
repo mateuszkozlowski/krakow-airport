@@ -366,17 +366,17 @@ export const translations = {
         title: "Czy dziś polecę z Krakowa?",
         backToAirportInfo: "Powrót do informacji lotniskowych",
         weatherAdvisory: "Alert pogodowy",
-        importantFlightInfo: "Ważna informacja na temat pogody",
-        flightDisruptions: "Spodziewane są znaczące zakłócenia lotów ",
-        severeWeather: "Spodziewane są trudne warunki pogodowe ",
+        importantFlightInfo: "Informacja o warunkach pogodowych",
+        flightDisruptions: "Możliwe są znaczące zakłócenia lotów ",
+        severeWeather: "Prognozowane są trudne warunki pogodowe ",
         checkFlightStatus: "Sprawdź status lotu",
-        knowYourRights: "Poznaj swoje prawa",
+        knowYourRights: "Informacje o prawach pasażera",
         // Passenger Rights translations
-        delayedFlight: "Opóźniony lot? Jesteśmy tu, aby pomóc",
-        supportAvailable: "Dowiedz się, jakie wsparcie jest dostępne i gdzie uzyskać natychmiastową pomoc na lotnisku w Krakowie",
-        proTip: "Wskazówka: Jeśli napotkałeś trudności, pamiętaj, że personel lotniska działa w trudnych warunkach i może być obciążony dużą liczbą pasażerów. Bądź cierpliwy, współpracuj i zrozum, że zrobienie wszystkiego, co w Twojej mocy, aby ułatwić pracę personelu, pomoże w szybszym rozwiązaniu sytuacji.",
-        whatToDoNow: "Co zrobić teraz",
-        stayAtGate: "Ważne: Jeśli przeszedłeś już kontrolę bezpieczeństwa, pozostań przy bramce! Najpierw poproś o pomoc personel przy bramce.",
+        delayedFlight: "Opóźniony lot? Informacje o dostępnym wsparciu",
+        supportAvailable: "Informacje o dostępnym wsparciu i miejscach uzyskania pomocy na lotnisku w Krakowie",
+        proTip: "Wskazówka: W przypadku trudności warto pamiętać, że personel lotniska może pracować w wymagających warunkach i obsługiwać zwiększoną liczbę pasażerów. Zachowanie spokoju i cierpliwości może przyczynić się do sprawniejszego rozwiązania sytuacji.",
+        whatToDoNow: "Sugerowane działania",
+        stayAtGate: "Uwaga: Po przejściu kontroli bezpieczeństwa zaleca się pozostanie przy bramce. W pierwszej kolejności warto skontaktować się z personelem przy bramce.",
         atYourGate: "Przy bramce",
         beforeSecurity: "Przed kontrolą bezpieczeństwa (Terminal Główny)",
         documentEverything: "Dokumentuj wszystko",
@@ -453,17 +453,17 @@ export const translations = {
         pageTitle: "Opóźniony lot? Jesteśmy tu, aby pomóc",
         pageSubtitle: "Dowiedz się, jakie wsparcie jest dostępne i gdzie uzyskać natychmiastową pomoc na lotnisku w Krakowie",
         // Status messages
-        statusSuspended: "Operacje lotniska mogą zostać zawieszone. Sprawdź status swojego lotu.",
-        statusMajorDisruption: "Prawdopodobne są znaczące zakłócenia. Sprawdź status swojego lotu.",
-        statusMinorDelays: "Możliwe niewielkie opóźnienia. Sprawdzaj regularnie status swojego lotu.",
-        statusNormal: "Warunki pogodowe sprzyjają normalnym operacjom.",
+        statusSuspended: "Istnieje możliwość zawieszenia operacji lotniskowych. Zalecane sprawdzenie statusu lotu u przewoźnika.",
+        statusMajorDisruption: "Możliwe znaczące zakłócenia. Zalecane sprawdzenie statusu lotu u przewoźnika.",
+        statusMinorDelays: "Możliwe niewielkie opóźnienia. Zalecane regularne sprawdzanie statusu lotu u przewoźnika.",
+        statusNormal: "Aktualne warunki pogodowe sprzyjają normalnym operacjom.",
         // Additional alert messages
-        laterInDay: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
-        checkStatus: "Zalecamy sprawdzanie statusu lotu",
-        withAirline: "regularnie",
-        directlyWithAirline: "w celu uzyskania informacji o możliwych zmianach",
+        laterInDay: "Prognozy wskazują na możliwość przejściowego pogorszenia warunków pogodowych w ciągu dnia",
+        checkStatus: "Zalecane sprawdzanie statusu lotu",
+        withAirline: "u przewoźnika",
+        directlyWithAirline: "bezpośrednio u przewoźnika w celu uzyskania aktualnych informacji",
         // Footer
-        disclaimer: "Ta aplikacja nie jest powiązana z Lotniskiem w Krakowie. Służy wyłącznie celom informacyjnym i nie powinna być używana jako jedyne źródło do planowania lotów lub podejmowania decyzji. Zawsze sprawdzaj oficjalne źródła i informacje od linii lotniczych, aby uzyskać najdokładniejsze i aktualne informacje.",
+        disclaimer: "Ta aplikacja nie jest oficjalną usługą Lotniska w Krakowie ani żadnego przewoźnika lotniczego. Służy wyłącznie celom informacyjnym i nie powinna być wykorzystywana jako podstawowe źródło informacji do planowania podróży lub podejmowania decyzji. Zawsze należy sprawdzać aktualne informacje bezpośrednio u przewoźnika lotniczego oraz w oficjalnych źródłach lotniskowych.",
         builtBy: "Stworzone przez Mateusza Kozłowskiego",
         changelog: "Historia zmian",
         email: "Email",
@@ -592,22 +592,21 @@ export const translations = {
             winterWeatherWarning: "❄️ Warunki zimowe mogą powodować opóźnienia",
         },
         // Risk level messages
-        riskLevel4Title: "Poważne zakłócenia",
-        riskLevel4Message: "Operacje prawdopodobnie zawieszone",
-        riskLevel4Status: "Wszystkie loty mogą być zawieszone ze względu na trudne warunki pogodowe. Sprawdź aktualizacje u swojego przewoźnika. \n\nJeśli nie otrzymałeś oficjalnej informacji o anulacji lotu wraz z nową rezerwacją, Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.",
+        riskLevel4Title: "Trudne warunki pogodowe",
+        riskLevel4Message: "Możliwe zawieszenie operacji",
+        riskLevel4Status: "Ze względu na trudne warunki pogodowe możliwe jest zawieszenie operacji lotniczych. Zalecane sprawdzenie aktualnych informacji bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
         
         riskLevel3Title: "Alert pogodowy",
-        riskLevel3Message: "Operacje mogą być ograniczone",
-        riskLevel3Status: `Możliwe opóźnienia powyżej 30 minut. Sprawdź status swojego lotu u przewoźnika. Pamiętaj, że Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.`,
+        riskLevel3Message: "Możliwe ograniczenia operacyjne",
+        riskLevel3Status: "Możliwe opóźnienia przekraczające 30 minut. Zalecane sprawdzenie statusu lotu bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
         
-        riskLevel2Title: "Niewielki wpływ pogody",
-        riskLevel2Message: "Spodziewane niewielkie utrudnienia",
-        riskLevel2Status: `Loty odbywają się, ale możliwe są opóźnienia od 10 do 20 minut. Sprawdź status swojego lotu u przewoźnika.
-        \n\nPamiętaj, że Twoim obowiązkiem jest przybycie na lotnisko co najmniej 2 godziny przed planowanym (zgodnie z rozkładem) wylotem.`,
+        riskLevel2Title: "Niewielki wpływ warunków pogodowych",
+        riskLevel2Message: "Możliwe niewielkie utrudnienia",
+        riskLevel2Status: "Operacje lotnicze są realizowane, możliwe opóźnienia od 10 do 20 minut. Zalecane sprawdzenie statusu lotu bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
         
-        riskLevel1Title: "Dobre warunki do lotów",
-        riskLevel1Message: "Normalne operacje",
-        riskLevel1Status: "Wszystkie loty odbywają się zgodnie z rozkładem.",
+        riskLevel1Title: "Korzystne warunki pogodowe",
+        riskLevel1Message: "Standardowe operacje",
+        riskLevel1Status: "Aktualne warunki sprzyjają planowym operacjom lotniczym.",
         
         // Time-based risk messages
         earlyMorningWarning: "Warunki wczesnoporanne mogą wpływać na widoczność",
@@ -620,11 +619,11 @@ export const translations = {
             many: "okresów"
         } as const,
         riskLegend: {
-            title: "Przewodnik po wpływie pogody",
-            description: "Ten przewodnik pomoże Ci zrozumieć, jak warunki pogodowe mogą wpłynąć na Twój lot i jakie działania należy podjąć.",
-            whatToExpect: "Czego się spodziewać:",
-            whatToDo: "Co należy zrobić:",
-            proTips: "Przydatne wskazówki",
+            title: "Informacje o wpływie warunków pogodowych",
+            description: "Poniższe informacje mają charakter orientacyjny i przedstawiają możliwy wpływ warunków pogodowych na operacje lotnicze.",
+            whatToExpect: "Możliwe scenariusze:",
+            whatToDo: "Sugerowane działania:",
+            proTips: "Dodatkowe wskazówki",
             close: "Zamknij",
             
             // Risk levels
@@ -696,19 +695,19 @@ export const translations = {
                 ]
             },
             tips: [
-                "Pobierz aplikację mobilną swojej linii lotniczej, aby otrzymywać natychmiastowe aktualizacje",
-                "Zapisz numery kontaktowe linii lotniczej w telefonie",
-                "Zrób zrzut ekranu szczegółów rezerwacji"
+                "Warto rozważyć zainstalowanie aplikacji mobilnej przewoźnika w celu otrzymywania aktualizacji",
+                "Zalecane zapisanie numerów kontaktowych przewoźnika w telefonie",
+                "Warto zachować kopię szczegółów rezerwacji"
             ]
         },
         banner: {
-            significantDisruptions: "Spodziewane są znaczące zakłócenia lotów",
+            significantDisruptions: "Prognozowana możliwość znaczących zakłóceń lotów",
             between: "w godzinach",
             and: "do",
-            dueTo: "z powodu",
-            thatMayOccur: "które mogą występować okresowo",
-            temporaryConditions: "Przejściowe pogorszenie warunków pogodowych może również wystąpić później w ciągu dnia",
-            checkStatus: "Zalecamy sprawdzenie statusu lotu w celu uzyskania informacji o możliwych zmianach"
+            dueTo: "ze względu na",
+            thatMayOccur: "które mogą wystąpić okresowo",
+            temporaryConditions: "Prognozy wskazują na możliwość przejściowego pogorszenia warunków pogodowych w ciągu dnia",
+            checkStatus: "Zalecane sprawdzenie statusu lotu bezpośrednio u przewoźnika"
         }
     }
 } as const; 
