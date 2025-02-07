@@ -4,7 +4,7 @@
 import React, { ReactNode } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Clock, Hotel, Info, Coffee, Shield, LucideIcon, MapPin, ArrowUpRight } from 'lucide-react';
+import { Clock, Hotel, Info, Coffee, Shield, LucideIcon, MapPin, ArrowUpRight, Camera, FileText, MessageCircle, FileCheck, Utensils, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/lib/translations';
 
@@ -19,300 +19,262 @@ export function PassengerRights() {
   const t = translations[language];
 
   return (
-    <div className="py-8">
-      <Alert variant="default" className="mb-8">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          {t.proTip}
-        </AlertDescription>
-      </Alert>
-      
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 text-slate-900">
-              {t.whatToDoNow}
-            </h2>
-            
-            <Alert className="mb-4 bg-blue-50 border-blue-200">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertDescription className="text-blue-900">
-                {t.stayAtGate}
-              </AlertDescription>
-            </Alert>
-            
-            <Accordion type="single" collapsible className="space-y-2" defaultValue="gate">
-              <AccordionItem value="gate">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">{t.atYourGate}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.speakWithStaff}</div>
-                      <div className="text-slate-600">{t.speakWithStaffDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.askAboutRights}</div>
-                      <div className="text-slate-600">{t.askAboutRightsDesc}</div>
-                    </li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="landside">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-orange-500" />
-                    <span className="font-medium">{t.beforeSecurity}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.visitAirlineDesk}</div>
-                      <div className="text-slate-600">{t.visitAirlineDeskDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.getInWriting}</div>
-                      <div className="text-slate-600">{t.getInWritingDesc}</div>
-                    </li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="document">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-green-500" />
-                    <span className="font-medium">{t.documentEverything}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.takePhotos}</div>
-                      <div className="text-slate-600">{t.takePhotosDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.keepDocuments}</div>
-                      <div className="text-slate-600">{t.keepDocumentsDesc}</div>
-                    </li>
-                
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+    <div className="py-8 max-w-7xl mx-auto px-4 px-6">
+            {/* Pro tip */}
+      <div className="mx-auto mb-16">
+        <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-white p-6 border border-slate-100">
+          <div className="flex gap-4">
+            <div className="flex-none">
+              <Info className="h-5 w-5 text-slate-400" />
+            </div>
+            <p className="text-sm text-slate-600">
+              {t.proTip}
+            </p>
           </div>
+        </div>
+      </div>
 
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 text-slate-900">
-              {t.rightsBasedOnDelay}
-            </h2>
+      {/* Timeline steps */}
+      <div className="max-w-4xl mx-auto mb-16">
+        <div className="relative">
+          {/* Vertical line */}
+          <div 
+            className="absolute left-8 w-0.5 bg-gradient-to-b from-blue-100 via-green-100 to-orange-100" 
+            style={{ 
+              top: '24px',
+              height: 'calc(100% - 288px)'
+            }}
+          />
 
-            <Accordion type="single" collapsible className="space-y-2">
-              <AccordionItem value="2hours">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <Coffee className="h-5 w-5 text-yellow-500" />
-                    <span className="font-medium">{t.twoHourDelay}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.freeMeals}</div>
-                      <div className="text-slate-600">{t.freeMealsDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.phoneCalls}</div>
-                      <div className="text-slate-600">{t.phoneCallsDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.wifi}</div>
-                      <div className="text-slate-600">{t.wifiDesc}</div>
-                    </li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="4hours">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-orange-500" />
-                    <span className="font-medium">{t.fourHourDelay}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.additionalMeals}</div>
-                      <div className="text-slate-600">{t.additionalMealsDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.reroutingOptions}</div>
-                      <div className="text-slate-600">{t.reroutingOptionsDesc}</div>
-                    </li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="overnight">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <Hotel className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">{t.overnightDelay}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <ul className="ml-7 space-y-3 text-sm text-slate-600">
-                    <li>
-                      <div className="font-medium text-slate-700">{t.hotelAccommodation}</div>
-                      <div className="text-slate-600">{t.hotelAccommodationDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.transport}</div>
-                      <div className="text-slate-600">{t.transportDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.multipleMeals}</div>
-                      <div className="text-slate-600">{t.multipleMealsDesc}</div>
-                    </li>
-                    <li>
-                      <div className="font-medium text-slate-700">{t.cancelOption}</div>
-                      <div className="text-slate-600">{t.cancelOptionDesc}</div>
-                    </li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-4 text-slate-900">
-              {t.officialResources}
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="rounded-lg border p-4">
-                <h3 className="font-medium mb-3">{t.inEnglish}</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>
-                    <a 
-                      href="https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-500 hover:underline flex items-center gap-1"
-                    >
-                      {t.euGuide}
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="https://europa.eu/youreurope/citizens/travel/passenger-rights/air/faq/index_en.htm" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-500 hover:underline flex items-center gap-1"
-                    >
-                      {t.faq}
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  </li>
-                </ul>
+          {/* Step 1: Document */}
+          <div className="relative flex gap-6 mb-12 group">
+            <div className="flex-none">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-50 to-white border-2 border-blue-100 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-blue-200">
+                <Camera className="h-8 w-8 text-blue-500" />
               </div>
+            </div>
+            <div className="flex-1 pt-3">
+              <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-xl p-6 border border-blue-100 transform transition-all group-hover:translate-x-1">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  {t.documentEverything}
+                  <span className="text-sm font-normal text-blue-600 bg-blue-100/50 px-2 py-0.5 rounded-full">
+                    {t.rightNow}
+                  </span>
+                </h3>
+                <div className="prose prose-slate prose-sm">
+                  <ul className="space-y-3 marker:text-blue-500">
+                    <li className="flex items-start gap-2">
+                      <FileText className="h-5 w-5 text-blue-500 flex-none mt-0.5" />
+                      <span>{t.takePhotosDesc}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <FileCheck className="h-5 w-5 text-blue-500 flex-none mt-0.5" />
+                      <span>{t.keepDocumentsDesc}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="font-medium mb-3">{t.inPolish}</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>
-                    <a 
-                      href="https://pasazerlotniczy.ulc.gov.pl/prawa-pasazera" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-500 hover:underline flex items-center gap-1"
-                    >
-                      {t.civilAviation}
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="https://www.gov.pl/web/infrastruktura/prawa-pasazera1" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-500 hover:underline flex items-center gap-1"
-                    >
-                      {t.ministry}
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  </li>
-                </ul>
+          {/* Step 2: Get Care & Assistance */}
+          <div className="relative flex gap-6 mb-12 group">
+            <div className="flex-none">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-50 to-white border-2 border-green-100 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-green-200">
+                <Coffee className="h-8 w-8 text-green-500" />
+              </div>
+            </div>
+            <div className="flex-1 pt-3">
+              <div className="bg-gradient-to-br from-green-50/50 to-white rounded-xl p-6 border border-green-100 transform transition-all group-hover:translate-x-1">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  {t.careRights}
+                  <span className="text-sm font-normal text-green-600 bg-green-100/50 px-2 py-0.5 rounded-full">
+                    {t.after2Hours}
+                  </span>
+                </h3>
+                <div className="prose prose-slate prose-sm">
+                  <div className="space-y-6">
+                    {/* 2+ hours */}
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <div className="flex gap-4 items-start">
+                        <div className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-medium">2h</div>
+                        <div>
+                          <p className="font-medium text-slate-900">{t.freeMeals}</p>
+                          <p className="text-sm text-slate-600 mb-2">{t.freeMealsDesc}</p>
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs text-slate-500 flex items-center gap-1">
+                              <span className="block w-1 h-1 rounded-full bg-green-500"></span>
+                              {t.shortHaulDelay} (≤ 1500 km)
+                            </p>
+                            <p className="text-xs text-slate-500 flex items-center gap-1">
+                              <span className="block w-1 h-1 rounded-full bg-green-500"></span>
+                              {t.mediumHaulDelay} (1500-3500 km)
+                            </p>
+                            <p className="text-xs text-slate-500 flex items-center gap-1">
+                              <span className="block w-1 h-1 rounded-full bg-green-500"></span>
+                              {t.longHaulDelay} (&gt; 3500 km)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4+ hours */}
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <div className="flex gap-4 items-start">
+                        <div className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-medium">4h</div>
+                        <div>
+                          <p className="font-medium text-slate-900">{t.additionalMeals}</p>
+                          <p className="text-sm text-slate-600 mb-2">{t.additionalMealsDesc}</p>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <Utensils className="h-4 w-4 text-green-500 flex-none mt-0.5" />
+                              <p className="text-xs text-slate-500">{t.additionalMealsNote}</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Clock className="h-4 w-4 text-green-500 flex-none mt-0.5" />
+                              <p className="text-xs text-slate-500">{t.reroutingOptionsNote}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Overnight */}
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <div className="flex gap-4 items-start">
+                        <div className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
+                          <Hotel className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{t.hotelAccommodation}</p>
+                          <p className="text-sm text-slate-600 mb-2">{t.hotelAccommodationDesc}</p>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-green-500 flex-none mt-0.5" />
+                              <p className="text-xs text-slate-500">{t.hotelTransportNote}</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Info className="h-4 w-4 text-green-500 flex-none mt-0.5" />
+                              <p className="text-xs text-slate-500">{t.hotelQualityNote}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Communication */}
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <div className="flex gap-4 items-start">
+                        <div className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
+                          <Phone className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{t.phoneCalls}</p>
+                          <p className="text-sm text-slate-600 mb-2">{t.phoneCallsDesc}</p>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <MessageCircle className="h-4 w-4 text-green-500 flex-none mt-0.5" />
+                              <p className="text-xs text-slate-500">{t.communicationNote}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Rights Note */}
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-5 w-5 text-green-500 flex-none mt-0.5" />
+                        <div>
+                          <p className="text-sm text-green-800">{t.careRightsNote}</p>
+                          <p className="text-xs text-green-700 mt-1">{t.careRightsImportant}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Know Your Rights & Compensation */}
+          <div className="relative flex gap-6 group">
+            <div className="flex-none">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-50 to-white border-2 border-orange-100 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-orange-200">
+                <Shield className="h-8 w-8 text-orange-500" />
+              </div>
+            </div>
+            <div className="flex-1 pt-3">
+              <div className="bg-gradient-to-br from-orange-50/50 to-white rounded-xl p-6 border border-orange-100 transform transition-all group-hover:translate-x-1">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  {t.compensationRights}
+                  <span className="text-sm font-normal text-orange-600 bg-orange-100/50 px-2 py-0.5 rounded-full">
+                    {t.after3Hours}
+                  </span>
+                </h3>
+                <div className="prose prose-slate prose-sm">
+                  <p className="text-orange-800 mb-4">{t.compensationDesc}</p>
+                  <div className="bg-white rounded-lg p-4 border border-orange-100">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-5 w-5 text-orange-500 flex-none mt-0.5" />
+                      <div>
+                        <p className="text-sm text-orange-800">{t.weatherCompensationDesc}</p>
+                        <div className="mt-4 text-sm">
+                          {t.compensationInfo}
+                          <a 
+                            href="https://www.airhelp.com/pl/?utm_medium=affiliate&utm_source=pap&utm_campaign=aff-krkflights&utm_content=&a_aid=krkflights&a_bid=2f59c947"
+                            target="_blank"
+                            rel="sponsored noopener noreferrer"
+                            className="text-orange-600 hover:underline font-medium"
+                          >
+                            {t.airHelpLink}
+                          </a>
+                          <span className="text-orange-600/75 text-xs">{t.sponsoredDisclosure}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="md:col-span-1">
-          <div className="sticky top-4 space-y-4">
-            <div className="rounded-lg border p-4">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
-                <MapPin className="h-4 w-4 text-blue-500" />
-                {t.airportInfo}
-              </h3>
-              
-              <div className="space-y-5 text-sm">
-                <div className="text-slate-600">
-                  <span className="font-medium">{t.mainTerminal}</span>{' '}
-                  <span className="text-slate-700">{t.mainTerminalDesc}</span>
-                </div>
-
-                <div className="text-slate-600">
-                  <span className="font-medium">{t.callCenter}</span>{' '}
-                  <a href="tel:+48122955800" className="font-medium text-slate-700 hover:text-blue-500 transition-colors">
-                    +48 12 295 58 00
-                  </a>
-                  {' / '}
-                  <a href="tel:0801055000" className="font-medium text-slate-700 hover:text-blue-500 transition-colors">
-                    0 801 055 000
-                  </a>
-                </div>
-
-                <div>
-                  <div className="text-slate-900 font-bold mb-2.5">
-                    {t.ticketOffices}
-                    <span className="font-normal text-slate-600"> {t.ticketOfficesDesc}</span>
-                  </div>
-                  <ul className="mt-2 space-y-2.5 text-slate-600">
-                    <li>
-                      <span className="font-medium text-slate-900">{t.lotOffice}</span>{' '}
-                      {t.lotOfficeDesc}{' '}
-                      <a href="tel:+48122855128" className="font-medium text-slate-700 hover:text-blue-500 transition-colors">
-                        Tel: +48 12 285 51 28
-                      </a>
-                    </li>
-                    <li>
-                      <span className="font-medium text-slate-900">{t.turkishOffice}</span>{' '}
-                      {t.turkishOfficeDesc}
-                    </li>
-                    <li>
-                      <span className="font-medium text-slate-900">{t.otherAirlines}</span>{' '}
-                      <span className="text-slate-500">
-                        {t.otherAirlinesDesc}
-                      </span>:{' '}
-                      {t.otherAirlinesHours}
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="border-t pt-4 text-slate-500 text-xs">
-                  <span className="font-medium">{t.needHelp}</span> {t.visitGateDesk}
-                </div>
-              </div>
+      {/* Resources */}
+      <div className=" mx-auto">
+        <h2 className="text-xl font-bold text-slate-900 mb-6">{t.officialResources}</h2>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <a 
+            href="https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl p-4 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-none">
+              <ArrowUpRight className="h-5 w-5 text-blue-600" />
             </div>
-          </div>
+            <div>
+              <div className="font-medium text-slate-900">{t.euGuide}</div>
+              <div className="text-sm text-slate-600">{t.inEnglish}</div>
+            </div>
+          </a>
+
+          <a 
+            href="https://pasazerlotniczy.ulc.gov.pl/prawa-pasazera"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl p-4 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-none">
+              <ArrowUpRight className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-medium text-slate-900">{t.civilAviation}</div>
+              <div className="text-sm text-slate-600">{t.inPolish}</div>
+            </div>
+          </a>
         </div>
       </div>
 

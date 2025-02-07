@@ -431,7 +431,7 @@ export default function Page() {
                           : ` ${t.directlyWithAirline}`}.
                       </p>
 
-                     {/* Temporarily disabled passenger rights button
+                     
                      <div className="flex flex-col sm:flex-row gap-3" style={{ marginTop: "8px" }}>
                         <Link 
                           href="/passengerrights"
@@ -443,7 +443,7 @@ export default function Page() {
                           {t.knowYourRights}
                         </Link>
                       </div>
-                      */}
+                  
                     </>
                   )}
                 </div>
