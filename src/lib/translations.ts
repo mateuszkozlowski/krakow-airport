@@ -652,6 +652,8 @@ export const translations = {
         riskLevel1Title: "Korzystne warunki pogodowe",
         riskLevel1Message: "Standardowe operacje",
         riskLevel1Status: "Aktualne warunki sprzyjają planowym operacjom lotniczym.",
+
+
         
         // Time-based risk messages
         earlyMorningWarning: "Warunki wczesnoporanne mogą wpływać na widoczność",
