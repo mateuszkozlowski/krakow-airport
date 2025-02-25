@@ -136,6 +136,17 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
     type: cloud.code
   }));
 
+  // Extract vertical visibility from raw METAR text if present
+  // VV is followed by 3 digits representing hundreds of feet
+  let verticalVisibility: { feet: number } | null = null;
+  const rawText = observation.raw_text;
+  const vvMatch = rawText.match(/\bVV(\d{3})\b/);
+  if (vvMatch && vvMatch[1]) {
+    const vvFeet = parseInt(vvMatch[1], 10) * 100;
+    verticalVisibility = { feet: vvFeet };
+    console.log(`Extracted vertical visibility: ${vvFeet} feet from METAR: ${rawText}`);
+  }
+
   return {
     data: [{
       airport_code: observation.icao,
@@ -166,6 +177,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       ceiling: observation.ceiling ? {
         feet: observation.ceiling.feet
       } : null,
+      vertical_visibility: verticalVisibility,
       observed: observation.observed
     }]
   };

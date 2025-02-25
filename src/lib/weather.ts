@@ -1557,6 +1557,14 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
     operationalImpactsSet.clear(); // Clear previous impacts
     operationalImpactsSet.add(warnings.operationsSuspended);
     operationalImpactsSet.add(warnings.diversionsLikely);
+    reasons.push(`Visibility (${weather.visibility.meters}m) below minimums (${MINIMUMS.VISIBILITY}m)`);
+  } else if (weather.vertical_visibility?.feet && weather.vertical_visibility.feet < MINIMUMS.VERTICAL_VISIBILITY) {
+    // Check for vertical visibility below minimums
+    baseRiskLevel = 4;
+    operationalImpactsSet.clear(); // Clear previous impacts
+    operationalImpactsSet.add(warnings.operationsSuspended);
+    operationalImpactsSet.add(warnings.diversionsLikely);
+    reasons.push(`Vertical visibility (${weather.vertical_visibility.feet}ft) below minimums (${MINIMUMS.VERTICAL_VISIBILITY}ft)`);
   } else if (weather.conditions?.some(c => ['FZFG', 'FZRA', 'FZDZ'].includes(c.code))) {
     baseRiskLevel = 4;
     operationalImpactsSet.clear(); // Clear previous impacts
@@ -1687,7 +1695,8 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
     message: `${riskDetails.message}${cleanedReasons.length ? ` - ${cleanedReasons[0]}` : ''}`,
     statusMessage: riskDetails.statusMessage,
     color: riskDetails.color,
-    operationalImpacts: Array.from(operationalImpactsSet)
+    operationalImpacts: Array.from(operationalImpactsSet),
+    explanation: cleanedReasons.length > 0 ? cleanedReasons.join('. ') : undefined
   };
 }
 

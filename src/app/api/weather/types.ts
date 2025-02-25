@@ -35,6 +35,7 @@ export interface TransformedMetar {
   visibility_units: string;
   wind: Wind;
   ceiling: Ceiling | null;
+  vertical_visibility: { feet: number } | null;
   observed: string;
 }
 

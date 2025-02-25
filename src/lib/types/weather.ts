@@ -37,6 +37,7 @@ export interface Change {
 }
 
 export interface WeatherData {
+  runway_visual_range: any;
   temperature?: {
     celsius: number;
   };
@@ -44,6 +45,9 @@ export interface WeatherData {
   visibility?: Visibility;
   clouds?: CloudInfo[];
   ceiling?: {
+    feet: number;
+  };
+  vertical_visibility?: {
     feet: number;
   };
   conditions?: WeatherCondition[];
