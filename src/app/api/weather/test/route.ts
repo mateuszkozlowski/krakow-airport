@@ -45,6 +45,15 @@ export async function POST(request: Request) {
       }]
     };
 
+    // Check for vertical visibility in the raw METAR text
+    let verticalVisibility: { feet: number } | null = null;
+    const rawText = testMetarData.data[0].raw_text;
+    const vvMatch = rawText.match(/\bVV(\d{3})\b/);
+    if (vvMatch && vvMatch[1]) {
+      const vvFeet = parseInt(vvMatch[1], 10) * 100;
+      verticalVisibility = { feet: vvFeet };
+    }
+
     const transformedMetar: TransformedMetarResponse = {
       data: [{
         airport_code: testMetarData.data[0].icao,
@@ -78,6 +87,7 @@ export async function POST(request: Request) {
         ceiling: {
           feet: Math.min(...testMetarData.data[0].clouds.map(cloud => cloud.feet))
         },
+        vertical_visibility: verticalVisibility,
         observed: testMetarData.data[0].observed
       }]
     };

@@ -36,8 +36,16 @@ export interface Change {
   indicator?: ChangeIndicator;
 }
 
+export interface RunwayVisualRange {
+  runway: string;
+  visibility: {
+    meters: number;
+  };
+  trend?: 'U' | 'D' | 'N'; // U = Upward, D = Downward, N = No change
+}
+
 export interface WeatherData {
-  runway_visual_range: any;
+  runway_visual_range?: RunwayVisualRange[];
   temperature?: {
     celsius: number;
   };
