@@ -142,7 +142,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
     // Patterns: FEW015CB, SCT020TCU, BKN025CB, etc.
     // If we have altitude, use it to match the specific cloud group, not just the first occurrence
     let cloudMatch: RegExpMatchArray | null = null;
-    let hadAltitude = baseAgl !== undefined && baseAgl !== null;
+    const hadAltitude = baseAgl !== undefined && baseAgl !== null;
     
     if (hadAltitude) {
       // We have altitude - match the specific cloud group
