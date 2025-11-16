@@ -842,31 +842,14 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
 
     // Merge TAF with OpenMeteo data
     const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
-    console.log('Enhanced forecast after OpenMeteo merge:', enhancedForecast.length);
-      phenomena: p.conditions.phenomena
-    })));
     
     // First merge overlapping periods
     const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast);
-    console.log('Forecast after merging overlapping periods:', mergedOverlapping.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    console.log('Forecast after merging overlapping periods:', mergedOverlapping.length);
     
     // Then merge consecutive similar periods
     const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping);
-    console.log('Final merged forecast:', mergedForecast.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    console.log('Final merged forecast:', mergedForecast.length);
 
     const currentAssessment = assessWeatherRisk(currentWeather, language);
     
@@ -1814,20 +1797,6 @@ export function formatBannerText(forecast: ForecastChange[], language: 'en' | 'p
 
 function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: OpenMeteoResponse, language: 'en' | 'pl'): ForecastChange[] {
   const t = translations[language];
-  
-  console.log('Debug - Merging TAF with OpenMeteo:', {
-    language,
-    tafPeriods: tafPeriods.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena,
-      riskLevel: p.riskLevel
-    })),
-    openMeteoDataPoints: openMeteoData.hourly.time.length
-  });
 
   const mergedPeriods = tafPeriods.map(period => {
     // Preserve the original risk level and translations
@@ -1871,17 +1840,6 @@ function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: Open
         statusMessage: riskTranslations[period.riskLevel.level].status
       };
     }
-    
-    console.log('Merged period:', {
-      from: period.from,
-      to: period.to,
-      isTemporary: period.isTemporary,
-      probability: period.probability,
-      changeType: period.changeType,
-      phenomena: period.conditions.phenomena,
-      riskLevel: period.riskLevel,
-      language
-    });
     
     return period;
   });
