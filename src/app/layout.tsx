@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   keywords: 'Krakow, airport, app, flights, delays, cancellations, weather',
   authors: [{ name: 'Mateusz Kozlowski' }],
   viewport: 'width=device-width, initial-scale=1.0',
+  icons: {
+    icon: '/icon.svg',
+  },
   openGraph: {
     images: '/ogimage.png',
   },

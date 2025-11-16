@@ -1167,7 +1167,7 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
         probability,
         language
       });
-      return;
+      continue;
     }
 
     const forecastChange = {
@@ -1684,7 +1684,7 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
   }
 
   // Final risk level (no time-based multipliers)
-  let finalRiskLevel = baseRiskLevel;
+  const finalRiskLevel = baseRiskLevel;
 
   const riskMappings = {
     4: {
@@ -1760,20 +1760,6 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
   };
 }
 
-// Helper function to describe visibility trends
-function getVisibilityTrendDescription(current: number, previous: number, language: 'en' | 'pl'): string {
-  const t = translations[language].operationalWarnings;
-  const change = current - previous;
-  const percentChange = Math.abs(change / previous * 100);
-  
-  if (percentChange < 10) return '';
-  
-  if (change < 0) {
-    return t.visibilityDecreasing;
-  } else {
-    return t.visibilityImproving;
-  }
-}
 
 // Add this helper function to get weather score based on WMO code
 function getWeatherScore(code: number): number {
@@ -1800,43 +1786,6 @@ function getWeatherScore(code: number): number {
   return 0;
 }
 
-// Add the de-icing risk calculation
-function calculateDeicingRisk(weather: WeatherData, language: 'en' | 'pl'): { score: number; reason?: string } {
-  const t = translations[language].weatherConditionMessages;
-  
-  if (!weather.temperature?.celsius) {
-    return { score: 0 };
-  }
-
-  const temp = weather.temperature.celsius;
-  let deicingScore = 0;
-  let reason = '';
-
-  if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.SEVERE) {
-    deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.CERTAIN;
-    reason = t.severeIcing;
-  } else if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.HIGH_RISK) {
-    deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.LIKELY;
-    reason = t.highIcingRisk;
-  } else if (temp <= RISK_WEIGHTS.DEICING.TEMPERATURE_THRESHOLDS.BELOW_ZERO) {
-    deicingScore = RISK_WEIGHTS.DEICING.BASE_SCORES.POSSIBLE;
-    reason = t.possibleIcing;
-  }
-
-  if (deicingScore > 0 && weather.conditions) {
-    const hasPrecipitation = weather.conditions.some(c => 
-      ['RA', 'SN', 'FZRA', 'FZDZ', 'SHSN', 'SHRA'].some(code => 
-        c.code.includes(code)
-      )
-    );
-    if (hasPrecipitation) {
-      deicingScore *= 1.5;
-      reason += t.withPrecipitation;
-    }
-  }
-
-  return { score: deicingScore, reason };
-}
 
 // Add this helper function for formatting visibility
 function formatVisibility(meters: number, language: 'en' | 'pl'): string {
@@ -1886,36 +1835,6 @@ function getDetailedDescription(condition: string, language: 'en' | 'pl'): strin
 }
 
 // Add this interface for warnings
-interface WarningMessages {
-  dangerousGusts: string;
-  diversionsLikely: string;
-  strongGustsOperations: string;
-  extendedDelays: string;
-  strongWindsApproaches: string;
-  minorDelaysPossible: string;
-  [key: string]: string; // For other warning messages
-}
-
-// Update the function with proper typing
-function getWindImpacts(
-  wind: { speed_kts: number; gust_kts?: number }, 
-  warnings: WarningMessages
-): string[] {
-  const impacts: string[] = [];
-  
-  if (wind.gust_kts && wind.gust_kts >= 40) {
-    impacts.push(warnings.dangerousGusts);
-    impacts.push(warnings.diversionsLikely);
-  } else if (wind.gust_kts && wind.gust_kts >= 35) {
-    impacts.push(warnings.strongGustsOperations);
-    impacts.push(warnings.extendedDelays);
-  } else if (wind.speed_kts >= 25 || (wind.gust_kts && wind.gust_kts >= 25)) {
-    impacts.push(warnings.strongWindsApproaches);
-    impacts.push(warnings.minorDelaysPossible);
-  }
-  
-  return impacts;
-}
 
 function getWeatherPhenomenonDescription(code: string, language: 'en' | 'pl'): string {
   return WEATHER_PHENOMENA_TRANSLATIONS[language][code as keyof typeof WEATHER_PHENOMENA] || code;
@@ -2023,22 +1942,6 @@ function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: Open
   return mergedPeriods;
 }
 
-async function getTafData(): Promise<TAFData> {
-  const response = await fetch('/api/weather', {
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache'
-    },
-    cache: 'no-store'
-  });
-
-  if (!response.ok) {
-    throw new Error('Weather data fetch failed');
-  }
-
-  const data = await response.json();
-  return data.taf.data[0];
-}
 
 async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
   const data = await fetchOpenMeteoForecast();
@@ -2071,12 +1974,6 @@ interface ForecastPeriod {
   riskLevel: RiskLevel;
   phenomena?: string[];
   language?: 'en' | 'pl';
-}
-
-interface TimelineEvent {
-  time: Date;
-  type: 'start' | 'end';
-  period: ForecastPeriod;
 }
 
 function mergeOverlappingPeriods(periods: ForecastChange[]): ForecastChange[] {
@@ -2194,32 +2091,6 @@ function mergeConsecutiveSimilarPeriods(periods: ForecastChange[]): ForecastChan
   return result;
 }
 
-// Add type conversion helper if needed
-function convertToForecastChange(period: ForecastPeriod): ForecastChange {
-  const language = period.language || 'pl';
-  
-  // Convert changeType to the correct type
-  let changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT' = 'PERSISTENT';
-  if (period.changeType === 'TEMPO') changeType = 'TEMPO';
-  if (period.changeType === 'BECMG') changeType = 'BECMG';
-
-  return {
-    ...period,
-    changeType, // Ensure changeType is one of the allowed literals
-    timeDescription: period.timeDescription || '',
-    conditions: {
-      phenomena: period.phenomena || []
-    },
-    riskLevel: {
-      level: 1,
-      title: getRiskTitle(1, language),
-      message: getRiskMessage(1, language),
-      statusMessage: getRiskStatus(1, language),
-      color: getRiskColor(1)
-    },
-    language
-  };
-}
 
 function arePeriodsConsecutive(a: ForecastChange, b: ForecastChange): boolean {
   // Allow for 1-minute gap to handle potential rounding
@@ -2327,132 +2198,6 @@ const COMPOUND_EFFECTS = {
   }
 } as const;
 
-// Add hysteresis constants to prevent rapid switching
-const HYSTERESIS = {
-  RISK_LEVEL: {
-    UP_THRESHOLD: 0.7,   // Required score to increase risk level
-    DOWN_THRESHOLD: 0.3  // Required score to decrease risk level
-  },
-  TIME_WINDOW: 30 * 60 * 1000  // 30 minutes in milliseconds
-} as const;
-
-// Add interface for trend analysis
-interface TrendAnalysis {
-  trend: 'improving' | 'deteriorating' | 'stable';
-  confidence: number;
-  volatility: 'high' | 'moderate' | 'low';
-  acceleration: number;
-}
-
-// Add sophisticated trend analysis function
-function analyzeTrend(
-  currentValue: number,
-  historicalValues: number[],
-  timeStamps: Date[],
-  parameter: 'visibility' | 'wind' | 'ceiling'
-): TrendAnalysis {
-  if (historicalValues.length < 2) {
-    return {
-      trend: 'stable',
-      confidence: 0,
-      volatility: 'low',
-      acceleration: 0
-    };
-  }
-
-  // Calculate rates of change
-  const ratesOfChange: number[] = [];
-  for (let i = 1; i < historicalValues.length; i++) {
-    const timeDiff = timeStamps[i].getTime() - timeStamps[i-1].getTime();
-    const valueDiff = historicalValues[i] - historicalValues[i-1];
-    ratesOfChange.push(valueDiff / (timeDiff / 1000)); // per second
-  }
-
-  // Calculate acceleration
-  const acceleration = ratesOfChange.reduce((acc, rate, i) => {
-    if (i === 0) return 0;
-    return acc + (rate - ratesOfChange[i-1]);
-  }, 0) / (ratesOfChange.length - 1);
-
-  // Calculate volatility
-  const mean = historicalValues.reduce((a, b) => a + b) / historicalValues.length;
-  const variance = historicalValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / historicalValues.length;
-  const volatility = Math.sqrt(variance);
-
-  // Determine volatility level
-  let volatilityLevel: 'high' | 'moderate' | 'low';
-  const volatilityThresholds = {
-    visibility: { high: 1000, moderate: 500 },
-    wind: { high: 10, moderate: 5 },
-    ceiling: { high: 500, moderate: 200 }
-  };
-
-  const thresholds = volatilityThresholds[parameter];
-  if (volatility > thresholds.high) {
-    volatilityLevel = 'high';
-  } else if (volatility > thresholds.moderate) {
-    volatilityLevel = 'moderate';
-  } else {
-    volatilityLevel = 'low';
-  }
-
-  // Calculate trend confidence based on data consistency
-  const consistencyScore = 1 - (volatility / (Math.max(...historicalValues) - Math.min(...historicalValues)));
-  const confidence = Math.max(0, Math.min(1, consistencyScore));
-
-  // Determine overall trend
-  const recentTrend = historicalValues[historicalValues.length - 1] - historicalValues[0];
-  const trend: 'improving' | 'deteriorating' | 'stable' = 
-    Math.abs(recentTrend) < (mean * 0.1) ? 'stable' :
-    recentTrend > 0 ? 'improving' : 'deteriorating';
-
-  return {
-    trend,
-    confidence,
-    volatility: volatilityLevel,
-    acceleration
-  };
-}
-
-// Add time-based multiplier calculation
-function calculateTimeMultiplier(date: Date): number {
-  const month = date.getMonth();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  // Calculate seasonal multiplier
-  let seasonalMultiplier = TREND_WEIGHTS.SEASONAL.SUMMER;
-  if (month >= 11 || month <= 1) {
-    seasonalMultiplier = TREND_WEIGHTS.SEASONAL.WINTER;
-  } else if (month >= 2 && month <= 4 || month >= 8 && month <= 10) {
-    seasonalMultiplier = TREND_WEIGHTS.SEASONAL.SHOULDER;
-  }
-
-  // Calculate diurnal multiplier
-  const timeOfDay = hour + minute / 60;
-  let diurnalMultiplier = TREND_WEIGHTS.DIURNAL.DAY;
-
-  // Approximate sunrise/sunset times for Kraków
-  const sunrise = { winter: 7.5, summer: 4.5 };
-  const sunset = { winter: 16, summer: 21 };
-
-  // Interpolate sunrise/sunset times based on month
-  const monthProgress = (month + 1) / 12;
-  const currentSunrise = sunrise.winter + (sunrise.summer - sunrise.winter) * monthProgress;
-  const currentSunset = sunset.winter + (sunset.summer - sunset.winter) * monthProgress;
-
-  // Apply dawn/dusk multipliers
-  if (Math.abs(timeOfDay - currentSunrise) <= 1) {
-    diurnalMultiplier = TREND_WEIGHTS.DIURNAL.DAWN;
-  } else if (Math.abs(timeOfDay - currentSunset) <= 1) {
-    diurnalMultiplier = TREND_WEIGHTS.DIURNAL.DUSK;
-  } else if (timeOfDay < currentSunrise || timeOfDay > currentSunset) {
-    diurnalMultiplier = TREND_WEIGHTS.DIURNAL.NIGHT;
-  }
-
-  return seasonalMultiplier * diurnalMultiplier;
-}
-
 // Update calculateRiskLevel function to handle both automatic conditions and temporary conditions
 export async function calculateRiskLevel(
   period: WeatherPeriod, 
@@ -2497,19 +2242,13 @@ export async function calculateRiskLevel(
     ceilingRisk >= 70
   ].filter(Boolean).length;
 
-  // Calculate compound effect multiplier for multiple severe conditions
-  let compoundMultiplier = 1.0;
+  // Calculate compound effect for multiple severe conditions
   if (severeConditions >= 3) {
     // Three or more severe conditions - extreme compound effect
-    compoundMultiplier = 1.5;
     impacts.push(t.operationalImpactMessages.multipleConditions);
   } else if (severeConditions === 2) {
     // Two severe conditions - strong compound effect
-    compoundMultiplier = 1.3;
     impacts.push(t.operationalImpactMessages.combinedConditions);
-  } else if (severeConditions === 1 && moderateConditions >= 2) {
-    // One severe + two or more moderate - moderate compound effect
-    compoundMultiplier = 1.2;
   }
 
   // Special handling for freezing conditions
@@ -2541,7 +2280,7 @@ export async function calculateRiskLevel(
     impacts.push(t.operationalImpactMessages.severeIcingRisk);
   }
   // 4. Multiple freezing phenomena (FZRA + FZFG, etc.)
-  else if (period.conditions?.filter(c => c.code.includes('FZ')).length >= 2) {
+  else if ((period.conditions?.filter(c => c.code.includes('FZ')).length ?? 0) >= 2) {
     riskLevel = 4;
     impacts.push(t.operationalImpactMessages.severeFreezing);
   }
@@ -2724,13 +2463,6 @@ function calculateCeilingRisk(clouds: { code: string; base_feet_agl?: number; ty
   return maxRisk;
 }
 
-// Add helper function to apply hysteresis
-function applyHysteresis(riskScore: number): 1 | 2 | 3 | 4 {
-  if (riskScore >= 70) return 4;  // Lowered from 80 - more sensitive to severe conditions
-  if (riskScore >= 50) return 3;  // Lowered from 60 - more sensitive to moderate conditions
-  if (riskScore >= 30) return 2;  // Lowered from 35 - more sensitive to marginal conditions
-  return 1;
-}
 
 // Add helper function to get OpenMeteo weight based on condition type and age
 function getOpenMeteoWeight(
@@ -2757,19 +2489,6 @@ function getProbabilityFactor(probability: number): number {
   return 0.5;                            
 }
 
-// Add helper function to get probability-aware messages
-function getProbabilityMessage(level: 1 | 2 | 3 | 4, probability: number, language: 'en' | 'pl'): string {
-  const t = translations[language];
-  const baseMessage = getRiskMessage(level, language);
-  
-  if (probability < 100) {
-    return language === 'en' 
-      ? `${probability}% probability: ${baseMessage}`
-      : `${probability}% prawdopodobieństwo: ${baseMessage}`;
-  }
-  
-  return baseMessage;
-}
 
 // Add snow duration thresholds
 const SNOW_DURATION = {
@@ -2818,20 +2537,6 @@ const SNOW_RECOVERY = {
   }
 } as const;
 
-// Add snow tracking state
-const snowTrackingState: {
-  startTime: number | null;
-  intensity: 'HEAVY' | 'MODERATE' | 'LIGHT' | null;
-  lastUpdate: number;
-  recoveryStartTime: number | null;
-} = {
-  startTime: null,
-  intensity: null,
-  lastUpdate: Date.now(),
-  recoveryStartTime: null
-};
-
-// Add helper function to track snow duration
 // Snow tracking state interface
 interface SnowTrackingState {
   startTime: number | null;
@@ -2918,7 +2623,6 @@ let lastSnowTrackingUpdate = 0;
 
 // Add lock key constant
 const SNOW_TRACKING_LOCK_KEY = 'snow_tracking_lock_epkk';
-const LOCK_TIMEOUT = 10000; // 10 seconds
 
 // Add lock helper functions
 async function acquireLock(): Promise<boolean> {

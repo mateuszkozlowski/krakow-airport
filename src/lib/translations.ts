@@ -180,6 +180,13 @@ export const translations = {
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
             prolongedSnowOperations: "❄️ Prolonged snow - significant operational impact",
             extendedSnowOperations: "❄️ Extended snow - increased operational impact",
+            multipleConditions: "⚠️ Multiple severe conditions - extreme operational impact",
+            combinedConditions: "⚠️ Combined severe conditions - significant delays expected",
+            operationsSuspended: "🚫 Operations may be suspended - visibility critically low",
+            dangerousGusts: "💨 Dangerous wind gusts - flight operations severely affected",
+            severeIcingRisk: "🧊 Severe icing risk - extensive de-icing required",
+            severeFreezing: "❄️ Multiple freezing phenomena - extreme caution required",
+            severeThunderstorm: "⛈️ Severe thunderstorm - major operational disruptions expected",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -571,6 +578,13 @@ export const translations = {
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
             prolongedSnowOperations: "❄️ Długotrwałe opady śniegu - znaczący wpływ na operacje",
             extendedSnowOperations: "❄️ Przedłużające się opady śniegu - zwiększony wpływ na operacje",
+            multipleConditions: "⚠️ Wiele poważnych warunków - ekstremalny wpływ na operacje",
+            combinedConditions: "⚠️ Połączone poważne warunki - oczekiwane znaczne opóźnienia",
+            operationsSuspended: "🚫 Operacje mogą zostać zawieszone - widoczność krytycznie niska",
+            dangerousGusts: "💨 Niebezpieczne porywy wiatru - operacje lotnicze poważnie zakłócone",
+            severeIcingRisk: "🧊 Poważne ryzyko oblodzenia - wymagane obszerne odladzanie",
+            severeFreezing: "❄️ Wiele zjawisk zamarzania - wymagana szczególna ostrożność",
+            severeThunderstorm: "⛈️ Poważna burza - oczekiwane poważne zakłócenia operacyjne",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
