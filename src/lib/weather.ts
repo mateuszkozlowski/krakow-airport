@@ -233,7 +233,8 @@ async function assessOperationalImpacts(weather: WeatherData, language: 'en' | '
   const t = translations[language].operationalImpactMessages;
   const impacts: string[] = [];
   
-  // Update snow tracking (now properly awaited)
+  // Update snow tracking based on current weather (METAR) - this is the only place where snow state is updated
+  // Other functions (like calculateWeatherPhenomenaRisk) only READ the state, not update it
   await updateSnowTracking(weather.conditions);
   
   // Ground operations impacts for snow conditions with duration consideration
@@ -837,23 +838,11 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
     });
     
     const tafPeriods = await processForecast(forecast, language);
-    console.log('Processed TAF periods:', tafPeriods.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
-      phenomena: p.conditions.phenomena
-    })));
+    console.log('Processed TAF periods:', tafPeriods.length);
 
     // Merge TAF with OpenMeteo data
     const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
-    console.log('Enhanced forecast after OpenMeteo merge:', enhancedForecast.map(p => ({
-      from: p.from,
-      to: p.to,
-      isTemporary: p.isTemporary,
-      probability: p.probability,
-      changeType: p.changeType,
+    console.log('Enhanced forecast after OpenMeteo merge:', enhancedForecast.length);
       phenomena: p.conditions.phenomena
     })));
     
@@ -989,15 +978,10 @@ interface GroupedPeriod {
 async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Promise<ForecastChange[]> {
   if (!taf || !taf.forecast) return [];
 
-  console.log('Debug - Processing TAF data:', {
-    language,
+  // Log only basic info to reduce console spam
+  console.log('Processing TAF data:', {
     raw: taf.raw_text,
-    forecast: taf.forecast.map(p => ({
-      from: p.timestamp?.from,
-      to: p.timestamp?.to,
-      conditions: p.conditions,
-      change: p.change
-    }))
+    periods: taf.forecast.length
   });
 
   const t = translations[language];
@@ -1013,15 +997,6 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
         to: adjustToWarsawTime(new Date(period.timestamp!.to)),
         language // Add language to each period
       };
-      console.log('Mapped period:', {
-        from: mappedPeriod.from,
-        to: mappedPeriod.to,
-        isTemporary: period.change?.indicator?.code === 'TEMPO',
-        probability: period.change?.probability,
-        changeType: period.change?.indicator?.code,
-        conditions: period.conditions,
-        language
-      });
       return mappedPeriod;
     })
     .sort((a, b) => a.from.getTime() - b.from.getTime());
@@ -1036,14 +1011,6 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   // Process each base period (now with async/await)
   for (const [index, period] of basePeriods.entries()) {
     const conditions = new Set<string>();
-    console.log(`Processing base period ${index}:`, {
-      from: period.from,
-      to: period.to,
-      isTemporary: false,
-      probability: undefined,
-      changeType: period.change?.indicator?.code || 'PERSISTENT',
-      language
-    });
 
     // Process visibility (FIX: use !== undefined to handle 0m!)
     if (period.visibility?.meters !== undefined) {
@@ -1102,16 +1069,6 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
       operationalImpacts: riskLevel.operationalImpacts,
       language // Add language to the forecast change
     };
-
-    console.log('Created base forecast change:', {
-      timeDescription: forecastChange.timeDescription,
-      isTemporary: forecastChange.isTemporary,
-      probability: forecastChange.probability,
-      changeType: forecastChange.changeType,
-      phenomena: forecastChange.conditions.phenomena,
-      riskLevel: forecastChange.riskLevel,
-      language
-    });
 
     changes.push(forecastChange);
   }
@@ -1187,16 +1144,6 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
       operationalImpacts: riskLevel.operationalImpacts,
       language // Add language to the forecast change
     };
-
-    console.log('Created TEMPO forecast change:', {
-      timeDescription: forecastChange.timeDescription,
-      isTemporary: forecastChange.isTemporary,
-      probability: forecastChange.probability,
-      changeType: forecastChange.changeType,
-      phenomena: forecastChange.conditions.phenomena,
-      riskLevel: forecastChange.riskLevel,
-      language
-    });
 
     changes.push(forecastChange);
   }
@@ -2402,8 +2349,8 @@ function calculateVisibilityRisk(meters: number | undefined): number {
 async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefined): Promise<number> {
   if (!conditions) return 0;
   
-  // Update snow tracking (properly await)
-  await updateSnowTracking(conditions);
+  // Note: Snow tracking is updated only in assessOperationalImpacts() for current weather (METAR)
+  // This function is called for forecast periods, so we only READ the snow state, not update it
   
   let maxRisk = 0;
   let severeCount = 0;
@@ -2417,7 +2364,7 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
     maxRisk = Math.max(maxRisk, risk);
   });
   
-  // Apply snow duration multiplier if applicable (properly await)
+  // Apply snow duration multiplier if applicable (only read state, don't update)
   const snowInfo = await getSnowDurationInfo();
   if (snowInfo.duration > 0) {
     maxRisk = Math.min(100, maxRisk * snowInfo.riskMultiplier);
@@ -2701,27 +2648,17 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
   );
 
   if (!needsUpdate) {
-    // No logging - reduces spam during forecast processing
     return;
   }
-  
-  // Only log when we actually need to update
-  console.log('🔍 Snow tracking update needed:', {
-    timestamp: new Date(now).toISOString(),
-    conditions: conditions.map(c => c.code),
-    hasSnow
-  });
 
   // Add debounce check
   if (now - lastSnowTrackingUpdate < SNOW_TRACKING_DEBOUNCE) {
-    console.log('🔄 Skipping snow tracking update - too soon since last update');
     return;
   }
 
   // Try to acquire lock
   const lockAcquired = await acquireLock();
   if (!lockAcquired) {
-    console.log('🔒 Could not acquire lock, skipping update');
     return;
   }
 
