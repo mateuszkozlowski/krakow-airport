@@ -650,78 +650,105 @@ export default function Home() {
         {/* Alert Bar with glassmorphism */}
         {highRiskPeriods.length > 0 && (
           <div className={cn(
-            "rounded-none border-b backdrop-blur-xl py-4 transition-all duration-300",
+            "rounded-none border-b backdrop-blur-xl transition-all duration-300",
             highRiskPeriods.some(p => p.riskLevel.level === 4) 
               ? "bg-red-900/40 border-red-500/30 shadow-lg shadow-red-900/20"
               : "bg-orange-900/40 border-orange-500/30 shadow-lg shadow-orange-900/20"
           )}>
-            <div className="max-w-6xl mx-auto w-full px-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 justify-between">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-4">
+              <div className="flex flex-col gap-3">
+                {/* Header - Always Visible */}
+                <div className="flex items-start gap-3 justify-between">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className={cn(
-                      "p-2 rounded-lg flex-shrink-0",
+                      "p-2.5 rounded-lg flex-shrink-0 mt-0.5",
                       highRiskPeriods.some(p => p.riskLevel.level === 4)
-                        ? "bg-red-500/20"
-                        : "bg-orange-500/20"
+                        ? "bg-red-500/20 ring-1 ring-red-400/30"
+                        : "bg-orange-500/20 ring-1 ring-orange-400/30"
                     )}>
                       <AlertTriangle className={cn(
                         "h-5 w-5",
                         highRiskPeriods.some(p => p.riskLevel.level === 4)
-                          ? "text-red-300"
-                          : "text-orange-300"
+                          ? "text-red-200"
+                          : "text-orange-200"
                       )} />
                     </div>
-                    <h3 className="font-bold text-white text-sm md:text-base truncate">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-white text-base md:text-lg leading-tight mb-1">
                         {highRiskPeriods.some(p => p.riskLevel.level === 4)
                           ? t.importantFlightInfo
                           : t.weatherAdvisory}
                       </h3>
-                    </div>
-                    <Button 
-                      onClick={() => setIsAlertExpanded(!isAlertExpanded)}
-                      size="icon"
-                      variant="ghost"
-                    className="text-white/80 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 rounded-lg"
-                      aria-label={isAlertExpanded ? 'Collapse alert' : 'Expand alert'}
-                    >
-                      {isAlertExpanded ? (
-                      <X className="h-5 w-5" />
-                      ) : (
-                      <ChevronDown className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </div>
-                  
-                  {isAlertExpanded && (
-                  <div className="space-y-4 animate-in fade-in duration-200">
-                    <p className="text-sm leading-relaxed text-white/95">
+                      {/* Quick summary - always visible */}
+                      <p className="text-sm text-white/90 leading-snug">
                         {highRiskPeriods.some(p => p.riskLevel.level === 4)
                           ? t.flightDisruptions
                           : t.severeWeather}
-                        {formatHighRiskTimes()}
-                        {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
-                          && `. ${t.laterInDay}`}
-                        {`. ${t.checkStatus}`}
+                        <span className="font-semibold text-white">
+                          {formatHighRiskTimes()}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setIsAlertExpanded(!isAlertExpanded)}
+                    size="icon"
+                    variant="ghost"
+                    className="text-white/80 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 rounded-lg h-9 w-9"
+                    aria-label={isAlertExpanded ? 'Collapse alert' : 'Expand alert'}
+                  >
+                    {isAlertExpanded ? (
+                      <X className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Expanded Details */}
+                {isAlertExpanded && (
+                  <div className="pl-14 pr-2 space-y-4 animate-in fade-in duration-200">
+                    {/* Additional context */}
+                    {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 && (
+                      <div className={cn(
+                        "flex items-start gap-2 p-3 rounded-lg border text-sm",
+                        highRiskPeriods.some(p => p.riskLevel.level === 4)
+                          ? "bg-red-950/30 border-red-500/20"
+                          : "bg-orange-950/30 border-orange-500/20"
+                      )}>
+                        <Info className="h-4 w-4 text-white/80 flex-shrink-0 mt-0.5" />
+                        <span className="text-white/95 leading-relaxed">
+                          {t.laterInDay}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Box - More prominent */}
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                      <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        {language === 'pl' ? 'Co powinieneś zrobić?' : 'What you should do'}
+                      </h4>
+                      <p className="text-sm text-white/90 leading-relaxed mb-4">
+                        {t.checkStatus}
                         {!highRiskPeriods.some(p => p.riskLevel.level === 4) 
                           ? ` ${t.withAirline}`
                           : ` ${t.directlyWithAirline}`}.
                       </p>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <Link 
-                          href="/passengerrights"
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold 
-                          bg-white hover:bg-white/90 text-red-900 transition-all rounded-lg px-5 py-2.5 
-                          shadow-lg hover:shadow-xl hover:scale-[1.02]
-                          focus:outline-none focus:ring-2 focus:ring-white/50"
+                      
+                      <Link 
+                        href="/passengerrights"
+                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto whitespace-nowrap text-sm font-semibold 
+                          bg-white hover:bg-white/95 text-slate-900 transition-all rounded-lg px-5 py-3 
+                          shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]
+                          focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-transparent"
                       >
                         <Shield className="h-4 w-4" />
-                          {t.knowYourRights}
-                        </Link>
-                      </div>
+                        {t.knowYourRights}
+                      </Link>
+                    </div>
                   </div>
-                  )}
+                )}
               </div>
             </div>
           </div>
