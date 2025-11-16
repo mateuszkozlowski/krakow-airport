@@ -10,6 +10,25 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2025-01-16",
+    version: "0.3.3",
+    changes: [
+      "Fixed critical weather risk assessment bugs affecting extreme conditions. The system now correctly identifies zero visibility (0m) and ground-level clouds (BKN000/OVC000) as Level 4 emergency conditions. Previously, these extreme weather situations were incorrectly treated as 'no data' due to JavaScript falsy value handling, potentially showing 'no risk' during the most dangerous conditions.",
+      
+      "Enhanced METAR parsing with robust fallback mechanisms. Implemented direct parsing from raw METAR text for visibility and cloud ceiling data when primary API data is unavailable. This ensures accurate weather assessment even for extreme low-visibility conditions (50m-100m) and ground-level cloud coverage that some weather APIs fail to parse correctly.",
+      
+      "Completely redesigned operational impact descriptions to be more specific and actionable. Impact messages now include exact measurements, percentage deviations from operational minimums, and clear recommendations. For example, instead of generic warnings, you'll now see 'Visibility 100m - 82% below minimum (550m)' with specific guidance on expected operational status.",
+      
+      "Removed predictable time-based risk multipliers for more intelligent weather assessment. The algorithm no longer artificially increases risk based on time of day or season, instead focusing purely on actual meteorological conditions and their operational impacts. This makes the system more accurate and less prone to false alarms during routine morning fog in summer months.",
+      
+      "Eliminated de-icing risk calculations based solely on temperature thresholds. The system now provides de-icing information only when actual freezing precipitation is present, preventing misleading warnings on clear cold days. This change significantly reduces false positive alerts during winter months with good visibility.",
+      
+      "Implemented comprehensive checks for numeric zero values throughout the codebase. Fixed 13 instances where zero measurements (0m visibility, 0ft ceiling, 0°C temperature) were incorrectly treated as missing data. This fundamental fix ensures all edge cases in extreme weather are properly assessed.",
+      
+      "Added special handling for clouds at ground level (BKN000/OVC000). These conditions now trigger immediate Level 4 alerts with clear messaging about zero vertical visibility and suspended operations. The system recognizes this as distinct from low ceiling and applies appropriate emergency-level warnings."
+    ]
+  },
+  {
     date: "2024-01-13",
     version: "0.3.2",
     changes: [

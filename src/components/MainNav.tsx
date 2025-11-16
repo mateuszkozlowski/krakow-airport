@@ -15,7 +15,7 @@ export function MainNav() {
           height={16}
           className="h-3 w-auto sm:h-4"
         />
-        <span className="text-lg sm:text-xl font-semibold">KRK.flights</span>
+        <span className="text-lg sm:text-xl font-semibold text-white">KRK.flights</span>
       </Link>
       <nav>
 

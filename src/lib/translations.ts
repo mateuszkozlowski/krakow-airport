@@ -180,6 +180,13 @@ export const translations = {
             reducedCapacity: "👁️ Low Visibility Procedures active - reduced airport capacity",
             prolongedSnowOperations: "❄️ Prolonged snow - significant operational impact",
             extendedSnowOperations: "❄️ Extended snow - increased operational impact",
+            multipleConditions: "⚠️ Multiple severe conditions - extreme operational impact",
+            combinedConditions: "⚠️ Combined severe conditions - significant delays expected",
+            operationsSuspended: "🚫 Operations may be suspended - visibility critically low",
+            dangerousGusts: "💨 Dangerous wind gusts - flight operations severely affected",
+            severeIcingRisk: "🧊 Severe icing risk - extensive de-icing required",
+            severeFreezing: "❄️ Multiple freezing phenomena - extreme caution required",
+            severeThunderstorm: "⛈️ Severe thunderstorm - major operational disruptions expected",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -252,15 +259,15 @@ export const translations = {
         // Risk level messages
         riskLevel4Title: "Major Weather Impact",
         riskLevel4Message: "Operations may be suspended",
-            riskLevel4Status: "All flights may be suspended due to severe weather conditions. Check for updates with your airline. Unless you receive official cancellation information, you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
+        riskLevel4Status: "All flights may be suspended due to severe weather conditions.",
         
         riskLevel3Title: "Weather Advisory",
         riskLevel3Message: "Operations may be restricted",
-        riskLevel3Status: "Delays of more than 30 minutes are possible. Check your flight status with your airline. Remember that you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
+        riskLevel3Status: "Delays of more than 30 minutes are possible.",
         
         riskLevel2Title: "Minor Weather Impact",
         riskLevel2Message: "Minor operational impacts expected",
-        riskLevel2Status: "Flights are operating, but delays of 10 to 20 minutes are possible. Check your flight status with your airline. Remember that you are obliged to arrive at the airport at least 2 hours before departure according to the schedule.",
+        riskLevel2Status: "Flights are operating, but delays of 10 to 20 minutes are possible.",
         
         riskLevel1Title: "Good Flying Conditions",
         riskLevel1Message: "Normal operations",
@@ -401,6 +408,10 @@ export const translations = {
         within30Mins: "Within 30 minutes",
         after2Hours: "After 2 hours",
         after3Hours: "After 3 hours",
+        // Changelog page
+        changelogTitle: "What's New?",
+        changelogSubtitle: "Keep track of changes and improvements.",
+        backToApp: "Back to App",
     },
     pl: {
         title: "Czy dziś polecę z Krakowa?",
@@ -457,8 +468,8 @@ export const translations = {
         additionalMealsDesc: "Przy dłuższych opóźnieniach, linie muszą kontynuować zapewnianie odpowiedniej opieki.",
         reroutingOptions: "Opcje zmiany trasy",
         reroutingOptionsDesc: "Możesz wybrać między alternatywnymi lotami a pełnym zwrotem kosztów, jeśli opóźnienie jest zbyt długie.",
-        loungeAccess: "Access to the airline lounge",
-        loungeAccessDesc: "Many airlines provide lounge access for comfortable waiting during long delays.",
+        loungeAccess: "Dostęp do poczekalni linii lotniczej",
+        loungeAccessDesc: "Wiele linii lotniczych zapewnia dostęp do poczekalni dla komfortowego oczekiwania podczas długich opóźnień.",
         // Overnight Delay section
         hotelAccommodation: "Zakwaterowanie w hotelu",
         hotelAccommodationDesc: "Przy opóźnieniach z noclegiem, linie muszą zapewnić i zorganizować pobyt w hotelu.",
@@ -567,6 +578,13 @@ export const translations = {
             reducedCapacity: "👁️ Aktywne procedury niskiej widoczności - zmniejszona przepustowość",
             prolongedSnowOperations: "❄️ Długotrwałe opady śniegu - znaczący wpływ na operacje",
             extendedSnowOperations: "❄️ Przedłużające się opady śniegu - zwiększony wpływ na operacje",
+            multipleConditions: "⚠️ Wiele poważnych warunków - ekstremalny wpływ na operacje",
+            combinedConditions: "⚠️ Połączone poważne warunki - oczekiwane znaczne opóźnienia",
+            operationsSuspended: "🚫 Operacje mogą zostać zawieszone - widoczność krytycznie niska",
+            dangerousGusts: "💨 Niebezpieczne porywy wiatru - operacje lotnicze poważnie zakłócone",
+            severeIcingRisk: "🧊 Poważne ryzyko oblodzenia - wymagane obszerne odladzanie",
+            severeFreezing: "❄️ Wiele zjawisk zamarzania - wymagana szczególna ostrożność",
+            severeThunderstorm: "⛈️ Poważna burza - oczekiwane poważne zakłócenia operacyjne",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -639,15 +657,15 @@ export const translations = {
         // Risk level messages
         riskLevel4Title: "Trudne warunki pogodowe",
         riskLevel4Message: "Możliwe zawieszenie operacji",
-        riskLevel4Status: "Ze względu na trudne warunki pogodowe możliwe jest zawieszenie operacji lotniczych. Zalecane sprawdzenie aktualnych informacji bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
+        riskLevel4Status: "Ze względu na trudne warunki pogodowe możliwe jest zawieszenie operacji lotniczych.",
         
         riskLevel3Title: "Alert pogodowy",
         riskLevel3Message: "Możliwe ograniczenia operacyjne",
-        riskLevel3Status: "Możliwe opóźnienia przekraczające 30 minut. Zalecane sprawdzenie statusu lotu bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
+        riskLevel3Status: "Możliwe opóźnienia przekraczające 30 minut.",
         
         riskLevel2Title: "Niewielki wpływ warunków pogodowych",
         riskLevel2Message: "Możliwe niewielkie utrudnienia",
-        riskLevel2Status: "Operacje lotnicze są realizowane, możliwe opóźnienia od 10 do 20 minut. Zalecane sprawdzenie statusu lotu bezpośrednio u przewoźnika. Należy stosować się do oficjalnych komunikatów od przewoźnika dotyczących odprawy i obecności na lotnisku.",
+        riskLevel2Status: "Operacje lotnicze są realizowane, możliwe opóźnienia od 10 do 20 minut.",
         
         riskLevel1Title: "Korzystne warunki pogodowe",
         riskLevel1Message: "Standardowe operacje",
@@ -673,7 +691,7 @@ export const translations = {
             
             // Risk levels
             goodConditions: {
-                title: "Dobre warunki do lotów",
+                title: "Korzystne warunki pogodowe",
                 description: "Warunki pogodowe sprzyjają normalnym operacjom lotniczym.",
                 details: [
                     "Regularne rozkłady lotów",
@@ -722,8 +740,8 @@ export const translations = {
                 ]
             },
             majorImpact: {
-                title: "Poważne zakłócenia",
-                description: "Trudne warunki pogodowe powodujące znaczące zakłócenia.",
+                title: "Trudne warunki pogodowe",
+                description: "Poważne warunki pogodowe powodujące znaczące zakłócenia.",
                 details: [
                     "Długie opóźnienia (2+ godziny)",
                     "Wysokie prawdopodobieństwo odwołań",
@@ -789,5 +807,9 @@ export const translations = {
         within30Mins: "W ciągu 30 minut",
         after2Hours: "Po 2 godzinach",
         after3Hours: "Po 3 godzinach",
+        // Changelog page
+        changelogTitle: "Co nowego?",
+        changelogSubtitle: "Śledź zmiany i usprawnienia.",
+        backToApp: "Powrót do aplikacji",
     }
 } as const; 

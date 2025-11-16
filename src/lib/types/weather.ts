@@ -135,6 +135,17 @@ export interface WeatherResponse {
     conditions: ProcessedConditions;
     raw: string;
     observed: string;
+    wind?: {
+      speed_kts: number;
+      direction: number;
+      gust_kts?: number;
+    };
+    visibility?: {
+      meters: number;
+    };
+    ceiling?: {
+      feet: number;
+    };
   };
   forecast: ForecastChange[];
   raw_taf: string;
