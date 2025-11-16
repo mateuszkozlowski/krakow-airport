@@ -336,6 +336,14 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
           if (cloudMatch && cloudMatch[1]) {
             cloudType = cloudMatch[1] as 'CB' | 'TCU';
           }
+        } else {
+          // Fallback: try to find CB/TCU for this cloud coverage code without altitude
+          // This handles cases where altitude isn't parsed but CB/TCU is still in raw TAF
+          const cloudPattern = new RegExp(`\\b${c.code}\\d{3}(CB|TCU)\\b`);
+          const cloudMatch = rawTaf.match(cloudPattern);
+          if (cloudMatch && cloudMatch[1]) {
+            cloudType = cloudMatch[1] as 'CB' | 'TCU';
+          }
         }
         
         // Also check cloud.text for CB/TCU keywords
