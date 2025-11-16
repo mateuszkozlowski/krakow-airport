@@ -2547,12 +2547,24 @@ interface SnowTrackingState {
 
 const SNOW_TRACKING_KEY = 'snow_tracking_state_epkk';
 
-// Helper function to get snow tracking state from Redis
+// In-memory cache to avoid repeated Redis calls during forecast processing
+let snowStateCache: { state: SnowTrackingState; timestamp: number } | null = null;
+const CACHE_TTL = 1000; // 1 second - enough to avoid repeated calls during single forecast processing
+
+// Helper function to get snow tracking state from Redis (with caching)
 async function getSnowTrackingState(): Promise<SnowTrackingState> {
+  const now = Date.now();
+  
+  // Return cached state if it's fresh (less than 1 second old)
+  if (snowStateCache && (now - snowStateCache.timestamp) < CACHE_TTL) {
+    // Cache hit - no logging to reduce spam
+    return snowStateCache.state;
+  }
+
   const defaultState: SnowTrackingState = {
     startTime: null,
     intensity: null,
-    lastUpdate: Date.now(),
+    lastUpdate: now,
     recoveryStartTime: null
   };
 
@@ -2560,15 +2572,17 @@ async function getSnowTrackingState(): Promise<SnowTrackingState> {
     // First check if Redis is available
     if (!redis) {
       console.warn('⚠️ Redis not initialized, using in-memory state');
+      snowStateCache = { state: defaultState, timestamp: now };
       return defaultState;
     }
 
     if (!await validateRedisConnection()) {
       console.warn('⚠️ Redis connection failed, using in-memory state');
+      snowStateCache = { state: defaultState, timestamp: now };
       return defaultState;
     }
 
-    // Try to get the state
+    // Try to get the state (actual Redis call)
     const state = await redis.get<SnowTrackingState>(SNOW_TRACKING_KEY);
     
     // Validate the state structure
@@ -2578,14 +2592,19 @@ async function getSnowTrackingState(): Promise<SnowTrackingState> {
         ('intensity' in state) && 
         ('lastUpdate' in state) && 
         ('recoveryStartTime' in state)) {
-      console.log('✅ Retrieved snow tracking state from Redis:', state);
+      // Only log actual Redis fetches
+      console.log('✅ Retrieved snow tracking state from Redis (cached for 1s)');
+      // Cache the state
+      snowStateCache = { state, timestamp: now };
       return state;
     }
 
     console.warn('⚠️ Invalid state in Redis, using default state');
+    snowStateCache = { state: defaultState, timestamp: now };
     return defaultState;
   } catch (error) {
     console.error('Failed to get snow tracking state from Redis:', error);
+    snowStateCache = { state: defaultState, timestamp: now };
     return defaultState;
   }
 }
@@ -2612,6 +2631,9 @@ async function setSnowTrackingState(state: SnowTrackingState): Promise<void> {
 
     await redis.set(SNOW_TRACKING_KEY, state, { ex: 24 * 60 * 60 }); // 24 hour expiry
     console.log('✅ Updated snow tracking state in Redis:', state);
+    
+    // Invalidate cache so next read gets fresh data
+    snowStateCache = { state, timestamp: Date.now() };
   } catch (error) {
     console.error('Failed to update snow tracking state in Redis:', error);
   }
@@ -2657,7 +2679,6 @@ async function releaseLock(): Promise<void> {
 // Update the snow tracking function to use locking
 async function updateSnowTracking(conditions: { code: string }[] | undefined): Promise<void> {
   if (!conditions) {
-    console.log('No conditions provided, skipping snow tracking update');
     return;
   }
 
@@ -2668,12 +2689,6 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
   const hasSnow = conditions.some(c => 
     ['+SN', 'SN', '-SN', '+SHSN', 'SHSN', '-SHSN'].some(code => c.code.includes(code))
   );
-
-  console.log('🔍 Current conditions:', {
-    timestamp: new Date(now).toISOString(),
-    conditions: conditions.map(c => c.code),
-    hasSnow
-  });
 
   // Determine if we need to update based on current conditions
   const needsUpdate = (
@@ -2686,9 +2701,16 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
   );
 
   if (!needsUpdate) {
-    console.log('ℹ️ No state update needed based on current conditions');
+    // No logging - reduces spam during forecast processing
     return;
   }
+  
+  // Only log when we actually need to update
+  console.log('🔍 Snow tracking update needed:', {
+    timestamp: new Date(now).toISOString(),
+    conditions: conditions.map(c => c.code),
+    hasSnow
+  });
 
   // Add debounce check
   if (now - lastSnowTrackingUpdate < SNOW_TRACKING_DEBOUNCE) {
@@ -2706,10 +2728,6 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
   try {
     // Re-fetch state after acquiring lock to ensure we have latest data
     const lockedState = await getSnowTrackingState();
-    console.log('📊 Current state:', {
-      timestamp: new Date(now).toISOString(),
-      state: { ...lockedState }
-    });
 
     let newState = { ...lockedState };
     let stateChanged = false;
@@ -2721,16 +2739,9 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
                        conditions.some(c => ['SN', 'SHSN'].includes(c.code)) ? 'MODERATE' :
                        null;
 
-      console.log('❄️ Snow detection:', { 
-        hasSnow, 
-        intensity,
-        currentStartTime: lockedState.startTime,
-        currentIntensity: lockedState.intensity
-      });
-
       // Only start new snow event if we're not already tracking one
       if (!lockedState.startTime) {
-        console.log('🆕 Starting new snow event');
+        console.log('🆕 Starting new snow event:', { intensity });
         newState = {
           startTime: now,
           intensity,
@@ -2761,12 +2772,6 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
       // In recovery period - check if it's complete
       const recoveryDuration = SNOW_RECOVERY.DURATION[lockedState.intensity ?? 'MODERATE'];
       const timeInRecovery = now - lockedState.recoveryStartTime;
-      
-      console.log('🔄 Checking recovery progress:', {
-        timeInRecovery: Math.floor(timeInRecovery / 1000),
-        recoveryDuration: Math.floor(recoveryDuration / 1000),
-        intensity: lockedState.intensity
-      });
 
       if (timeInRecovery >= recoveryDuration) {
         console.log('✅ Recovery period complete, resetting state');
@@ -2784,28 +2789,15 @@ async function updateSnowTracking(conditions: { code: string }[] | undefined): P
     if (stateChanged) {
       newState.lastUpdate = now;
       
-      console.log('💾 State update summary:', {
+      console.log('💾 Snow tracking state updated:', {
         timestamp: new Date(now).toISOString(),
-        changes: {
-          startTime: {
-            from: lockedState.startTime ? new Date(lockedState.startTime).toISOString() : null,
-            to: newState.startTime ? new Date(newState.startTime).toISOString() : null
-          },
-          intensity: {
-            from: lockedState.intensity,
-            to: newState.intensity
-          },
-          recoveryStartTime: {
-            from: lockedState.recoveryStartTime ? new Date(lockedState.recoveryStartTime).toISOString() : null,
-            to: newState.recoveryStartTime ? new Date(newState.recoveryStartTime).toISOString() : null
-          }
-        }
+        startTime: newState.startTime ? new Date(newState.startTime).toISOString() : null,
+        intensity: newState.intensity,
+        recoveryStartTime: newState.recoveryStartTime ? new Date(newState.recoveryStartTime).toISOString() : null
       });
 
       await setSnowTrackingState(newState);
       lastSnowTrackingUpdate = now;
-    } else {
-      console.log('ℹ️ No state changes needed');
     }
   } catch (error) {
     console.error('❌ Error in updateSnowTracking:', error);
