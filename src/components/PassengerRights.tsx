@@ -22,12 +22,12 @@ export function PassengerRights() {
     <div className="py-4 sm:py-8 max-w-6xl mx-auto px-3 sm:px-6">
             {/* Pro tip */}
       <div className="mx-auto mb-6 sm:mb-16">
-        <div className="rounded-xl sm:rounded-2xl bg-slate-800/50 backdrop-blur-sm p-3 sm:p-6 border border-slate-700/50">
-          <div className="flex gap-2 sm:gap-4">
-            <div className="flex-none hidden sm:block">
-              <Info className="h-5 w-5 text-blue-400" />
+        <div className="rounded-xl sm:rounded-2xl bg-blue-50 border-2 border-blue-200 p-4 sm:p-6 shadow-sm">
+          <div className="flex gap-3 sm:gap-4">
+            <div className="flex-none">
+              <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <p className="text-base text-slate-300">
+            <p className="text-base sm:text-lg text-slate-800 leading-relaxed">
               {t.proTip}
             </p>
           </div>
@@ -39,7 +39,7 @@ export function PassengerRights() {
         <div className="relative">
           {/* Vertical line */}
           <div 
-            className="absolute left-5 sm:left-8 w-0.5 bg-gradient-to-b from-blue-900/30 via-green-900/30 to-orange-900/30" 
+            className="absolute left-5 sm:left-8 w-1 bg-gradient-to-b from-blue-200 via-green-200 to-orange-200" 
             style={{ 
               top: '24px',
               height: 'calc(100% - 48px)'
@@ -49,27 +49,27 @@ export function PassengerRights() {
           {/* Step 1: Document */}
           <div className="relative flex gap-2 sm:gap-6 mb-6 sm:mb-12 group">
             <div className="flex-none">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-900/30 to-slate-800 border-2 border-blue-700/50 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-blue-600">
-                <Camera className="h-5 w-5 sm:h-8 sm:w-8 text-blue-400" />
+              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border-4 border-white shadow-lg flex items-center justify-center transform transition-all group-hover:scale-110">
+                <Camera className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
               </div>
             </div>
             <div className="flex-1 pt-1 sm:pt-3">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-6 border border-blue-700/30 transform transition-all group-hover:translate-x-1">
-                <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-4 flex flex-wrap items-center gap-2">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 border-2 border-blue-100 shadow-md transform transition-all group-hover:shadow-xl">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 flex flex-wrap items-center gap-2">
                   {t.documentEverything}
-                  <span className="text-sm font-normal text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded-full">
+                  <span className="text-sm sm:text-base font-semibold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
                     {t.rightNow}
                   </span>
                 </h3>
-                <div className="prose prose-base prose-slate">
-                  <ul className="space-y-2 sm:space-y-3 marker:text-blue-400">
-                    <li className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 flex-none mt-1" />
-                      <span className="text-base text-slate-300">{t.takePhotosDesc}</span>
+                <div className="prose prose-base prose-slate max-w-none">
+                  <ul className="space-y-3 sm:space-y-4">
+                    <li className="flex items-start gap-3">
+                      <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-none mt-0.5" />
+                      <span className="text-base sm:text-lg text-slate-700 leading-relaxed">{t.takePhotosDesc}</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 flex-none mt-0.5" />
-                      <span className="text-slate-300">{t.keepDocumentsDesc}</span>
+                    <li className="flex items-start gap-3">
+                      <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-none mt-0.5" />
+                      <span className="text-base sm:text-lg text-slate-700 leading-relaxed">{t.keepDocumentsDesc}</span>
                     </li>
                   </ul>
                 </div>
@@ -80,15 +80,15 @@ export function PassengerRights() {
           {/* Step 2: Get Care & Assistance */}
           <div className="relative flex gap-2 sm:gap-6 mb-6 sm:mb-12 group">
             <div className="flex-none">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-900/30 to-slate-800 border-2 border-green-700/50 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-green-600">
-                <Coffee className="h-5 w-5 sm:h-8 sm:w-8 text-green-400" />
+              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-500 to-green-600 border-4 border-white shadow-lg flex items-center justify-center transform transition-all group-hover:scale-110">
+                <Coffee className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
               </div>
             </div>
             <div className="flex-1 pt-1 sm:pt-3">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-6 border border-green-700/30 transform transition-all group-hover:translate-x-1">
-                <h3 className="text-base sm:text-xl font-semibold text-white mb-2 sm:mb-4 flex flex-wrap items-center gap-2">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 border-2 border-green-100 shadow-md transform transition-all group-hover:shadow-xl">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 flex flex-wrap items-center gap-2">
                   {t.careRights}
-                  <span className="text-xs sm:text-sm font-normal text-green-300 bg-green-900/30 px-2 py-0.5 rounded-full">
+                  <span className="text-sm sm:text-base font-semibold text-green-700 bg-green-100 px-3 py-1 rounded-full">
                     {t.after2Hours}
                   </span>
                 </h3>

@@ -187,6 +187,9 @@ export const translations = {
             severeIcingRisk: "🧊 Severe icing risk - extensive de-icing required",
             severeFreezing: "❄️ Multiple freezing phenomena - extreme caution required",
             severeThunderstorm: "⛈️ Severe thunderstorm - major operational disruptions expected",
+            cumulonimbusDetected: "⛈️ Cumulonimbus clouds detected - thunderstorm activity likely",
+            toweringCumulusDetected: "🌩️ Towering cumulus detected - weather developing",
+            veryLowScatteredClouds: "☁️ Very low scattered clouds (<200ft) - near approach minimums",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {
@@ -585,6 +588,9 @@ export const translations = {
             severeIcingRisk: "🧊 Poważne ryzyko oblodzenia - wymagane obszerne odladzanie",
             severeFreezing: "❄️ Wiele zjawisk zamarzania - wymagana szczególna ostrożność",
             severeThunderstorm: "⛈️ Poważna burza - oczekiwane poważne zakłócenia operacyjne",
+            cumulonimbusDetected: "⛈️ Wykryto chmury Cumulonimbus - prawdopodobna aktywność burzowa",
+            toweringCumulusDetected: "🌩️ Wykryto chmury piętrowe - rozwijająca się pogoda",
+            veryLowScatteredClouds: "☁️ Bardzo niskie chmury rozproszone (<200ft) - blisko minimów podejścia",
         },
         // Weather conditions and operational messages
         weatherConditionMessages: {

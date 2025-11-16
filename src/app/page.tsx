@@ -592,14 +592,32 @@ export default function Home() {
       const warsawNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
       const warsawStart = new Date(periodStart.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
       
-      if (warsawStart.getDate() === warsawNow.getDate()) {
+      // Set time to midnight for accurate day comparison
+      const todayMidnight = new Date(warsawNow);
+      todayMidnight.setHours(0, 0, 0, 0);
+      
+      const startMidnight = new Date(warsawStart);
+      startMidnight.setHours(0, 0, 0, 0);
+      
+      // Calculate day difference
+      const dayDifference = Math.floor((startMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (dayDifference === 0) {
         return language === 'pl'
           ? `do ${endTime} dzisiaj`
           : `until ${endTime} today`;
-      }
+      } else if (dayDifference === 1) {
         return language === 'pl'
           ? `jutro w godzinach ${startTime} do ${endTime}`
           : `tomorrow between ${startTime} and ${endTime}`;
+      } else {
+        // For dates beyond tomorrow, show the actual date
+        const dateFormat = { month: 'short', day: 'numeric', timeZone: 'Europe/Warsaw' } as const;
+        const dateStr = periodStart.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-GB', dateFormat);
+        return language === 'pl'
+          ? `${dateStr} w godzinach ${startTime} do ${endTime}`
+          : `${dateStr} between ${startTime} and ${endTime}`;
+      }
     };
 
     return formatTimeRange();

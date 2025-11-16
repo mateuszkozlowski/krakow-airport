@@ -1178,7 +1178,7 @@ async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en'
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
   const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
-  const ceilingRisk = calculateCeilingRisk(period.clouds);
+  const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Calculate compound effects (no time multiplier)
   let compoundMultiplier = 1;
@@ -1248,7 +1248,7 @@ async function calculateRiskScore(period: WeatherPeriod): Promise<number> {
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
   const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
-  const ceilingRisk = calculateCeilingRisk(period.clouds);
+  const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Calculate compound effects (no time multiplier)
   let compoundMultiplier = 1;
@@ -2115,7 +2115,7 @@ export async function calculateRiskLevel(
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
   const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
-  const ceilingRisk = calculateCeilingRisk(period.clouds);
+  const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Get probability from TAF
   const probability = period.change?.probability || 100;
@@ -2201,7 +2201,7 @@ export async function calculateRiskLevel(
     (severeConditions >= 2 && probability >= 30) ||
     (period.conditions?.some(c => 
       c.code.includes('TS') && 
-      period.clouds?.some(cloud => cloud.type === 'CB')
+      period.clouds?.some(cloud => cloud.type === 'CB' || cloud.cloudType === 'CB')
     ) && probability >= 30) ||
     (period.conditions?.some(c => 
       (c.code.includes('+SN') || c.code.includes('FZRA')) &&
@@ -2247,6 +2247,28 @@ export async function calculateRiskLevel(
 
   if (period.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
     impacts.push(t.operationalImpactMessages.runwayClearing);
+  }
+
+  // Check for CB (Cumulonimbus) clouds
+  if (period.clouds?.some(c => c.cloudType === 'CB' || c.type === 'CB')) {
+    impacts.push(t.operationalImpactMessages.cumulonimbusDetected);
+  }
+
+  // Check for TCU (Towering Cumulus) clouds
+  if (period.clouds?.some(c => c.cloudType === 'TCU' || c.type === 'TCU')) {
+    impacts.push(t.operationalImpactMessages.toweringCumulusDetected);
+  }
+
+  // Check for very low FEW/SCT clouds (< 200ft) - but only if NOT in fog/mist
+  // In fog, low scattered clouds are part of the fog layer, not a separate concern
+  const hasFogOrMist = period.conditions?.some(c => c.code === 'FG' || c.code === 'BR' || c.code === 'MIFG');
+  
+  if (!hasFogOrMist && period.clouds?.some(c => 
+    (c.code === 'FEW' || c.code === 'SCT') && 
+    c.base_feet_agl !== undefined && 
+    c.base_feet_agl < 200
+  )) {
+    impacts.push(t.operationalImpactMessages.veryLowScatteredClouds);
   }
 
   // Get translations for the risk level
@@ -2337,15 +2359,74 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
 }
 
 // Add helper function for ceiling risk calculation
-function calculateCeilingRisk(clouds: { code: string; base_feet_agl?: number; type?: string }[] | undefined): number {
+function calculateCeilingRisk(
+  clouds: { code: string; base_feet_agl?: number; type?: string; cloudType?: 'CB' | 'TCU' }[] | undefined,
+  conditions?: { code: string }[]
+): number {
   if (!clouds) return 0;
+  
+  // Check if there's an active thunderstorm (TS) at the airport
+  const hasActiveThunderstorm = conditions?.some(c => c.code.includes('TS'));
   
   let maxRisk = 0;
   clouds.forEach(cloud => {
+    // Check for CB (Cumulonimbus) - risk varies by coverage and activity
+    if (cloud.cloudType === 'CB' || cloud.type === 'CB') {
+      let cbRisk = 0;
+      
+      // Base risk depends on coverage: isolated CB vs multiple cells
+      if (cloud.code === 'FEW') {
+        // FEW CB - isolated cell, can often be avoided
+        cbRisk = 75;
+        console.log(`⚠️ Isolated CB at ${cloud.base_feet_agl}ft - thunderstorm cell nearby`);
+      } else if (cloud.code === 'SCT') {
+        // SCT CB - scattered cells, harder to avoid
+        cbRisk = 85;
+        console.log(`⚠️ Scattered CB at ${cloud.base_feet_agl}ft - multiple thunderstorm cells`);
+      } else {
+        // BKN/OVC CB - organized system, very dangerous
+        cbRisk = 95;
+        console.log(`⚠️ Broken/Overcast CB at ${cloud.base_feet_agl}ft - organized thunderstorm system`);
+      }
+      
+      // Boost risk if there's an active TS code (thunderstorm AT the airport)
+      if (hasActiveThunderstorm && cbRisk < 95) {
+        cbRisk = Math.min(95, cbRisk + 10);
+        console.log(`⚠️ Active thunderstorm (TS) with CB - increased risk to ${cbRisk}`);
+      }
+      
+      maxRisk = Math.max(maxRisk, cbRisk);
+    }
+    
+    // Check for TCU (Towering Cumulus) - developing weather
+    if (cloud.cloudType === 'TCU' || cloud.type === 'TCU') {
+      // TCU indicates developing convection - high risk
+      maxRisk = Math.max(maxRisk, 80);
+      console.log(`⚠️ TCU (Towering Cumulus) detected at ${cloud.base_feet_agl}ft - Developing weather!`);
+    }
+    
+    // Check very low FEW/SCT clouds - but only if NOT in fog/mist
+    // In fog (FG/BR), low scattered clouds are part of the fog layer, not a separate concern
+    // Note: Kraków (EPKK) ILS minimums ~200ft, so only very low scattered clouds are concerning
+    const hasFogOrMist = conditions?.some(c => c.code === 'FG' || c.code === 'BR' || c.code === 'MIFG');
+    
+    if ((cloud.code === 'FEW' || cloud.code === 'SCT') && cloud.base_feet_agl !== undefined && !hasFogOrMist) {
+      if (cloud.base_feet_agl < 200) {
+        // Extremely low scattered clouds WITHOUT fog - possible deterioration
+        maxRisk = Math.max(maxRisk, 50);
+        console.log(`⚠️ Very low ${cloud.code} clouds at ${cloud.base_feet_agl}ft without fog - Watch for deterioration`);
+      } else if (cloud.base_feet_agl < 300) {
+        // Low scattered clouds - monitor for deterioration
+        maxRisk = Math.max(maxRisk, 30);
+        console.log(`⚠️ Low ${cloud.code} clouds at ${cloud.base_feet_agl}ft - Monitoring conditions`);
+      }
+    }
+    
+    // Standard ceiling calculation for BKN/OVC
     // FIX: use !== undefined to handle 0ft ceiling (BKN000/OVC000)!
     if ((cloud.code === 'BKN' || cloud.code === 'OVC') && cloud.base_feet_agl !== undefined) {
       if (cloud.base_feet_agl < MINIMUMS.CEILING) {
-        maxRisk = 100;
+        maxRisk = Math.max(maxRisk, 100);
       } else {
         // Use exponential scaling for better sensitivity to near-minimums
         const ceilingRatio = cloud.base_feet_agl / MINIMUMS.CEILING;
@@ -2358,9 +2439,9 @@ function calculateCeilingRisk(clouds: { code: string; base_feet_agl?: number; ty
         }
       }
       
-      // Additional risk for CB clouds
-      if (cloud.type === 'CB') {
-        maxRisk = Math.min(100, maxRisk * 1.5);
+      // Additional risk multiplier for CB clouds in BKN/OVC layers
+      if (cloud.cloudType === 'CB' || cloud.type === 'CB') {
+        maxRisk = Math.min(100, maxRisk * 1.2); // Additional boost for ceiling + CB
       }
     }
   });
