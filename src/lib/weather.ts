@@ -930,6 +930,7 @@ interface WeatherPeriod {
     code: string;
     base_feet_agl?: number;
     type?: string;
+    cloudType?: 'CB' | 'TCU';
   }[];
   wind?: {
     speed_kts: number;
@@ -1421,7 +1422,6 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
     }
   });
 
-  const warnings = t.operationalWarnings;
   const operationalImpactsSet = new Set<string>();
   const reasons: string[] = [];
 
@@ -1460,7 +1460,6 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
       : '📞 Check flight status directly with your airline');
     reasons.push(`Horizontal visibility (${weather.visibility.meters}m) below minimums (${MINIMUMS.VISIBILITY}m)`);
   } else if (weather.vertical_visibility?.feet !== undefined && weather.vertical_visibility.feet < MINIMUMS.VERTICAL_VISIBILITY) {
-    const percentBelow = Math.round(((MINIMUMS.VERTICAL_VISIBILITY - weather.vertical_visibility.feet) / MINIMUMS.VERTICAL_VISIBILITY) * 100);
     baseRiskLevel = 4;
     operationalImpactsSet.clear();
     operationalImpactsSet.add(language === 'pl'
@@ -1545,7 +1544,6 @@ export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): 
         ? '📞 NATYCHMIAST skontaktuj się z przewoźnikiem'
         : '📞 Contact your airline IMMEDIATELY');
     } else {
-      const ceilingPercentOfMinimum = Math.round((weather.ceiling.feet / MINIMUMS.CEILING) * 100);
       baseRiskLevel = Math.max(baseRiskLevel, 3);
       operationalImpactsSet.add(language === 'pl'
         ? `☁️ Podstawa chmur poniżej minimów: ${weather.ceiling.feet}ft (minimum: ${MINIMUMS.CEILING}ft)`
@@ -1865,22 +1863,6 @@ async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
   };
 }
 
-interface ForecastPeriod {
-  from: Date;
-  to: Date;
-  isTemporary?: boolean;
-  changeType: 'TEMPO' | 'BECMG' | 'PERSISTENT';
-  probability?: number;
-  operationalImpacts?: string[];
-  timeDescription: string;
-  conditions: {
-    phenomena: string[];
-  };
-  riskLevel: RiskLevel;
-  phenomena?: string[];
-  language?: 'en' | 'pl';
-}
-
 function mergeOverlappingPeriods(periods: ForecastChange[]): ForecastChange[] {
   // Create timeline events
   const events: { time: Date; type: 'start' | 'end'; period: ForecastChange }[] = [];
@@ -2060,30 +2042,6 @@ function arePeriodsSimilar(a: ForecastChange, b: ForecastChange): boolean {
 }
 
 // Update type definitions for multipliers
-const TREND_WEIGHTS = {
-  ACCELERATION: {
-    VISIBILITY: 0.3,    // Weight for visibility change acceleration
-    WIND: 0.25,         // Weight for wind change acceleration
-    CEILING: 0.2        // Weight for ceiling change acceleration
-  },
-  VOLATILITY: {
-    HIGH: 0.4,          // Additional risk for highly volatile conditions
-    MODERATE: 0.2,      // Additional risk for moderately volatile conditions
-    LOW: 0.1            // Additional risk for slightly volatile conditions
-  },
-  SEASONAL: {
-    WINTER: 1.3 as number,        // Winter months (Dec-Feb)
-    SHOULDER: 1.15 as number,     // Shoulder seasons (Mar-May, Sep-Nov)
-    SUMMER: 1.0 as number         // Summer months (Jun-Aug)
-  },
-  DIURNAL: {
-    DAWN: 1.25 as number,         // Dawn period (1 hour before to 1 hour after sunrise)
-    DUSK: 1.2 as number,          // Dusk period (1 hour before to 1 hour after sunset)
-    NIGHT: 1.15 as number,        // Night operations
-    DAY: 1.0 as number           // Daytime operations
-  }
-} as const;
-
 // Update compound effect calculations to be less aggressive
 const COMPOUND_EFFECTS = {
   // Synergistic effects between different weather phenomena
