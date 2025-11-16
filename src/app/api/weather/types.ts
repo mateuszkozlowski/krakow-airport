@@ -1,6 +1,6 @@
 interface BaseCloud {
   altitude: number;
-  type: string;
+  type: string; // Coverage type: FEW, SCT, BKN, OVC, etc.
 }
 
 // Transformed (output) interfaces
@@ -11,6 +11,7 @@ export interface TransformedCondition {
 export interface Cloud extends BaseCloud {
   symbol: string;
   base_feet_agl?: number;
+  cloudType?: 'CB' | 'TCU'; // Cumulonimbus or Towering Cumulus
 }
 
 export interface Wind {
@@ -79,7 +80,9 @@ export interface ForecastLine {
   conditions: WeatherCondition[];
   clouds?: {
     code: string;
-    base_feet_agl: number;
+    base_feet_agl?: number;
+    feet?: number;
+    cloudType?: 'CB' | 'TCU';
   }[];
   wind: {
     speed_kts: number;

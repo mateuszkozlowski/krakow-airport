@@ -54,12 +54,12 @@ interface CheckWXMetarResponse {
       meters: number;
     };
     clouds: Array<{
-      base_feet_agl: number;
-      base_meters_agl: number;
+      base_feet_agl?: number;
+      base_meters_agl?: number;
       code: string;
       text: string;
-      feet: number;
-      meters: number;
+      feet?: number;
+      meters?: number;
     }>;
     dewpoint: {
       celsius: number;
@@ -92,12 +92,12 @@ interface CheckWXTafResponse {
     raw_text: string;
     forecast: Array<{
       clouds: Array<{
-        base_feet_agl: number;
-        base_meters_agl: number;
+        base_feet_agl?: number;
+        base_meters_agl?: number;
         code: string;
         text: string;
-        feet: number;
-        meters: number;
+        feet?: number;
+        meters?: number;
       }>;
       conditions?: Array<{
         code: string;
@@ -132,27 +132,50 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
   const observation = checkwxData.data[0];
   const rawText = observation.raw_text;
   
-  // Parse clouds with special handling for BKN000/OVC000
+  // Parse clouds with special handling for BKN000/OVC000, CB, TCU
   const clouds: Cloud[] = (observation.clouds || []).map(cloud => {
     let altitude = cloud.feet;
     let baseAgl = cloud.base_feet_agl;
+    let cloudType: 'CB' | 'TCU' | undefined = undefined;
     
-    // If CheckWX didn't parse base_feet_agl (e.g., BKN000), extract from raw METAR
-    if (baseAgl === undefined || baseAgl === null) {
-      // Match patterns like "BKN000", "OVC000", "BKN001" etc.
-      const cloudMatch = rawText.match(new RegExp(`\\b${cloud.code}(\\d{3})\\b`));
-      if (cloudMatch && cloudMatch[1]) {
-        baseAgl = parseInt(cloudMatch[1], 10) * 100; // Convert to feet
-        altitude = baseAgl;
-        console.log(`⚠️ Extracted ${cloud.code}${cloudMatch[1]} from raw METAR: ${baseAgl}ft AGL`);
+    // Extract CB (Cumulonimbus) or TCU (Towering Cumulus) from raw METAR
+    // Patterns: FEW015CB, SCT020TCU, BKN025CB, etc.
+    const cloudPattern = new RegExp(`\\b${cloud.code}(\\d{3})(CB|TCU)?\\b`);
+    const cloudMatch = rawText.match(cloudPattern);
+    
+    if (cloudMatch) {
+      // Extract altitude if CheckWX didn't parse base_feet_agl
+      if (baseAgl === undefined || baseAgl === null) {
+        if (cloudMatch[1]) {
+          baseAgl = parseInt(cloudMatch[1], 10) * 100; // Convert to feet
+          altitude = baseAgl;
+          console.log(`⚠️ Extracted ${cloud.code}${cloudMatch[1]} from raw METAR: ${baseAgl}ft AGL`);
+        }
+      }
+      
+      // Extract cloud type (CB or TCU)
+      if (cloudMatch[2]) {
+        cloudType = cloudMatch[2] as 'CB' | 'TCU';
+        console.log(`⚠️ Detected ${cloudType} (${cloudType === 'CB' ? 'Cumulonimbus' : 'Towering Cumulus'}) at ${baseAgl}ft`);
+      }
+    }
+    
+    // Also check cloud.text for CB/TCU keywords if not found in pattern
+    if (!cloudType && cloud.text) {
+      const textLower = cloud.text.toLowerCase();
+      if (textLower.includes('cumulonimbus')) {
+        cloudType = 'CB';
+      } else if (textLower.includes('towering')) {
+        cloudType = 'TCU';
       }
     }
     
     return {
       altitude: altitude || 0,
-      symbol: cloud.code + (baseAgl !== undefined ? String(Math.floor(baseAgl / 100)).padStart(3, '0') : '000'),
+      symbol: cloud.code + (baseAgl !== undefined ? String(Math.floor(baseAgl / 100)).padStart(3, '0') : '000') + (cloudType || ''),
       type: cloud.code,
-      base_feet_agl: baseAgl
+      base_feet_agl: baseAgl,
+      cloudType: cloudType
     };
   });
 
@@ -231,6 +254,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
 function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafResponse | null {
   if (!checkwxData.data?.[0]?.forecast) return null;
 
+  const rawTaf = checkwxData.data[0].raw_text;
   const forecast = checkwxData.data[0].forecast.map(period => {
     // Log the raw period data
     console.log('Transforming TAF period:', {
@@ -280,11 +304,34 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
           text: WEATHER_PHENOMENA_TRANSLATIONS.en[phenomenonCode as keyof typeof WEATHER_PHENOMENA_TRANSLATIONS.en] || phenomenonCode
         };
       }) || [],
-      clouds: period.clouds?.map(c => ({
-        code: c.code,
-        base_feet_agl: c.base_feet_agl,
-        feet: c.feet
-      })) || [],
+      clouds: period.clouds?.map(c => {
+        // Extract CB or TCU from raw TAF or cloud text
+        let cloudType: 'CB' | 'TCU' | undefined = undefined;
+        
+        // Try to find CB/TCU in raw TAF text for this cloud group
+        const cloudPattern = new RegExp(`\\b${c.code}(\\d{3})(CB|TCU)?\\b`);
+        const cloudMatch = rawTaf.match(cloudPattern);
+        if (cloudMatch && cloudMatch[2]) {
+          cloudType = cloudMatch[2] as 'CB' | 'TCU';
+        }
+        
+        // Also check cloud.text for CB/TCU keywords
+        if (!cloudType && c.text) {
+          const textLower = c.text.toLowerCase();
+          if (textLower.includes('cumulonimbus')) {
+            cloudType = 'CB';
+          } else if (textLower.includes('towering')) {
+            cloudType = 'TCU';
+          }
+        }
+        
+        return {
+          code: c.code,
+          base_feet_agl: c.base_feet_agl,
+          feet: c.feet,
+          cloudType: cloudType
+        };
+      }) || [],
       wind: period.wind ? {
         speed_kts: period.wind.speed_kts,
         direction: period.wind.degrees,
@@ -296,10 +343,11 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
       ceiling: period.clouds?.length ? (() => {
         // Only consider BKN (broken) and OVC (overcast) for ceiling
         const ceilingClouds = period.clouds.filter(cloud => 
-          cloud.code === 'BKN' || cloud.code === 'OVC'
+          (cloud.code === 'BKN' || cloud.code === 'OVC') &&
+          (cloud.base_feet_agl !== undefined || cloud.feet !== undefined)
         );
         return ceilingClouds.length > 0 ? {
-          feet: Math.min(...ceilingClouds.map(cloud => cloud.base_feet_agl || cloud.feet))
+          feet: Math.min(...ceilingClouds.map(cloud => cloud.base_feet_agl !== undefined ? cloud.base_feet_agl : (cloud.feet ?? 0)))
         } : null;
       })() : null
     };
