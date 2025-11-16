@@ -14,13 +14,10 @@ const PassengerRightsPage = () => {
     const t = translations[language];
 
     return (
-        <div className="min-h-screen">
-            <div 
-                className="bg-[#1a1f36] bg-cover bg-center" 
-                style={{ backgroundImage: "url('/background.png')" }}
-            >
-                <Alert className="rounded-none border-0 bg-white/10 backdrop-blur text-white">
-                    <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+            <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+                <Alert className="rounded-none border-0 bg-transparent">
+                    <div className="max-w-6xl mx-auto w-full px-6 flex justify-between items-center">
                         <Link
                             href="/"
                             className="text-sm flex items-center gap-2 text-white/80 hover:text-white transition-colors">
@@ -32,8 +29,7 @@ const PassengerRightsPage = () => {
                                 href="https://x.com/KrkFlights"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium 
-                                hover:bg-white/20 h-9 w-9 transition-colors"
+                                className="inline-flex items-center justify-center rounded-md hover:bg-white/10 h-9 w-9 transition-colors"
                                 aria-label="Twitter"
                             >
                                 <svg
@@ -48,35 +44,36 @@ const PassengerRightsPage = () => {
                         </div>
                     </div>
                 </Alert>
+            </div>
 
-                <div className="max-w-4xl mx-auto px-6 pb-16">
-                    <h1 className="text-2xl md:text-4xl font-bold mt-24 mb-2 md:mb-4 text-white">
-                        {t.pageTitle}
-                    </h1>
-                    <div className="text-xl md:text-3xl mb-8 text-white/80">
-                        {t.pageSubtitle}
-                    </div>
+            {/* Hero Section */}
+            <div className="max-w-6xl mx-auto px-6 pt-12 pb-8">
+                <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4 text-white">
+                    {t.pageTitle}
+                </h1>
+                <div className="text-xl md:text-2xl mb-8 text-slate-300">
+                    {t.pageSubtitle}
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-6 pb-8">
-                <PassengerRights />
-            </div>
+            {/* Main Content */}
+            <PassengerRights />
 
-            <footer className="border-t border-slate-200 py-6 bg-white">
-                <div className="max-w-4xl mx-auto px-6">
-                    <p className="text-sm text-slate-600 leading-relaxed mb-4">{t.disclaimer}</p>
-                    <div className="border-t border-slate-200 my-4"></div>
+            {/* Footer */}
+            <footer className="border-t border-slate-700 py-6 bg-black/20 mt-12">
+                <div className="max-w-6xl mx-auto px-6">
+                    <p className="text-sm text-slate-400 leading-relaxed mb-4">{t.disclaimer}</p>
+                    <div className="border-t border-slate-700 my-4"></div>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div className="text-sm text-slate-700">{t.builtBy}</div>
+                        <div className="text-sm text-slate-500">{t.builtBy}</div>
                         <div className="flex flex-wrap gap-4">
-                            <a href="/changelog" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                            <a href="/changelog" className="text-sm text-slate-400 hover:text-white transition-colors">
                                 {t.changelog}
                             </a>
-                            <a href="mailto:mateusz.kozlowski@gmail.com" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                            <a href="mailto:mateusz.kozlowski@gmail.com" className="text-sm text-slate-400 hover:text-white transition-colors">
                                 {t.email}
                             </a>
-                            <a href="https://mateuszkozlowski.xyz/" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                            <a href="https://mateuszkozlowski.xyz/" className="text-sm text-slate-400 hover:text-white transition-colors">
                                 {t.website}
                             </a>
                         </div>
