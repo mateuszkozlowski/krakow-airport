@@ -1,33 +1,27 @@
 // src/components/PassengerRights.tsx
 'use client';
 
-import React, { ReactNode } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Clock, Hotel, Info, Coffee, Shield, LucideIcon, MapPin, ArrowUpRight, Camera, FileText, MessageCircle, FileCheck, Utensils, Phone } from 'lucide-react';
+import React from 'react';
+import { Hotel, Info, Coffee, Shield, MapPin, ArrowUpRight, Camera, FileText, FileCheck, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/lib/translations';
-
-interface InfoSectionProps {
-  title: string;
-  children: ReactNode;
-  icon: LucideIcon;
-}
 
 export function PassengerRights() {
   const { language } = useLanguage();
   const t = translations[language];
 
   return (
-    <div className="py-4 sm:py-8 max-w-6xl mx-auto px-3 sm:px-6">
-            {/* Pro tip */}
-      <div className="mx-auto mb-6 sm:mb-16">
-        <div className="rounded-xl sm:rounded-2xl bg-blue-50 border-2 border-blue-200 p-4 sm:p-6 shadow-sm">
-          <div className="flex gap-3 sm:gap-4">
-            <div className="flex-none">
-              <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+    <div className="py-6 sm:py-12 max-w-5xl mx-auto px-4 sm:px-6">
+      {/* Pro tip */}
+      <div className="mx-auto mb-8 sm:mb-12">
+        <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 p-5 sm:p-7 shadow-sm">
+          <div className="flex gap-4">
+            <div className="flex-none mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shadow-sm">
+                <Info className="h-5 w-5 text-white" />
+              </div>
             </div>
-            <p className="text-base sm:text-lg text-slate-800 leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-medium">
               {t.proTip}
             </p>
           </div>
@@ -35,145 +29,166 @@ export function PassengerRights() {
       </div>
 
       {/* Timeline steps */}
-      <div className="max-w-4xl mx-auto mb-6 sm:mb-16">
-        <div className="relative">
+      <div className="max-w-4xl mx-auto mb-8 sm:mb-12">
+        <div className="relative space-y-6 sm:space-y-8">
           {/* Vertical line */}
           <div 
-            className="absolute left-5 sm:left-8 w-1 bg-gradient-to-b from-blue-200 via-green-200 to-orange-200" 
+            className="absolute left-6 sm:left-9 w-0.5 bg-gradient-to-b from-blue-300 via-green-300 to-orange-300" 
             style={{ 
-              top: '24px',
-              height: 'calc(100% - 48px)'
+              top: '32px',
+              height: 'calc(100% - 64px)'
             }}
           />
 
           {/* Step 1: Document */}
-          <div className="relative flex gap-2 sm:gap-6 mb-6 sm:mb-12 group">
-            <div className="flex-none">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border-4 border-white shadow-lg flex items-center justify-center transform transition-all group-hover:scale-110">
-                <Camera className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
+          <div className="relative flex gap-4 sm:gap-6 group">
+            <div className="flex-none z-10">
+              <div className="w-12 h-12 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                <Camera className="h-6 w-6 sm:h-9 sm:w-9 text-white" />
               </div>
             </div>
-            <div className="flex-1 pt-1 sm:pt-3">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 border-2 border-blue-100 shadow-md transform transition-all group-hover:shadow-xl">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 flex flex-wrap items-center gap-2">
-                  {t.documentEverything}
-                  <span className="text-sm sm:text-base font-semibold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+            <div className="flex-1 pb-2">
+              <div className="bg-white rounded-2xl p-5 sm:p-7 border border-blue-200 shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:border-blue-300">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                    {t.documentEverything}
+                  </h3>
+                  <span className="text-xs sm:text-sm font-semibold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
                     {t.rightNow}
                   </span>
-                </h3>
-                <div className="prose prose-base prose-slate max-w-none">
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start gap-3">
-                      <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-none mt-0.5" />
-                      <span className="text-base sm:text-lg text-slate-700 leading-relaxed">{t.takePhotosDesc}</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-none mt-0.5" />
-                      <span className="text-base sm:text-lg text-slate-700 leading-relaxed">{t.keepDocumentsDesc}</span>
-                    </li>
-                  </ul>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-none mt-1">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                      </div>
+                    </div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-relaxed">{t.takePhotosDesc}</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-none mt-1">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <FileCheck className="h-4 w-4 text-blue-600" />
+                      </div>
+                    </div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-relaxed">{t.keepDocumentsDesc}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Step 2: Get Care & Assistance */}
-          <div className="relative flex gap-2 sm:gap-6 mb-6 sm:mb-12 group">
-            <div className="flex-none">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-500 to-green-600 border-4 border-white shadow-lg flex items-center justify-center transform transition-all group-hover:scale-110">
-                <Coffee className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
+          <div className="relative flex gap-4 sm:gap-6 group">
+            <div className="flex-none z-10">
+              <div className="w-12 h-12 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                <Coffee className="h-6 w-6 sm:h-9 sm:w-9 text-white" />
               </div>
             </div>
-            <div className="flex-1 pt-1 sm:pt-3">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 border-2 border-green-100 shadow-md transform transition-all group-hover:shadow-xl">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 flex flex-wrap items-center gap-2">
-                  {t.careRights}
-                  <span className="text-sm sm:text-base font-semibold text-green-700 bg-green-100 px-3 py-1 rounded-full">
+            <div className="flex-1 pb-2">
+              <div className="bg-white rounded-2xl p-5 sm:p-7 border border-green-200 shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:border-green-300">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                    {t.careRights}
+                  </h3>
+                  <span className="text-xs sm:text-sm font-semibold text-green-700 bg-green-100 px-3 py-1 rounded-full">
                     {t.after2Hours}
                   </span>
-                </h3>
-                <div className="prose prose-slate prose-sm">
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* 2+ hours */}
-                    <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-green-700/30">
-                      <div className="flex gap-3 sm:gap-4 items-start">
-                        <div className="flex-none flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-green-900/30 text-green-300 text-xs sm:text-sm font-medium">2h</div>
-                        <div>
-                          <p className="font-medium text-base text-white">{t.freeMeals}</p>
-                          <p className="text-base text-slate-300 mb-2">{t.freeMealsDesc}</p>
-                          <div className="mt-2 space-y-1 hidden sm:block">
-                            <p className="text-slate-400 flex items-center gap-1">
-                              <span className="block w-1 h-1 rounded-full bg-green-400"></span>
-                              {t.shortHaulDelay} (≤ 1500 km)
-                            </p>
-                            <p className="text-slate-400 flex items-center gap-1">
-                              <span className="block w-1 h-1 rounded-full bg-green-400"></span>
-                              {t.mediumHaulDelay} (1500-3500 km)
-                            </p>
-                            <p className="text-slate-400 flex items-center gap-1">
-                              <span className="block w-1 h-1 rounded-full bg-green-400"></span>
-                              {t.longHaulDelay} (&gt; 3500 km)
-                            </p>
+                </div>
+                
+                <div className="space-y-3 sm:space-y-4">
+                  {/* 2+ hours */}
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-none">
+                        <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">2h</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-base text-slate-900 mb-1">{t.freeMeals}</p>
+                        <p className="text-sm text-slate-700 mb-2">{t.freeMealsDesc}</p>
+                        <div className="space-y-1 text-xs text-slate-600">
+                          <p className="flex items-center gap-1.5">
+                            <span className="block w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            {t.shortHaulDelay} (≤ 1500 km)
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <span className="block w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            {t.mediumHaulDelay} (1500-3500 km)
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <span className="block w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            {t.longHaulDelay} (&gt; 3500 km)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4+ hours */}
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-none">
+                        <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">4h</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-base text-slate-900 mb-1">{t.additionalMeals}</p>
+                        <p className="text-sm text-slate-700">{t.additionalMealsDesc}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overnight */}
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-none">
+                        <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
+                          <Hotel className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-base text-slate-900 mb-1">{t.hotelAccommodation}</p>
+                        <p className="text-sm text-slate-700 mb-3">{t.hotelAccommodationDesc}</p>
+                        <div className="space-y-2 pl-1">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 text-green-600 flex-none mt-0.5" />
+                            <p className="text-xs text-slate-600">{t.hotelTransportNote}</p>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <Info className="h-4 w-4 text-green-600 flex-none mt-0.5" />
+                            <p className="text-xs text-slate-600">{t.hotelQualityNote}</p>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* 4+ hours */}
-                    <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-green-700/30">
-                      <div className="flex gap-3 sm:gap-4 items-start">
-                        <div className="flex-none flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-green-900/30 text-green-300 text-xs sm:text-sm font-medium">4h</div>
-                        <div>
-                          <p className="font-medium text-base text-white">{t.additionalMeals}</p>
-                          <p className="text-base text-slate-300">{t.additionalMealsDesc}</p>
+                  {/* Communication */}
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-none">
+                        <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
+                          <Phone className="h-5 w-5 text-white" />
                         </div>
                       </div>
-                    </div>
-
-                    {/* Overnight - hidden on mobile */}
-                    <div className="hidden sm:block bg-slate-900/50 rounded-lg p-4 border border-green-700/30">
-                      <div className="flex gap-4 items-start">
-                        <div className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-green-900/30 text-green-300">
-                          <Hotel className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-base text-white">{t.hotelAccommodation}</p>
-                          <p className="text-base text-slate-300 mb-2">{t.hotelAccommodationDesc}</p>
-                          <div className="mt-2 space-y-2">
-                            <div className="flex items-start gap-2">
-                              <MapPin className="h-4 w-4 text-green-400 flex-none mt-0.5" />
-                              <p className="text-slate-400">{t.hotelTransportNote}</p>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Info className="h-4 w-4 text-green-400 flex-none mt-0.5" />
-                              <p className="text-slate-400">{t.hotelQualityNote}</p>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-base text-slate-900 mb-1">{t.phoneCalls}</p>
+                        <p className="text-sm text-slate-700">{t.phoneCallsDesc}</p>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Communication - simplified on mobile */}
-                    <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-green-700/30">
-                      <div className="flex gap-3 sm:gap-4 items-start">
-                        <div className="flex-none flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-green-900/30 text-green-300">
-                          <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-base text-white">{t.phoneCalls}</p>
-                          <p className="text-base text-slate-300">{t.phoneCallsDesc}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Additional Rights Note - simplified on mobile */}
-                    <div className="bg-green-900/20 rounded-lg p-3 sm:p-4 border border-green-700/30">
-                      <div className="flex items-start gap-2">
-                        <Info className="hidden sm:block h-5 w-5 text-green-400 flex-none mt-0.5" />
-                        <div>
-                          <p className="text-base text-green-300">{t.careRightsNote}</p>
-                          <p className="hidden sm:block text-sm text-green-400 mt-1">{t.careRightsImportant}</p>
-                        </div>
+                  {/* Important Note */}
+                  <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-xl p-4 border border-green-300">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-green-700 flex-none mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-green-900">{t.careRightsNote}</p>
+                        <p className="text-xs text-green-800">{t.careRightsImportant}</p>
                       </div>
                     </div>
                   </div>
@@ -183,45 +198,45 @@ export function PassengerRights() {
           </div>
 
           {/* Step 3: Know Your Rights & Compensation */}
-          <div className="relative flex gap-2 sm:gap-6 group">
-            <div className="flex-none">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-orange-900/30 to-slate-800 border-2 border-orange-700/50 flex items-center justify-center transform transition-all group-hover:scale-110 group-hover:border-orange-600">
-                <Shield className="h-5 w-5 sm:h-8 sm:w-8 text-orange-400" />
+          <div className="relative flex gap-4 sm:gap-6 group">
+            <div className="flex-none z-10">
+              <div className="w-12 h-12 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                <Shield className="h-6 w-6 sm:h-9 sm:w-9 text-white" />
               </div>
             </div>
-            <div className="flex-1 pt-1 sm:pt-3">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-6 border border-orange-700/30 transform transition-all group-hover:translate-x-1">
-                <h3 className="text-base sm:text-xl font-semibold text-white mb-2 sm:mb-4 flex flex-wrap items-center gap-2">
-                  {t.compensationRights}
-                  <span className="text-xs sm:text-sm font-normal text-orange-300 bg-orange-900/30 px-2 py-0.5 rounded-full">
+            <div className="flex-1 pb-2">
+              <div className="bg-white rounded-2xl p-5 sm:p-7 border border-orange-200 shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:border-orange-300">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                    {t.compensationRights}
+                  </h3>
+                  <span className="text-xs sm:text-sm font-semibold text-orange-700 bg-orange-100 px-3 py-1 rounded-full">
                     {t.after3Hours}
                   </span>
-                </h3>
-                <div className="prose prose-slate prose-sm">
-                  <p className="text-base text-orange-300 mb-3 sm:mb-4">{t.compensationDesc}</p>
-                  <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-orange-700/30">
-                    <div className="flex items-start gap-2">
-                      <Info className="hidden sm:block h-5 w-5 text-orange-400 flex-none mt-0.5" />
-                      <div className="space-y-6">
-                        <p className="text-base text-orange-300">{t.weatherCompensationDesc}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <p className="text-sm sm:text-base text-slate-700 leading-relaxed">{t.compensationDesc}</p>
+                  
+                  <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-orange-600 flex-none mt-0.5" />
+                      <div className="flex-1 space-y-4">
+                        <p className="text-sm text-slate-700 leading-relaxed">{t.weatherCompensationDesc}</p>
                         
-                        <div className="border-t border-orange-700/30 pt-6">
-                          <div className="space-y-4">
-                            <div className="flex flex-col gap-3">
-                              <span className="text-base text-slate-300">{t.compensationInfo}</span>
-                              <div className="flex flex-col gap-2">
-                                <a 
-                                  href="https://www.airhelp.com/pl/?utm_medium=affiliate&utm_source=pap&utm_campaign=aff-krkflights&utm_content=&a_aid=krkflights&a_bid=2f59c947"
-                                  target="_blank"
-                                  rel="sponsored noopener noreferrer"
-                                  className="group inline-flex items-center gap-2 text-orange-400 hover:text-orange-300"
-                                >
-                                  <span className="font-medium">{t.airHelpLink}</span>
-                                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                                </a>
-                                <p className="text-sm text-slate-400">{t.sponsoredDisclosure}</p>
-                              </div>
-                            </div>
+                        <div className="pt-4 border-t border-orange-200">
+                          <p className="text-sm text-slate-700 mb-3">{t.compensationInfo}</p>
+                          <div className="space-y-2">
+                            <a 
+                              href="https://www.airhelp.com/pl/?utm_medium=affiliate&utm_source=pap&utm_campaign=aff-krkflights&utm_content=&a_aid=krkflights&a_bid=2f59c947"
+                              target="_blank"
+                              rel="sponsored noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium transition-colors group/link"
+                            >
+                              <span>{t.airHelpLink}</span>
+                              <ArrowUpRight className="h-4 w-4 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
+                            </a>
+                            <p className="text-xs text-slate-500">{t.sponsoredDisclosure}</p>
                           </div>
                         </div>
                       </div>
@@ -235,21 +250,21 @@ export function PassengerRights() {
       </div>
 
       {/* Resources */}
-      <div className="mx-auto">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-6">{t.officialResources}</h2>
-        <div className="grid sm:grid-cols-2 gap-2 sm:gap-4">
+      <div className="mx-auto max-w-4xl">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">{t.officialResources}</h2>
+        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
           <a 
             href="https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 bg-slate-800/50 hover:border-blue-600 hover:bg-slate-800 transition-colors backdrop-blur-sm"
+            className="group flex items-center gap-3 sm:gap-4 rounded-xl p-4 sm:p-5 bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all duration-300"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-900/30 flex items-center justify-center flex-none">
-              <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-none group-hover:bg-blue-100 transition-colors">
+              <ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <div>
-              <div className="font-medium text-base text-white">{t.euGuide}</div>
-              <div className="text-base text-slate-400">{t.inEnglish}</div>
+            <div className="flex-1">
+              <div className="font-semibold text-base sm:text-lg text-slate-900 mb-0.5">{t.euGuide}</div>
+              <div className="text-sm text-slate-600">{t.inEnglish}</div>
             </div>
           </a>
 
@@ -257,14 +272,14 @@ export function PassengerRights() {
             href="https://pasazerlotniczy.ulc.gov.pl/prawa-pasazera"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 bg-slate-800/50 hover:border-blue-600 hover:bg-slate-800 transition-colors backdrop-blur-sm"
+            className="group flex items-center gap-3 sm:gap-4 rounded-xl p-4 sm:p-5 bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all duration-300"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-900/30 flex items-center justify-center flex-none">
-              <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-none group-hover:bg-blue-100 transition-colors">
+              <ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <div>
-              <div className="font-medium text-base text-white">{t.civilAviation}</div>
-              <div className="text-base text-slate-400">{t.inPolish}</div>
+            <div className="flex-1">
+              <div className="font-semibold text-base sm:text-lg text-slate-900 mb-0.5">{t.civilAviation}</div>
+              <div className="text-sm text-slate-600">{t.inPolish}</div>
             </div>
           </a>
         </div>
