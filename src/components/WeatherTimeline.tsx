@@ -597,12 +597,12 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
           ) : (
             <>
               {/* Current conditions card */}
-              <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50`}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <Card className={`${getStatusColors(current.riskLevel.level).bg} border-slate-700/50 rounded-2xl shadow-lg`}>
+                <CardContent className="p-5 md:p-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-sm font-medium text-slate-200">
+                        <span className="text-sm font-semibold text-slate-200">
                           {t.currentConditions} • {t.updated} {adjustToWarsawTime(new Date(current.observed)).toLocaleTimeString('en-GB', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -611,13 +611,13 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                         </span>
                       </div>
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusColors(current.riskLevel.level).pill} w-full sm:w-auto text-center sm:text-left`}>
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColors(current.riskLevel.level).pill} w-full sm:w-auto text-center sm:text-left shadow-sm`}>
                           {current.riskLevel.title}
                         </span>
                       </div>
                     </div>
 
-                    <div className={`text-lg font-medium ${getStatusColors(current.riskLevel.level).text}`}>
+                    <div className={`text-lg md:text-xl font-semibold ${getStatusColors(current.riskLevel.level).text}`}>
                       {current.riskLevel.statusMessage}
                     </div>
 
@@ -628,7 +628,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           return (
                             <span
                               key={index}
-                              className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                              className="bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm"
                               title={getDetailedDescription(phenomenonText)}
                             >
                               {phenomenonText}
@@ -640,7 +640,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                           typeof p === 'string' ? p.includes('Wind') : p.text?.includes('Wind')
                         ) && (
                           <span
-                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            className="bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm"
                             title={`Wind ${current.wind.direction}° at ${current.wind.speed_kts}kt${current.wind.gust_kts ? ` (gusts ${current.wind.gust_kts}kt)` : ''}`}
                           >
                             {getStandardizedWindDescription(current.wind.speed_kts, language, current.wind.gust_kts)}
@@ -650,7 +650,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
                         {current.visibility?.meters && (
                           <span
-                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            className="bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm"
                             title={`Current visibility: ${current.visibility.meters} meters`}
                           >
                             {formatVisibilityDescription(current.visibility.meters)}
@@ -660,7 +660,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
 
                         {current.ceiling?.feet && (
                           <span
-                            className="bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                            className="bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm"
                             title={`Current ceiling: ${current.ceiling.feet} feet`}
                           >
                             {formatCeilingDescription(current.ceiling.feet)}
@@ -759,18 +759,18 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                       return (
                         <Card 
                           key={`${period.from.getTime()}-${period.to.getTime()}-${index}`}
-                          className={`border-slate-700/50 ${colors.bg}`}
+                          className={`border-slate-700/50 ${colors.bg} rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-200`}
                         >
-                          <CardContent className="p-4">
-                            <div className="flex flex-col gap-3">
+                          <CardContent className="p-5 md:p-6">
+                            <div className="flex flex-col gap-4">
                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                                  <span className="text-sm font-medium text-slate-200">
+                                  <span className="text-sm font-semibold text-slate-200">
                                     {period.timeDescription}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                                  <span className={`px-2 py-1 rounded-full text-xs ${colors.pill} w-full sm:w-auto text-center sm:text-left`}>
+                                  <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${colors.pill} w-full sm:w-auto text-center sm:text-left shadow-sm`}>
                                     {period.riskLevel.title}
                                   </span>
                                 </div>
@@ -862,7 +862,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                           filteredPhenomena.map((condition, idx) => (
                                             <span
                                               key={idx}
-                                              className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                              className={'bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm'}
                                             >
                                               {condition}
                                             </span>
@@ -874,7 +874,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                                          !filteredPhenomena.some(p => p.includes('💨')) &&
                                          getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts) && (
                                           <span
-                                            className={'bg-slate-800/40 text-slate-300 px-3 py-1.5 rounded-full text-xs whitespace-nowrap hover:bg-slate-700 hover:text-white transition-colors duration-200'}
+                                            className={'bg-slate-800/50 text-slate-200 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap hover:bg-slate-700/80 hover:text-white transition-all duration-200 shadow-sm'}
                                           >
                                             {getStandardizedWindDescription(period.wind.speed_kts, language, period.wind.gust_kts)}
                                             {period.wind.gust_kts && ` (${period.wind.speed_kts}G${period.wind.gust_kts}kt)`}
@@ -914,7 +914,7 @@ const WeatherTimeline: React.FC<WeatherTimelineProps> = ({ current, forecast, is
                     {uniqueForecast.length > 4 && (
                       <button
                         onClick={() => setShowAll(!showAll)}
-                        className="w-full text-center text-sm text-slate-400 hover:text-slate-200 transition-colors duration-200 bg-slate-800/50 rounded-lg py-3"
+                        className="w-full text-center text-sm font-medium text-slate-300 hover:text-white transition-all duration-200 bg-slate-800/50 hover:bg-slate-800/70 rounded-2xl py-4 shadow-md hover:shadow-lg"
                       >
                         {showAll ? t.showLess : t.showMore}
                       </button>

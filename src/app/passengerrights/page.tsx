@@ -63,25 +63,23 @@ const PassengerRightsPage = () => {
                 <PassengerRights />
             </div>
 
-            <footer className="border-t border-slate-200 py-4">
-                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
-                    <p>
-                        This application is not an official Krakow Airport service. It is intended for informational purposes only and should not be used as the sole source for flight planning or decision-making. Always check with official sources and your airline for the most accurate and up-to-date information.
-                    </p>
-                </div>
-                <div className="max-w-4xl mx-auto border-t border-slate-200 my-4"></div>
-                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-slate-900">
-                    <div>Built by Mateusz Kozłowski</div>
-                    <div className="flex gap-4">
-                        <a href="/changelog" className="hover:text-slate-600">
-                            Changelog
-                        </a>
-                        <a href="mailto:mateusz.kozlowski@gmail.com" className="hover:text-slate-600">
-                            Email
-                        </a>
-                        <a href="https://mateuszkozlowski.xyz/" className="hover:text-slate-600">
-                            WWW
-                        </a>
+            <footer className="border-t border-slate-200 py-6 bg-white">
+                <div className="max-w-4xl mx-auto px-6">
+                    <p className="text-sm text-slate-600 leading-relaxed mb-4">{t.disclaimer}</p>
+                    <div className="border-t border-slate-200 my-4"></div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="text-sm text-slate-700">{t.builtBy}</div>
+                        <div className="flex flex-wrap gap-4">
+                            <a href="/changelog" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                                {t.changelog}
+                            </a>
+                            <a href="mailto:mateusz.kozlowski@gmail.com" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                                {t.email}
+                            </a>
+                            <a href="https://mateuszkozlowski.xyz/" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                                {t.website}
+                            </a>
+                        </div>
                     </div>
                 </div>
             </footer>

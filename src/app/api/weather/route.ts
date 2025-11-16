@@ -130,21 +130,68 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
   if (!checkwxData.data?.length) return null;
   
   const observation = checkwxData.data[0];
-  const clouds: Cloud[] = (observation.clouds || []).map(cloud => ({
-    altitude: cloud.feet,
-    symbol: cloud.code + String(cloud.base_feet_agl).padStart(3, '0'),
-    type: cloud.code
-  }));
+  const rawText = observation.raw_text;
+  
+  // Parse clouds with special handling for BKN000/OVC000
+  const clouds: Cloud[] = (observation.clouds || []).map(cloud => {
+    let altitude = cloud.feet;
+    let baseAgl = cloud.base_feet_agl;
+    
+    // If CheckWX didn't parse base_feet_agl (e.g., BKN000), extract from raw METAR
+    if (baseAgl === undefined || baseAgl === null) {
+      // Match patterns like "BKN000", "OVC000", "BKN001" etc.
+      const cloudMatch = rawText.match(new RegExp(`\\b${cloud.code}(\\d{3})\\b`));
+      if (cloudMatch && cloudMatch[1]) {
+        baseAgl = parseInt(cloudMatch[1], 10) * 100; // Convert to feet
+        altitude = baseAgl;
+        console.log(`⚠️ Extracted ${cloud.code}${cloudMatch[1]} from raw METAR: ${baseAgl}ft AGL`);
+      }
+    }
+    
+    return {
+      altitude: altitude || 0,
+      symbol: cloud.code + (baseAgl !== undefined ? String(Math.floor(baseAgl / 100)).padStart(3, '0') : '000'),
+      type: cloud.code,
+      base_feet_agl: baseAgl
+    };
+  });
 
   // Extract vertical visibility from raw METAR text if present
   // VV is followed by 3 digits representing hundreds of feet
   let verticalVisibility: { feet: number } | null = null;
-  const rawText = observation.raw_text;
   const vvMatch = rawText.match(/\bVV(\d{3})\b/);
   if (vvMatch && vvMatch[1]) {
     const vvFeet = parseInt(vvMatch[1], 10) * 100;
     verticalVisibility = { feet: vvFeet };
     console.log(`Extracted vertical visibility: ${vvFeet} feet from METAR: ${rawText}`);
+  }
+
+  // Extract visibility from raw METAR if CheckWX doesn't provide it
+  // Format: "0050" = 50m, "9999" = 10km+
+  let visibility = observation.visibility?.meters_float;
+  if (visibility === undefined || visibility === null) {
+    const visMatch = rawText.match(/\s(\d{4})\s/);
+    if (visMatch && visMatch[1]) {
+      visibility = parseInt(visMatch[1], 10);
+      console.log(`⚠️ Extracted visibility from raw METAR: ${visibility}m (CheckWX didn't provide it)`);
+    }
+  }
+
+  // Calculate ceiling from clouds (BKN or OVC)
+  let ceiling: { feet: number } | null = null;
+  if (observation.ceiling) {
+    ceiling = { feet: observation.ceiling.feet };
+  } else {
+    // Fallback: calculate ceiling from our parsed clouds
+    const ceilingClouds = clouds.filter(c => 
+      (c.type === 'BKN' || c.type === 'OVC') && 
+      c.base_feet_agl !== undefined
+    );
+    if (ceilingClouds.length > 0) {
+      const lowestCeiling = Math.min(...ceilingClouds.map(c => c.base_feet_agl!));
+      ceiling = { feet: lowestCeiling };
+      console.log(`⚠️ Calculated ceiling from clouds: ${lowestCeiling}ft (CheckWX didn't provide ceiling)`);
+    }
   }
 
   return {
@@ -167,16 +214,14 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       raw_text: observation.raw_text,
       temp_air: observation.temperature.celsius,
       temp_dewpoint: observation.dewpoint.celsius,
-      visibility: observation.visibility.meters_float,
+      visibility: visibility || 0,
       visibility_units: 'meters',
       wind: {
         speed_kts: observation.wind?.speed_kts || 0,
         direction: observation.wind?.degrees || 0,
         gust_kts: observation.wind?.gust_kts || null
       },
-      ceiling: observation.ceiling ? {
-        feet: observation.ceiling.feet
-      } : null,
+      ceiling,
       vertical_visibility: verticalVisibility,
       observed: observation.observed
     }]
@@ -195,6 +240,22 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
       clouds: period.clouds
     });
 
+    // Extract probability from indicator code or text
+    let probability: number | undefined;
+    if (period.change?.indicator) {
+      const indicatorCode = period.change.indicator.code;
+      const indicatorText = period.change.indicator.text || '';
+      
+      // Check for PROB in indicator code or text (e.g., "PROB40", "PROB30 TEMPO")
+      const probMatch = (indicatorCode + ' ' + indicatorText).match(/PROB(\d{2})/);
+      if (probMatch) {
+        probability = parseInt(probMatch[1], 10);
+      } else if (indicatorCode === 'TEMPO') {
+        // Default TEMPO probability is 30% if not specified
+        probability = 30;
+      }
+    }
+
     return {
       timestamp: period.timestamp ? {
         from: period.timestamp.from,
@@ -205,7 +266,7 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
           code: period.change.indicator.code,
           text: period.change.indicator.text,
           desc: period.change.indicator.desc,
-          probability: period.change.indicator.code === 'TEMPO' ? 30 : undefined
+          probability
         }
       } : undefined,
       conditions: period.conditions?.map(c => {
@@ -232,9 +293,15 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
       visibility: period.visibility ? {
         meters: period.visibility.meters_float
       } : null,
-      ceiling: period.clouds?.length ? {
-        feet: Math.min(...period.clouds.map(cloud => cloud.feet))
-      } : null
+      ceiling: period.clouds?.length ? (() => {
+        // Only consider BKN (broken) and OVC (overcast) for ceiling
+        const ceilingClouds = period.clouds.filter(cloud => 
+          cloud.code === 'BKN' || cloud.code === 'OVC'
+        );
+        return ceilingClouds.length > 0 ? {
+          feet: Math.min(...ceilingClouds.map(cloud => cloud.base_feet_agl || cloud.feet))
+        } : null;
+      })() : null
     };
   });
 

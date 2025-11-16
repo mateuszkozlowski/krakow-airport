@@ -67,7 +67,7 @@ const RiskLevel: React.FC<RiskLevelProps> = ({ icon, color, title, description, 
   );
 };
 
-const RiskLegendContent = () => {
+export const RiskLegendContent = () => {
   const { language } = useLanguage();
   const t = translations[language].riskLegend;
 

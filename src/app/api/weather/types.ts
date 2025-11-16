@@ -10,6 +10,7 @@ export interface TransformedCondition {
 
 export interface Cloud extends BaseCloud {
   symbol: string;
+  base_feet_agl?: number;
 }
 
 export interface Wind {
