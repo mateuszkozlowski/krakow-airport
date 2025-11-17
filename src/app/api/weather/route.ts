@@ -324,7 +324,7 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
       clouds: period.clouds?.map(c => {
         // Extract CB or TCU from raw TAF or cloud text
         let cloudType: 'CB' | 'TCU' | undefined = undefined;
-        let altitude = c.base_feet_agl || c.feet;
+        const altitude = c.base_feet_agl || c.feet;
         let extractedAltitude: number | undefined = undefined;
         
         // Try to find CB/TCU in raw TAF text for this specific cloud group
