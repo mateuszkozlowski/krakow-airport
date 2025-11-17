@@ -1,0 +1,4448 @@
+
+> krakow-airport@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.0.4
+   - Local:        http://localhost:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1067ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (942 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 662ms
+ ○ Compiling /api/weather ...
+ ✓ Compiled /api/weather in 1209ms (1106 modules)
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1323ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 49ms
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2500m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2500m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1610ms
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1616ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 49ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 13ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2500m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 807ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2500m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 795ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 761ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 945ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 767ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 780ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 980ms
+ ✓ Compiled in 316ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 42ms
+ ✓ Compiled in 180ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 41ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2300m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 807ms
+ ✓ Compiled in 206ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 22ms
+ ✓ Compiled in 205ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 32ms
+ ✓ Compiled in 145ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 114ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 96 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 96 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 427ms
+ GET /api/weather 200 in 426ms
+ ✓ Compiled in 204ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 18ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 70ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 103 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 199ms
+Cache status for weather-EPKK: HIT
+Cache age: 103 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 283ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 9 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 324ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 43ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 155 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 155 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 346ms
+ GET /api/weather 200 in 346ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 29ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 10 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 180ms
+Cache status for weather-EPKK: HIT
+Cache age: 10 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 310ms
+ ✓ Compiled in 326ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 48ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 76ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 46 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 46 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 423ms
+ GET /api/weather 200 in 424ms
+ ✓ Compiled in 144ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 31ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 16 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 386ms
+ ✓ Compiled in 246ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 39ms
+ ✓ Compiled in 192ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 23ms
+ ✓ Compiled in 152ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 23ms
+ ✓ Compiled in 147ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ✓ Compiled in 216ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 33ms
+ ✓ Compiled in 137ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 23ms
+ ✓ Compiled in 186ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 21ms
+ ✓ Compiled in 181ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 30ms
+ ✓ Compiled in 164ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ✓ Compiled in 154ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 20ms
+ ✓ Compiled in 180ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 27ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 91ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 6 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 172ms
+Cache status for weather-EPKK: HIT
+Cache age: 6 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 320ms
+ ✓ Compiled /_not-found in 275ms (923 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 304ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 74ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 12ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 20 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 278ms
+Cache status for weather-EPKK: HIT
+Cache age: 20 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 368ms
+ ✓ Compiled in 268ms (937 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 37ms
+ ✓ Compiled in 210ms (937 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 26ms
+ ✓ Compiled in 208ms (937 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 36ms
+ ✓ Compiled in 142ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 39ms
+ ✓ Compiled in 150ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 30ms
+ ✓ Compiled in 191ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 92ms
+ ✓ Compiled in 154ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ✓ Compiled in 159ms (934 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 97ms
+ ✓ Compiled /_not-found in 82ms (923 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 111ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 151 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 151 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 364ms
+ GET /api/weather 200 in 367ms
+ ✓ Compiled in 189ms (937 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 31ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 69ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 154 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 227ms
+Cache status for weather-EPKK: HIT
+Cache age: 154 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 312ms
+ ⨯ ./src/app/page.tsx
+Error:   [31mx[0m Expected ',', got '{'
+     ,-[[36;1;4m/Users/mateuszkozlowski/krkflights/krakow-airport/src/app/page.tsx[0m:941:1]
+ [2m938[0m |         </div>
+ [2m939[0m |       </div>
+ [2m940[0m | 
+ [2m941[0m |       {/* Footer */}
+     : [35;1m      ^[0m
+ [2m942[0m |       <footer className="border-t border-slate-700/50 py-8 md:py-12 bg-black/20 mt-12 md:mt-20">
+ [2m943[0m |         <div className="max-w-6xl mx-auto px-6 md:px-8 lg:px-12">
+ [2m944[0m |           <p className="text-xs md:text-sm text-slate-300 leading-relaxed mb-4 md:mb-6">{t.disclaimer}</p>
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/page.tsx
+ ○ Compiling /_error ...
+ ⨯ ./src/app/page.tsx
+Error:   [31mx[0m Expected ',', got '{'
+     ,-[[36;1;4m/Users/mateuszkozlowski/krkflights/krakow-airport/src/app/page.tsx[0m:941:1]
+ [2m938[0m |         </div>
+ [2m939[0m |       </div>
+ [2m940[0m | 
+ [2m941[0m |       {/* Footer */}
+     : [35;1m      ^[0m
+ [2m942[0m |       <footer className="border-t border-slate-700/50 py-8 md:py-12 bg-black/20 mt-12 md:mt-20">
+ [2m943[0m |         <div className="max-w-6xl mx-auto px-6 md:px-8 lg:px-12">
+ [2m944[0m |           <p className="text-xs md:text-sm text-slate-300 leading-relaxed mb-4 md:mb-6">{t.disclaimer}</p>
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/page.tsx
+ GET / 500 in 1127ms
+ GET / 500 in 6ms
+ GET / 500 in 5ms
+ GET / 500 in 6ms
+ ✓ Compiled /_error in 329ms (1164 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 153ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2100m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 831ms
+⚠️ Extracted visibility from raw METAR: 2100m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1174ms
+ ✓ Compiled in 180ms (1178 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 34ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 64ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 52 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 239ms
+Cache status for weather-EPKK: HIT
+Cache age: 52 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 328ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 2100m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 772ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 814ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 841ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 2000,
+  base_meters_agl: 610,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 2000,
+  meters: 610
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 1100,
+  base_meters_agl: 335,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1100,
+  meters: 335
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 200,
+  base_meters_agl: 61,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 200,
+  meters: 61
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 879ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 852ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 52ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 150 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 150 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 357ms
+ GET /api/weather 200 in 355ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 151 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 363ms
+ ✓ Compiled /passengerrights in 377ms (1192 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 469ms
+ ✓ Compiled in 181ms (1206 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 20ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 35ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 9999m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 771ms
+⚠️ Extracted visibility from raw METAR: 9999m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 858ms
+ ⨯ ./src/components/PassengerRights.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/mateuszkozlowski/krkflights/krakow-airport/src/components/PassengerRights.tsx[0m:24:1]
+ [2m21[0m |   ];
+ [2m22[0m | 
+ [2m23[0m |   return (
+ [2m24[0m |     <div className="min-h-screen bg-white">
+    : [35;1m     ^^^[0m
+ [2m25[0m |       {/* Hero Section */}
+ [2m26[0m |       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white">
+ [2m27[0m |         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/PassengerRights.tsx
+./src/app/passengerrights/page.tsx
+ ⨯ ./src/components/PassengerRights.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/mateuszkozlowski/krkflights/krakow-airport/src/components/PassengerRights.tsx[0m:24:1]
+ [2m21[0m |   ];
+ [2m22[0m | 
+ [2m23[0m |   return (
+ [2m24[0m |     <div className="min-h-screen bg-white">
+    : [35;1m     ^^^[0m
+ [2m25[0m |       {/* Hero Section */}
+ [2m26[0m |       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white">
+ [2m27[0m |         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/PassengerRights.tsx
+./src/app/passengerrights/page.tsx
+ ✓ Compiled in 400ms (1216 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 47ms
+ ✓ Compiled in 196ms (1216 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 28ms
+ ✓ Compiled in 250ms (1208 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 21ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⨯ src/components/PassengerRights.tsx (23:16) @ Scale
+ ⨯ ReferenceError: Scale is not defined
+    at PassengerRights (./src/components/PassengerRights.tsx:45:113)
+digest: "1553270712"
+  21 |           <div className="text-center max-w-3xl mx-auto">
+  22 |             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
+> 23 |               <Scale className="h-4 w-4" />
+     |                ^
+  24 |               <span className="text-sm font-medium">
+  25 |                 {language === 'en' ? 'EU Regulation 261/2004' : 'Rozporządzenie UE 261/2004'}
+  26 |               </span>
+ GET /passengerrights 500 in 66ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 318ms (1204 modules)
+ GET /passengerrights 200 in 192ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 73ms
+ ✓ Compiled in 329ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 41ms
+ ✓ Compiled in 247ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 51ms
+ ✓ Compiled in 154ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 30ms
+ ✓ Compiled in 167ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 19ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 77ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 23ms
+ ✓ Compiled in 395ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 21ms
+ ✓ Compiled in 179ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 18ms
+ ✓ Compiled in 169ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 18ms
+ ✓ Compiled in 171ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 18ms
+ ✓ Compiled in 174ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 18ms
+ ✓ Compiled in 279ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 34ms
+ ✓ Compiled in 137ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 80ms
+ ✓ Compiled /_not-found in 250ms (1193 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 297ms
+ ✓ Compiled in 364ms (1206 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 30ms
+ ✓ Compiled in 169ms (1206 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 25ms
+ ✓ Compiled in 262ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 21ms
+ ✓ Compiled in 139ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 17ms
+ ✓ Compiled in 221ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 28ms
+ ✓ Compiled in 137ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 19ms
+ ✓ Compiled in 258ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 20ms
+ ✓ Compiled in 310ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 16ms
+ ✓ Compiled in 134ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 17ms
+ ✓ Compiled in 133ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 17ms
+ ✓ Compiled in 165ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 28ms
+ ✓ Compiled in 155ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 15ms
+ ✓ Compiled in 184ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 77ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 119 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 401ms
+Cache status for weather-EPKK: HIT
+Cache age: 119 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 478ms
+ ✓ Compiled in 157ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 47ms
+ GET / 200 in 43ms
+ ✓ Compiled in 132ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 26ms
+ GET / 200 in 24ms
+ ✓ Compiled in 140ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 23ms
+ GET / 200 in 22ms
+ ✓ Compiled in 146ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 36ms
+ GET / 200 in 35ms
+ ✓ Compiled in 229ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 27ms
+ GET / 200 in 28ms
+ ✓ Compiled in 210ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 32ms
+ GET / 200 in 32ms
+ ✓ Compiled in 207ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 24ms
+ GET / 200 in 24ms
+ ✓ Compiled in 172ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 30ms
+ GET / 200 in 31ms
+ ✓ Compiled in 133ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 28ms
+ GET / 200 in 31ms
+ ✓ Compiled in 217ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 25ms
+ GET / 200 in 25ms
+ ✓ Compiled in 201ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 23ms
+ GET / 200 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 94ms
+ ✓ Compiled /_not-found in 119ms (1191 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 214ms
+ ✓ Compiled in 160ms (1205 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 33ms
+ GET / 200 in 34ms
+ ✓ Compiled in 186ms (1202 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 49ms
+ GET / 200 in 48ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 62ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 7000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+⚠️ Extracted visibility from raw METAR: 7000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 988ms
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 992ms
+ ✓ Compiled in 220ms (1200 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 51ms
+ GET / 200 in 65ms
+ ✓ Compiled /_not-found in 90ms (1189 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 114ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 32ms
+ ✓ Compiled in 220ms (1203 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 18ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 8ms
+ ✓ Compiled in 290ms (1203 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 32ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 14ms
+ ✓ Compiled in 148ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 6ms
+ ✓ Compiled in 135ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 16ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 10ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 87ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 25ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 76ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1038ms
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1042ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 967ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 39ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 33 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 241ms
+Cache status for weather-EPKK: HIT
+Cache age: 33 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 324ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 816ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 1430ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 46ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 159 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+Cache status for weather-EPKK: HIT
+Cache age: 159 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 362ms
+ GET /api/weather 200 in 359ms
+ ✓ Compiled in 315ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 61ms
+ GET /passengerrights 200 in 59ms
+ ✓ Compiled in 166ms (662 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 17ms
+ GET / 200 in 17ms
+ ✓ Compiled in 139ms (662 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 15ms
+ GET /passengerrights 200 in 14ms
+ ✓ Compiled in 402ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 48ms
+ GET / 200 in 47ms
+ ✓ Compiled in 170ms (1204 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /passengerrights. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /passengerrights 200 in 26ms
+ GET / 200 in 27ms
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 1 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 352ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 165 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 359ms
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+Cache status for weather-EPKK: HIT
+Cache age: 170 seconds (stale after 180 seconds)
+✅ Serving fresh cache for weather-EPKK
+ GET /api/weather 200 in 108ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 121ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 714ms
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 779ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 34ms
+🔍 Checking cache for key: weather-EPKK
+🔍 Checking cache for key: weather-EPKK
+✅ Redis connection successful
+✅ Redis connection successful
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+Cache status for weather-EPKK: MISS
+🔄 Fetching fresh data for weather-EPKK
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 722ms
+⚠️ Extracted visibility from raw METAR: 8000m (CheckWX didn't provide it)
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'SN', text: 'Snow' },
+  { code: 'RA', text: 'Rain' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: {
+  miles: 0.75,
+  miles_text: '0 3/4',
+  meters: 1200,
+  meters_text: '1,200'
+},
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+Transforming TAF period: {
+  type: 'BECMG',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'BASE',
+  conditions: [ { code: 'RA', text: 'Light Rain' } ],
+  visibility: { miles: 3.73, miles_text: '3.73', meters: 6000, meters_text: '6,000' },
+  clouds: [
+  {
+  base_feet_agl: 700,
+  base_meters_agl: 213,
+  code: 'SCT',
+  text: 'Scattered',
+  feet: 700,
+  meters: 213
+},
+  {
+  base_feet_agl: 1500,
+  base_meters_agl: 457,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 1500,
+  meters: 457
+}
+]
+}
+Transforming TAF period: {
+  type: 'TEMPO',
+  conditions: [
+  { code: 'RA', text: 'Rain' },
+  { code: 'DZ', text: 'Drizzle' },
+  { code: 'BR', text: 'Mist' }
+],
+  visibility: { miles: 1.24, miles_text: '1.24', meters: 2000, meters_text: '2,000' },
+  clouds: [
+  {
+  base_feet_agl: 500,
+  base_meters_agl: 152,
+  code: 'BKN',
+  text: 'Broken',
+  feet: 500,
+  meters: 152
+}
+]
+}
+💾 Saving to cache: weather-EPKK
+✅ Cache updated for weather-EPKK
+ GET /api/weather 200 in 821ms
+ ✓ Compiled in 290ms (1204 modules)
+ ✓ Compiled /_not-found in 123ms (1193 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 404 in 153ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Checking Redis configuration: {
+  hasUrl: true,
+  hasToken: true,
+  urlPrefix: 'https://',
+  env: 'development'
+}
+✅ Redis URL format valid: https://charmed-kitten-40319.upstash.io
+✅ Redis client initialized
+ GET / 200 in 75ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397468432 404 in 12ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397468432 404 in 17ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 17ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app/page.js 404 in 10ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 33ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397471292 404 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app-pages-internals.js 404 in 25ms
+ GET /_next/static/chunks/app/page.js 404 in 24ms
+ GET /_next/static/chunks/main-app.js?v=1763397471292 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397475967 404 in 17ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app/page.js 404 in 25ms
+ GET /_next/static/chunks/main-app.js?v=1763397475967 404 in 27ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397478551 404 in 19ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397478551 404 in 26ms
+ GET /_next/static/chunks/app/page.js 404 in 25ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 10ms
+ GET /_next/static/css/app/layout.css?v=1763397478551 404 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 22ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 20ms
+ GET /_next/static/css/app/layout.css?v=1763397492709 404 in 20ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ GET /_next/static/chunks/main-app.js?v=1763397492709 404 in 28ms
+ GET /_next/static/chunks/app/page.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397493359 404 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397493359 404 in 28ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms
+ GET /_next/static/chunks/app/page.js 404 in 27ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397495323 404 in 9ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app/page.js 404 in 27ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms
+ GET /_next/static/chunks/main-app.js?v=1763397495323 404 in 29ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397496207 404 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397496207 404 in 25ms
+ GET /_next/static/chunks/app/page.js 404 in 25ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 9ms
+ GET /_next/static/css/app/layout.css?v=1763397496207 404 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 21ms
+ GET /_next/static/css/app/layout.css?v=1763397501940 404 in 22ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app/page.js 404 in 28ms
+ GET /_next/static/chunks/main-app.js?v=1763397501940 404 in 31ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 30ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 23ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397503429 404 in 23ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app-pages-internals.js 404 in 24ms
+ GET /_next/static/chunks/app/page.js 404 in 23ms
+ GET /_next/static/chunks/main-app.js?v=1763397503429 404 in 25ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 20ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 13ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397506602 404 in 21ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app-pages-internals.js 404 in 28ms
+ GET /_next/static/chunks/main-app.js?v=1763397506602 404 in 30ms
+ GET /_next/static/chunks/app/page.js 404 in 24ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 25ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 14ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397507282 404 in 19ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/app/page.js 404 in 23ms
+ GET /_next/static/chunks/main-app.js?v=1763397507282 404 in 27ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 23ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 15ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397507956 404 in 23ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397507956 404 in 26ms
+ GET /_next/static/chunks/app/page.js 404 in 23ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 12ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /.well-known/appspecific/com.chrome.devtools.json. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 10ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/css/app/layout.css. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/css/app/layout.css?v=1763397517800 404 in 18ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/main-app.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app-pages-internals.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata viewport is configured in metadata export in /_next/static/chunks/app/page.js. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /_next/static/chunks/main-app.js?v=1763397517800 404 in 25ms
+ GET /_next/static/chunks/app/page.js 404 in 21ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 25ms

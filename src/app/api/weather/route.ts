@@ -324,11 +324,13 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
       clouds: period.clouds?.map(c => {
         // Extract CB or TCU from raw TAF or cloud text
         let cloudType: 'CB' | 'TCU' | undefined = undefined;
+        let altitude = c.base_feet_agl || c.feet;
+        let extractedAltitude: number | undefined = undefined;
         
         // Try to find CB/TCU in raw TAF text for this specific cloud group
         // Use altitude to match the exact cloud, not just the first occurrence of the coverage code
-        const altitude = c.base_feet_agl || c.feet;
         if (altitude !== undefined) {
+          // We have altitude - match the specific cloud group
           // Convert feet to 3-digit TAF format (e.g., 2000 feet -> 020)
           const altitudeCode = Math.round(altitude / 100).toString().padStart(3, '0');
           const cloudPattern = new RegExp(`\\b${c.code}${altitudeCode}(CB|TCU)?\\b`);
@@ -337,16 +339,27 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
             cloudType = cloudMatch[1] as 'CB' | 'TCU';
           }
         } else {
-          // Fallback: try to find CB/TCU for this cloud coverage code without altitude
-          // This handles cases where altitude isn't parsed but CB/TCU is still in raw TAF
-          const cloudPattern = new RegExp(`\\b${c.code}\\d{3}(CB|TCU)\\b`);
+          // No altitude available - try to extract it from raw TAF text
+          // Note: If multiple clouds with same code exist in different periods, this will match the first one
+          // This is a limitation when CheckWX doesn't provide altitude data, but it's better than missing CB/TCU
+          const cloudPattern = new RegExp(`\\b${c.code}(\\d{3})(CB|TCU)?\\b`);
           const cloudMatch = rawTaf.match(cloudPattern);
-          if (cloudMatch && cloudMatch[1]) {
-            cloudType = cloudMatch[1] as 'CB' | 'TCU';
+          // Altitude will be in capture group [1], CB/TCU in capture group [2]
+          
+          if (cloudMatch) {
+            if (cloudMatch[1]) {
+              extractedAltitude = parseInt(cloudMatch[1], 10) * 100; // Convert to feet
+              console.log(`⚠️ Extracted ${c.code}${cloudMatch[1]} from raw TAF: ${extractedAltitude}ft (CheckWX didn't provide altitude)`);
+            }
+            
+            if (cloudMatch[2]) {
+              cloudType = cloudMatch[2] as 'CB' | 'TCU';
+              console.log(`⚠️ Detected ${cloudType} (${cloudType === 'CB' ? 'Cumulonimbus' : 'Towering Cumulus'}) in TAF`);
+            }
           }
         }
         
-        // Also check cloud.text for CB/TCU keywords
+        // Also check cloud.text for CB/TCU keywords if not found in pattern
         if (!cloudType && c.text) {
           const textLower = c.text.toLowerCase();
           if (textLower.includes('cumulonimbus')) {
@@ -358,8 +371,8 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
         
         return {
           code: c.code,
-          base_feet_agl: c.base_feet_agl,
-          feet: c.feet,
+          base_feet_agl: c.base_feet_agl ?? extractedAltitude,
+          feet: c.feet ?? extractedAltitude,
           cloudType: cloudType
         };
       }) || [],
