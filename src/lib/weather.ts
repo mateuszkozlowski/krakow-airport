@@ -60,19 +60,39 @@ const RISK_WEIGHTS = {
     FC: 100,     
     '+SN': 85,   
     '+SHSN': 90, 
-    'SHSN': 80   
+    'SHSN': 80,
+    'BLSN': 85,  // Blowing snow - very poor visibility and high wind
+    'FZ': 85     // General freezing conditions
   },
   
   // Moderate phenomena
   PHENOMENA_MODERATE: {
-    SN: 70,     
+    SN: 70,
+    '-SN': 45,   // Light snow - still requires de-icing but less severe
     BR: 60,     // Increased from 50 to 60 - mist is more significant
     FG: 85,     
-    RA: 30,     
-    SHRA: 40,   
+    RA: 30,
+    '-RA': 20,   // Light rain - minimal impact
+    SHRA: 40,
+    '-SHRA': 25, // Light rain showers
+    '+SHRA': 65, // Heavy rain showers - can be intense
+    '-SHSN': 55, // Light snow showers
     GR: 90,     
     GS: 60,     
-    '+RA': 50   
+    '+RA': 50,
+    RASN: 75,   // Rain and snow mix - higher risk than snow alone
+    '-RASN': 60, // Light rain and snow mix
+    '+RASN': 85, // Heavy rain and snow mix
+    SNRA: 75,   // Snow with rain (alternative notation)
+    '-SNRA': 60, // Light snow with rain
+    '+SNRA': 85, // Heavy snow with rain
+    'DRSN': 70,  // Drifting snow - reduced visibility
+    'DZ': 25,    // Drizzle
+    '-DZ': 15,   // Light drizzle
+    '+DZ': 40,   // Heavy drizzle
+    'HZ': 40,    // Haze - can reduce visibility
+    'SG': 50,    // Snow grains - similar to light snow
+    'SH': 35     // General showers
   },
   
   // De-icing risk based on temperature and conditions
@@ -1858,7 +1878,7 @@ function extendForecastWithOpenMeteo(
   language: 'en' | 'pl'
 ): ForecastChange[] {
   const t = translations[language];
-  const now = new Date();
+  const now = adjustToWarsawTime(new Date());
   
   // Create a map of hours that are covered by TAF
   const tafCoverage = new Set<string>();
@@ -1876,8 +1896,10 @@ function extendForecastWithOpenMeteo(
   const openMeteoPeriods: ForecastChange[] = [];
   
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    const hourTime = new Date(openMeteoData.hourly.time[i]);
-    const hourKey = hourTime.toISOString().split(':')[0];
+    // Parse Open-Meteo time as UTC and adjust to Warsaw time
+    const hourTimeUTC = new Date(openMeteoData.hourly.time[i]);
+    const hourTime = adjustToWarsawTime(hourTimeUTC);
+    const hourKey = hourTimeUTC.toISOString().split(':')[0]; // Use UTC for key comparison with TAF
     
     // Only create periods for gaps and within 48h from now
     const hoursFromNow = (hourTime.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -1961,7 +1983,7 @@ function extendForecastWithOpenMeteo(
       );
     }
     
-    // Create the period (hourly)
+    // Create the period (hourly) - adjusted to Warsaw time
     const periodEnd = new Date(hourTime);
     periodEnd.setHours(periodEnd.getHours() + 1);
     
@@ -2524,12 +2546,22 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
   let severeCount = 0;
   
   conditions.forEach(condition => {
-    const risk = RISK_WEIGHTS.PHENOMENA_SEVERE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_SEVERE] ||
-                RISK_WEIGHTS.PHENOMENA_MODERATE[condition.code as keyof typeof RISK_WEIGHTS.PHENOMENA_MODERATE] ||
-                0;
+    // Split codes by space to handle combinations like 'FZRA FZFG' or 'SHSN BLSN'
+    const codes = condition.code.split(' ').filter(c => c.length > 0);
     
-    if (risk >= 70) severeCount++;
-    maxRisk = Math.max(maxRisk, risk);
+    codes.forEach(code => {
+      const risk = RISK_WEIGHTS.PHENOMENA_SEVERE[code as keyof typeof RISK_WEIGHTS.PHENOMENA_SEVERE] ||
+                  RISK_WEIGHTS.PHENOMENA_MODERATE[code as keyof typeof RISK_WEIGHTS.PHENOMENA_MODERATE] ||
+                  0;
+      
+      if (risk >= 70) severeCount++;
+      maxRisk = Math.max(maxRisk, risk);
+    });
+    
+    // Add synergy bonus for combinations (e.g., FZRA + FZFG is worse than either alone)
+    if (codes.length > 1 && maxRisk >= 80) {
+      maxRisk = Math.min(100, maxRisk * 1.05); // +5% bonus for dangerous combinations
+    }
   });
   
   // Apply snow duration multiplier if applicable (only read state, don't update)

@@ -651,7 +651,7 @@ export const translations = {
             marginalConditions: "☁️ Graniczne warunki",
             extendedDelays: "⏳ Prawdopodobne dłuższe opóźnienia",
             deicingRequired: "❄️ Wymagane odladzanie",
-            possibleDelays: "⚠️ Możliwe opóźnienia",
+            possibleDelays: "Możliwe opóźnienia",
             someFlightsMayDivert: "✈️ Niektóre loty mogą zostać przekierowane",
             winterWeatherWarning: "❄️ Warunki zimowe mogą powodować opóźnienia",
         },
