@@ -14,25 +14,15 @@ const changelog: ChangelogEntry[] = [
     version: "0.4.0",
     changes: [
       "Complete forecast display redesign with mobile-first philosophy. Rebuilt the entire forecast interface from the ground up, drawing inspiration from premium weather apps like Apple Weather, Yahoo Weather, and Google Weather. The new design prioritizes touch-first interactions, clear visual hierarchy, and instant information access without unnecessary complexity.",
-      
       "Introduced horizontal timeline view with intelligent hour-by-hour breakdown. The new timeline displays up to 48 hours of forecast data in a compact, swipeable format that lets you quickly scan conditions at a glance. Each hour cell shows risk level, primary weather phenomenon, and interactive tooltips on desktop with full details displayed directly on mobile for optimal usability.",
-      
       "Implemented Smart Insights system that surfaces critical weather periods automatically. Instead of forcing users to scroll through every hour, the system now intelligently identifies and highlights periods with elevated risk (Level 3-4), displaying them prominently with grouped time ranges, worst-case visibility, relevant phenomena, and actionable warnings. When conditions are favorable, only the timeline is shown—keeping the interface clean and focused.",
-      
       "Added elegant day separators with gradient transitions throughout the timeline. Both mobile and desktop views now feature vertical gradient lines with clear day labels ('jutro', 'pojutrze') that help users instantly understand when conditions span across multiple days. This visual enhancement makes multi-day forecasts significantly easier to parse.",
-      
       "Optimized mobile experience with dedicated vertical layout for detailed information. On mobile devices, Smart Insights appear first with full details (no tooltips needed), followed by a horizontal swipeable timeline. This approach eliminates the need for hover interactions and ensures all critical information is immediately visible on smaller screens.",
-      
       "Removed legacy accordion-style forecast view in favor of the new unified interface. The old classic view with expandable cards has been completely replaced by the new horizontal timeline system, eliminating UI complexity and reducing the codebase by over 300 lines while improving user experience across all devices.",
-      
       "Enhanced responsive design with device-appropriate interactions. Desktop users benefit from hover tooltips with comprehensive details, while mobile users see all information directly without needing to tap. The system automatically adapts based on screen size, ensuring optimal experience whether you're on a phone, tablet, or desktop.",
-      
       "Implemented sophisticated period grouping for Smart Insights. Consecutive hours with similar risk levels are automatically merged into single cards with time ranges (e.g., '14:00 - 17:00'), reducing visual clutter while maintaining all critical information. Each grouped period shows the worst-case scenario across that timespan.",
-      
       "Added phenomenon icons throughout the interface using consistent Lucide React icons. Replaced generic indicators with specific, recognizable SVG icons: Waves for fog/mist, Sparkles for freezing fog (cyan), CloudRain for rain, CloudLightning for thunderstorms, Snowflake for snow, and Wind for strong winds. These icons appear both in the timeline and in detailed views.",
-      
       "Introduced custom scrollbar styling with scroll affordance hints. The horizontal timeline features a sleek, semi-transparent scrollbar that blends with the design while remaining functional. A clickable arrow indicator appears on the right edge when there's more content to scroll, disappearing dynamically when you reach the end.",
-      
       "Completely eliminated view switching complexity from the user interface. Removed the beta/classic toggle switch and all associated state management, making the application simpler to use and maintain. The new timeline view is now the only view, reducing decision fatigue and ensuring all users get the best experience."
     ]
   },
@@ -41,15 +31,10 @@ const changelog: ChangelogEntry[] = [
     version: "0.3.4",
     changes: [
       "Completely redesigned 'Weather Impact Information' modal with modern, calming design. The new interface features soft gradients, glassmorphism effects, and smooth animations that create a professional yet approachable experience. Each risk level card now expands interactively with staggered animations, making information discovery more engaging.",
-      
       "Streamlined content to focus purely on weather impact facts. Removed all suggestions, recommendations, and behavioral observations to eliminate any legal liability. The modal now presents only objective information about how weather conditions may affect flight operations, with clear disclaimers that passengers should rely solely on official airline communications.",
-      
       "Simplified information architecture by removing redundant sections. Eliminated the 'Airline Procedures' column and focused exclusively on 'Possible Impact', making the interface cleaner and more user-friendly. Each risk level (Good Conditions, Minor Impact, Weather Advisory, Major Impact) now displays only relevant weather impact information without overwhelming users with unnecessary details.",
-      
       "Enhanced visual hierarchy with improved color coding and iconography. Each risk level features distinct gradient backgrounds (emerald for good, amber for minor, orange for advisory, red for major) with matching icons and subtle glow effects on hover. The design maintains WCAG accessibility standards while looking modern and professional.",
-      
       "Implemented professional legal disclaimer without visual clutter. The disclaimer text is now presented in a clean, unobtrusive format without emoji or border boxes, maintaining legal protection while preserving the modern aesthetic. The text clearly states that information is for guidance only and that the service operator assumes no liability for travel decisions.",
-      
       "Added Pro Tips section with practical, non-advisory suggestions. Tips include installing airline apps for faster notifications, saving contact numbers, and keeping screenshots of bookings - all framed as observations rather than recommendations to maintain legal safety while providing value to users."
     ]
   },
@@ -58,17 +43,11 @@ const changelog: ChangelogEntry[] = [
     version: "0.3.3",
     changes: [
       "Fixed critical weather risk assessment bugs affecting extreme conditions. The system now correctly identifies zero visibility (0m) and ground-level clouds (BKN000/OVC000) as Level 4 emergency conditions. Previously, these extreme weather situations were incorrectly treated as 'no data' due to JavaScript falsy value handling, potentially showing 'no risk' during the most dangerous conditions.",
-      
       "Enhanced METAR parsing with robust fallback mechanisms. Implemented direct parsing from raw METAR text for visibility and cloud ceiling data when primary API data is unavailable. This ensures accurate weather assessment even for extreme low-visibility conditions (50m-100m) and ground-level cloud coverage that some weather APIs fail to parse correctly.",
-      
       "Completely redesigned operational impact descriptions to be more specific and actionable. Impact messages now include exact measurements, percentage deviations from operational minimums, and clear recommendations. For example, instead of generic warnings, you'll now see 'Visibility 100m - 82% below minimum (550m)' with specific guidance on expected operational status.",
-      
       "Removed predictable time-based risk multipliers for more intelligent weather assessment. The algorithm no longer artificially increases risk based on time of day or season, instead focusing purely on actual meteorological conditions and their operational impacts. This makes the system more accurate and less prone to false alarms during routine morning fog in summer months.",
-      
       "Eliminated de-icing risk calculations based solely on temperature thresholds. The system now provides de-icing information only when actual freezing precipitation is present, preventing misleading warnings on clear cold days. This change significantly reduces false positive alerts during winter months with good visibility.",
-      
       "Implemented comprehensive checks for numeric zero values throughout the codebase. Fixed 13 instances where zero measurements (0m visibility, 0ft ceiling, 0°C temperature) were incorrectly treated as missing data. This fundamental fix ensures all edge cases in extreme weather are properly assessed.",
-      
       "Added special handling for clouds at ground level (BKN000/OVC000). These conditions now trigger immediate Level 4 alerts with clear messaging about zero vertical visibility and suspended operations. The system recognizes this as distinct from low ceiling and applies appropriate emergency-level warnings."
     ]
   },
@@ -77,9 +56,7 @@ const changelog: ChangelogEntry[] = [
     version: "0.3.2",
     changes: [
       "Enhanced snow monitoring with cumulative impact assessment. The system now tracks snowfall duration and accumulation, automatically increasing risk levels for prolonged snow events. Added airport recovery time predictions based on snowfall intensity and ground operations capacity.",
-      
       "Integrated X/Twitter alerts via @KrkFlights. The system now automatically posts real-time weather alerts and important updates, keeping passengers informed through social media. Follow us at https://x.com/KrkFlights for instant updates!",
-      
       "Improved data management with enhanced caching mechanisms. Optimized storage patterns for weather data and implemented more efficient data retrieval systems, resulting in faster load times and reduced server load."
     ]
   },
@@ -88,11 +65,8 @@ const changelog: ChangelogEntry[] = [
     version: "0.3.1",
     changes: [
       "Integrated OpenMeteo as a secondary weather data source with intelligent data fusion. The system now combines TAF and OpenMeteo forecasts with weighted impact (0.8) to provide more comprehensive and accurate weather predictions.",
-
       "Standardized wind condition descriptions across all displays. Introduced consistent terminology for wind reporting: 'Strong Wind Gusts' (≥35kt), 'Strong Winds' (≥25kt), and 'Moderate Winds' (≥15kt). Enhanced weather risk assessment with more sophisticated precipitation analysis.",
-     
-      "Added detailed 'What to expect' sections throughout the interface to help passengers understand weather impacts. Implemented context-aware impact descriptions that explain how different weather conditions affect flight operations. Enhanced the visibility of operational impacts with intuitive icons and clear explanations.",
-      
+      "Added detailed 'What to expect' sections throughout the interface to help passengers understand weather impacts. Implemented context-aware impact descriptions that explain how different weather conditions affect flight operations. Enhanced the visibility of operational impacts with intuitive icons and clear explanations."
     ] 
   },
   {
@@ -234,12 +208,14 @@ export function Changelog() {
         {changelog.map((entry, index) => (
           <div key={index} className="relative pl-12">
             {/* Timeline line */}
-            {index !== changelog.length - 1}
+            {index !== changelog.length - 1 && (
+              <div className="absolute left-0 top-8 bottom-0 w-0.5 bg-gray-200" />
+            )}
             
             {/* Timeline icon */}
-<div className="absolute left-4 top-0 transform -translate-x-1/2 bg-white p-1">
-  {getVersionIcon(entry.version || '0.0.0')}
-</div>
+            <div className="absolute left-0 top-0 transform -translate-x-1/2 bg-white p-1">
+              {getVersionIcon(entry.version || '0.0.0')}
+            </div>
 
             <div>
               {/* Version and date header */}
@@ -252,7 +228,7 @@ export function Changelog() {
 
               {/* Changes list */}
               <ul className="space-y-2">
-                {entry.changes.map((change, changeIndex) => (
+                {entry.changes.filter(change => change && change.trim()).map((change, changeIndex) => (
                   <li 
                     key={changeIndex}
                     className="flex items-start gap-2 text-gray-700 leading-relaxed"

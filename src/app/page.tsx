@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, memo } from 'react';
+import dynamic from 'next/dynamic';
 import { Alert } from "@/components/ui/alert";
 import type { WeatherResponse } from '@/lib/types/weather';
 import { getAirportWeather } from "@/lib/weather";
@@ -10,7 +11,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
 import { 
   AlertTriangle, 
-  AlertCircle,
   CheckCircle2,
   Shield,
   X,
@@ -21,24 +21,45 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { 
-  WindCompass, 
-  VisibilityIndicator, 
-  RiskGauge
-} from "@/components/BetaVisualizations";
-import { HourlyBreakdown } from "@/components/HourlyBreakdown";
-import { RiskLegendContent } from "@/components/RiskLegend";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerTrigger,
-  DrawerClose 
-} from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-// Compact legend button component
-function CompactLegendButton() {
+// Dynamic imports for heavy components
+const WindCompass = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.WindCompass })), {
+  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const VisibilityIndicator = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.VisibilityIndicator })), {
+  loading: () => <div className="w-full h-32 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const RiskGauge = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.RiskGauge })), {
+  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const HourlyBreakdown = dynamic(() => import("@/components/HourlyBreakdown").then(mod => ({ default: mod.HourlyBreakdown })), {
+  loading: () => <div className="w-full h-64 bg-slate-700/30 rounded-xl animate-pulse" />,
+  ssr: false
+});
+
+const RiskLegendContent = dynamic(() => import("@/components/RiskLegend").then(mod => ({ default: mod.RiskLegendContent })), {
+  loading: () => <div className="w-full h-32 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const Dialog = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.Dialog })), { ssr: false });
+const DialogContent = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.DialogContent })), { ssr: false });
+const DialogTrigger = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.DialogTrigger })), { ssr: false });
+
+const Drawer = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.Drawer })), { ssr: false });
+const DrawerContent = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerContent })), { ssr: false });
+const DrawerTrigger = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerTrigger })), { ssr: false });
+const DrawerClose = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerClose })), { ssr: false });
+
+// Compact legend button component - memoized
+const CompactLegendButton = memo(function CompactLegendButton() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const { language } = useLanguage();
   const t = translations[language].riskLegend;
@@ -92,10 +113,10 @@ function CompactLegendButton() {
       </DrawerContent>
     </Drawer>
   );
-}
+});
 
-// Risk visualization component with radial design - Enhanced with forecast ring
-function RiskRadial({ 
+// Risk visualization component with radial design - Enhanced with forecast ring - memoized
+const RiskRadial = memo(function RiskRadial({ 
   level, 
   forecastLevel,
   size = 200 
@@ -252,7 +273,7 @@ function RiskRadial({
       </div>
     </div>
   );
-}
+});
 
 // Helper function to get forecast risk level for current time window
 function getForecastRiskForCurrentTime(forecast: WeatherResponse['forecast']): {
@@ -281,8 +302,8 @@ function getForecastRiskForCurrentTime(forecast: WeatherResponse['forecast']): {
 
 
 
-// Key metrics display with advanced visualizations
-function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
+// Key metrics display with advanced visualizations - memoized
+const KeyMetrics = memo(function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -342,7 +363,7 @@ function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
       )}
     </div>
   );
-}
+});
 
 
 export default function Home() {
@@ -359,73 +380,28 @@ export default function Home() {
     return true;
   });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('alertExpanded', isAlertExpanded.toString());
-    }
-  }, [isAlertExpanded]);
-
-  async function fetchData() {
-    try {
-        setIsLoading(true);
-      setError(null);
-      const weatherData = await getAirportWeather(language);
-      if (!weatherData) {
-        throw new Error('Failed to fetch data');
-      }
-      setWeather(weatherData);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load data');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [language]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-300">{language === 'pl' ? 'Ładowanie...' : 'Loading...'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !weather) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto" />
-          <p className="text-slate-300">{error || 'Failed to load data'}</p>
-          <button 
-            onClick={fetchData}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            {language === 'pl' ? 'Spróbuj ponownie' : 'Try Again'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const highRiskPeriods = weather?.forecast?.filter(
-    period => period.riskLevel.level >= 3 && new Date(period.to) > new Date()
-  ) || [];
+  // ALL MEMOIZED VALUES MUST BE BEFORE ANY CONDITIONAL RETURNS
+  // Memoized expensive calculations
+  const highRiskPeriods = useMemo(() => 
+    weather?.forecast?.filter(
+      period => period.riskLevel.level >= 3 && new Date(period.to) > new Date()
+    ) || [], 
+    [weather?.forecast]
+  );
 
   // Check if we're currently within a forecast period with different risk
-  const forecastRiskNow = getForecastRiskForCurrentTime(weather.forecast);
-  const currentRisk = weather.current.riskLevel.level;
-  const showAlert = highRiskPeriods.length > 0 || (forecastRiskNow && forecastRiskNow.level >= 3);
+  const forecastRiskNow = useMemo(() => 
+    weather?.forecast ? getForecastRiskForCurrentTime(weather.forecast) : null,
+    [weather?.forecast]
+  );
+  
+  const currentRisk = weather?.current?.riskLevel?.level ?? 1;
+  const showAlert = useMemo(() => 
+    highRiskPeriods.length > 0 || (forecastRiskNow && forecastRiskNow.level >= 3),
+    [highRiskPeriods.length, forecastRiskNow]
+  );
 
-  const formatHighRiskTimes = () => {
+  const formatHighRiskTimes = useMemo(() => {
     if (!highRiskPeriods.length) return '';
     const firstPeriod = highRiskPeriods[0];
     const periodStart = new Date(firstPeriod.from);
@@ -469,7 +445,66 @@ export default function Home() {
     };
 
     return formatTimeRange();
-  };
+  }, [highRiskPeriods, language]);
+
+  // EFFECTS AFTER ALL HOOKS
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('alertExpanded', isAlertExpanded.toString());
+    }
+  }, [isAlertExpanded]);
+
+  async function fetchData() {
+    try {
+        setIsLoading(true);
+      setError(null);
+      const weatherData = await getAirportWeather(language);
+      if (!weatherData) {
+        throw new Error('Failed to fetch data');
+      }
+      setWeather(weatherData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [language]);
+
+  // CONDITIONAL RETURNS AFTER ALL HOOKS
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-slate-300">{language === 'pl' ? 'Ładowanie...' : 'Loading...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !weather) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto" />
+          <p className="text-slate-300">{error || 'Failed to load data'}</p>
+          <button 
+            onClick={fetchData}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            {language === 'pl' ? 'Spróbuj ponownie' : 'Try Again'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

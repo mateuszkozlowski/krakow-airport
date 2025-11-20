@@ -623,7 +623,9 @@ function calculateCrosswind(windDirection: number, windSpeed: number, gustKts?: 
     // Headwind component = wind speed × cos(angle) (negative = tailwind)
     const headwind = windSpeedToUse * Math.cos(angleDiff * Math.PI / 180);
     
-    if (crosswind > Math.abs(maxCrosswind)) {
+    // Select runway with most headwind (since reciprocal runways have identical crosswind)
+    // This selects the runway pilots would actually use (landing into the wind)
+    if (headwind > maxHeadwind) {
       maxCrosswind = crosswind;
       maxHeadwind = headwind;
       affectedRunway = rwy.name;
@@ -1985,10 +1987,11 @@ function extendForecastWithOpenMeteo(
     
     // Precipitation phenomena
     if (precipitation > 0.5) {
-      if (temp <= 0) {
-        phenomena.push(language === 'pl' ? 'Śnieg' : 'Snow');
-      } else if (temp < 4 && precipitation > 2) {
+      // Freezing rain: heavy precipitation at or below freezing
+      if (temp <= 0 && precipitation > 2) {
         phenomena.push(language === 'pl' ? 'Marznący deszcz' : 'Freezing rain');
+      } else if (temp <= 0) {
+        phenomena.push(language === 'pl' ? 'Śnieg' : 'Snow');
       } else {
         phenomena.push(language === 'pl' ? 'Deszcz' : 'Rain');
       }
@@ -2492,11 +2495,31 @@ export async function calculateRiskLevel(
 
   // Crosswind operational impacts for EPKK runways
   if (period.wind?.direction !== undefined && period.wind?.speed_kts) {
-    const { crosswind, runway } = calculateCrosswind(
+    const { crosswind, runway, headwind } = calculateCrosswind(
       period.wind.direction,
       period.wind.speed_kts,
       period.wind.gust_kts
     );
+    
+    // Check for tailwind (negative headwind)
+    if (headwind < 0) {
+      const tailwind = Math.abs(headwind);
+      if (tailwind >= 10) {
+        impacts.push(
+          language === 'pl'
+            ? `⚠️ Wiatr z tyłu ${tailwind}kt na pasie ${runway} - przekroczenie limitu (10kt)`
+            : `⚠️ Tailwind ${tailwind}kt on runway ${runway} - exceeds limit (10kt)`
+        );
+        riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
+      } else if (tailwind >= 5) {
+        impacts.push(
+          language === 'pl'
+            ? `⚠️ Wiatr z tyłu ${tailwind}kt na pasie ${runway} - wydłużony dobieg`
+            : `⚠️ Tailwind ${tailwind}kt on runway ${runway} - extended landing roll`
+        );
+        riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
+      }
+    }
     
     // Only show warning when crosswind exceeds operational limits
     if (crosswind >= MINIMUMS.CROSSWIND) {
