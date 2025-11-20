@@ -58,10 +58,9 @@ function splitIntoHourlyPeriods(forecast: ForecastChange[], hoursCount: number =
     }
     
     // Find the period that covers this hour
+    // Note: p.from and p.to are already adjusted to Warsaw time in getAirportWeather
     const period = forecast.find(p => {
-      const from = adjustToWarsawTime(p.from);
-      const to = adjustToWarsawTime(p.to);
-      return hourTime >= from && hourTime < to;
+      return hourTime >= p.from && hourTime < p.to;
     });
     
     // Only add hour if period exists - Open-Meteo extension will happen in lib/weather.ts
@@ -110,6 +109,10 @@ function extractPhenomenaBars(hours: HourlyPeriod[]): PhenomenaBar[] {
     'Marznąc': 10,
     'FZFG': 10,
     'FZRA': 10,
+    'Thunderstorm': 9,
+    'Burza': 9,
+    'TS': 9,
+    'TSRA': 9,
     'Fog': 8,
     'Mgła': 8,
     'FG': 8,
@@ -468,8 +471,8 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                       </div>
                     </div>
                     
-                    {/* Visibility - PROMINENT */}
-                    {period.visibility !== undefined && (
+                    {/* Visibility - PROMINENT (only show if reduced) */}
+                    {period.visibility !== undefined && period.visibility < 5000 && (
                       <div className="flex flex-col items-end">
                         <div className="text-[10px] text-slate-400 uppercase tracking-wide">
                           {language === 'pl' ? 'Widoczność' : 'Visibility'}
@@ -550,7 +553,30 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                           {h.time.split(':')[0]}
                         </span>
                         {getRiskIcon(h.riskLevel, 'w-8 h-8')}
-                        {h.phenomena.length > 0 && getPhenomenaIcon(h.phenomena[0], 'w-5 h-5 text-slate-400')}
+                        {h.phenomena.length > 0 && (() => {
+                          // Find highest priority phenomenon
+                          const priorityMap: Record<string, number> = {
+                            'Freezing': 10, 'Marznąc': 10, 'FZFG': 10, 'FZRA': 10,
+                            'Thunderstorm': 9, 'Burza': 9, 'TS': 9, 'TSRA': 9,
+                            'Fog': 8, 'Mgła': 8, 'FG': 8,
+                            'Mist': 6, 'Zamglenie': 6, 'BR': 6,
+                            'Rain': 5, 'Deszcz': 5, 'Snow': 5, 'Śnieg': 5,
+                          };
+                          
+                          let highestPriority = 0;
+                          let topPhenomenon = h.phenomena[0];
+                          
+                          for (const phenomenon of h.phenomena) {
+                            for (const [key, priority] of Object.entries(priorityMap)) {
+                              if (phenomenon.includes(key) && priority > highestPriority) {
+                                highestPriority = priority;
+                                topPhenomenon = phenomenon;
+                              }
+                            }
+                          }
+                          
+                          return getPhenomenaIcon(topPhenomenon, 'w-5 h-5 text-slate-400');
+                        })()}
                       </div>
                     </React.Fragment>
                   );
@@ -591,10 +617,10 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const isDayChange = i > 0 && h.dayLabel !== hours[i - 1].dayLabel;
                 const dayLabelText = getDayLabel(h.dayLabel, language);
                 
-                // Find phenomena for this hour
-                const hourPhenomena = phenomenaBars.filter(bar => 
-                  i >= bar.startHour && i < bar.endHour
-                );
+                // Find phenomena for this hour and sort by priority
+                const hourPhenomena = phenomenaBars
+                  .filter(bar => i >= bar.startHour && i < bar.endHour)
+                  .sort((a, b) => b.priority - a.priority); // Sort by priority descending
                 
                 return (
                   <React.Fragment key={`desktop-${i}-${h.hour.getTime()}`}>
