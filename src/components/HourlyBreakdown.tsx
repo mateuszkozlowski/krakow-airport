@@ -617,10 +617,10 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const isDayChange = i > 0 && h.dayLabel !== hours[i - 1].dayLabel;
                 const dayLabelText = getDayLabel(h.dayLabel, language);
                 
-                // Find phenomena for this hour
-                const hourPhenomena = phenomenaBars.filter(bar => 
-                  i >= bar.startHour && i < bar.endHour
-                );
+                // Find phenomena for this hour and sort by priority
+                const hourPhenomena = phenomenaBars
+                  .filter(bar => i >= bar.startHour && i < bar.endHour)
+                  .sort((a, b) => b.priority - a.priority); // Sort by priority descending
                 
                 return (
                   <React.Fragment key={`desktop-${i}-${h.hour.getTime()}`}>
