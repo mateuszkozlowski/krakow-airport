@@ -10,6 +10,50 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2025-01-20",
+    version: "0.4.0",
+    changes: [
+      "Complete forecast display redesign with mobile-first philosophy. Rebuilt the entire forecast interface from the ground up, drawing inspiration from premium weather apps like Apple Weather, Yahoo Weather, and Google Weather. The new design prioritizes touch-first interactions, clear visual hierarchy, and instant information access without unnecessary complexity.",
+      
+      "Introduced horizontal timeline view with intelligent hour-by-hour breakdown. The new timeline displays up to 48 hours of forecast data in a compact, swipeable format that lets you quickly scan conditions at a glance. Each hour cell shows risk level, primary weather phenomenon, and interactive tooltips on desktop with full details displayed directly on mobile for optimal usability.",
+      
+      "Implemented Smart Insights system that surfaces critical weather periods automatically. Instead of forcing users to scroll through every hour, the system now intelligently identifies and highlights periods with elevated risk (Level 3-4), displaying them prominently with grouped time ranges, worst-case visibility, relevant phenomena, and actionable warnings. When conditions are favorable, only the timeline is shown—keeping the interface clean and focused.",
+      
+      "Added elegant day separators with gradient transitions throughout the timeline. Both mobile and desktop views now feature vertical gradient lines with clear day labels ('jutro', 'pojutrze') that help users instantly understand when conditions span across multiple days. This visual enhancement makes multi-day forecasts significantly easier to parse.",
+      
+      "Optimized mobile experience with dedicated vertical layout for detailed information. On mobile devices, Smart Insights appear first with full details (no tooltips needed), followed by a horizontal swipeable timeline. This approach eliminates the need for hover interactions and ensures all critical information is immediately visible on smaller screens.",
+      
+      "Removed legacy accordion-style forecast view in favor of the new unified interface. The old classic view with expandable cards has been completely replaced by the new horizontal timeline system, eliminating UI complexity and reducing the codebase by over 300 lines while improving user experience across all devices.",
+      
+      "Enhanced responsive design with device-appropriate interactions. Desktop users benefit from hover tooltips with comprehensive details, while mobile users see all information directly without needing to tap. The system automatically adapts based on screen size, ensuring optimal experience whether you're on a phone, tablet, or desktop.",
+      
+      "Implemented sophisticated period grouping for Smart Insights. Consecutive hours with similar risk levels are automatically merged into single cards with time ranges (e.g., '14:00 - 17:00'), reducing visual clutter while maintaining all critical information. Each grouped period shows the worst-case scenario across that timespan.",
+      
+      "Added phenomenon icons throughout the interface using consistent Lucide React icons. Replaced generic indicators with specific, recognizable SVG icons: Waves for fog/mist, Sparkles for freezing fog (cyan), CloudRain for rain, CloudLightning for thunderstorms, Snowflake for snow, and Wind for strong winds. These icons appear both in the timeline and in detailed views.",
+      
+      "Introduced custom scrollbar styling with scroll affordance hints. The horizontal timeline features a sleek, semi-transparent scrollbar that blends with the design while remaining functional. A clickable arrow indicator appears on the right edge when there's more content to scroll, disappearing dynamically when you reach the end.",
+      
+      "Completely eliminated view switching complexity from the user interface. Removed the beta/classic toggle switch and all associated state management, making the application simpler to use and maintain. The new timeline view is now the only view, reducing decision fatigue and ensuring all users get the best experience."
+    ]
+  },
+  {
+    date: "2025-01-20",
+    version: "0.3.4",
+    changes: [
+      "Completely redesigned 'Weather Impact Information' modal with modern, calming design. The new interface features soft gradients, glassmorphism effects, and smooth animations that create a professional yet approachable experience. Each risk level card now expands interactively with staggered animations, making information discovery more engaging.",
+      
+      "Streamlined content to focus purely on weather impact facts. Removed all suggestions, recommendations, and behavioral observations to eliminate any legal liability. The modal now presents only objective information about how weather conditions may affect flight operations, with clear disclaimers that passengers should rely solely on official airline communications.",
+      
+      "Simplified information architecture by removing redundant sections. Eliminated the 'Airline Procedures' column and focused exclusively on 'Possible Impact', making the interface cleaner and more user-friendly. Each risk level (Good Conditions, Minor Impact, Weather Advisory, Major Impact) now displays only relevant weather impact information without overwhelming users with unnecessary details.",
+      
+      "Enhanced visual hierarchy with improved color coding and iconography. Each risk level features distinct gradient backgrounds (emerald for good, amber for minor, orange for advisory, red for major) with matching icons and subtle glow effects on hover. The design maintains WCAG accessibility standards while looking modern and professional.",
+      
+      "Implemented professional legal disclaimer without visual clutter. The disclaimer text is now presented in a clean, unobtrusive format without emoji or border boxes, maintaining legal protection while preserving the modern aesthetic. The text clearly states that information is for guidance only and that the service operator assumes no liability for travel decisions.",
+      
+      "Added Pro Tips section with practical, non-advisory suggestions. Tips include installing airline apps for faster notifications, saving contact numbers, and keeping screenshots of bookings - all framed as observations rather than recommendations to maintain legal safety while providing value to users."
+    ]
+  },
+  {
     date: "2025-01-16",
     version: "0.3.3",
     changes: [
