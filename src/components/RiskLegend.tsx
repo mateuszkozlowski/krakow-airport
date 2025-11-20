@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Drawer, 
@@ -11,7 +11,20 @@ import {
   DrawerClose 
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Info, HelpCircle } from "lucide-react";
+import { 
+  AlertTriangle, 
+  CheckCircle2, 
+  Info, 
+  HelpCircle,
+  CloudRain,
+  Eye,
+  AlertCircle,
+  Sparkles,
+  ChevronRight,
+  Calendar,
+  Phone,
+  FileText
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,47 +33,114 @@ import { translations } from '@/lib/translations';
 interface RiskLevelProps {
   icon: React.ReactNode;
   color: string;
+  bgGradient: string;
+  borderColor: string;
   title: string;
   description: string;
   details: readonly string[];
-  recommendations: readonly string[];
+  index: number;
 }
 
-const RiskLevel: React.FC<RiskLevelProps> = ({ icon, color, title, description, details, recommendations }) => {
+const RiskLevel: React.FC<RiskLevelProps> = ({ 
+  icon, 
+  color, 
+  bgGradient, 
+  borderColor,
+  title, 
+  description, 
+  details, 
+  index 
+}) => {
   const { language } = useLanguage();
   const t = translations[language].riskLegend;
+  const [isExpanded, setIsExpanded] = useState(index === 0);
   
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="shrink-0">{icon}</div>
-        <span className={cn("font-medium", color)}>{title}</span>
+    <div 
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border transition-all duration-500 hover:shadow-lg",
+        borderColor,
+        bgGradient,
+        isExpanded ? "shadow-xl" : "shadow-md hover:shadow-lg"
+      )}
+      style={{
+        animationDelay: `${index * 100}ms`,
+        animation: "fadeInUp 0.6s ease-out forwards",
+      }}
+    >
+      {/* Subtle glow effect on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className={cn("absolute inset-0 blur-xl opacity-30", bgGradient)} />
       </div>
-      <div className="ml-6 space-y-2">
-        <p className="text-sm text-slate-200">{description}</p>
-        
-        <div className="space-y-1">
-          <div className="flex gap-2 items-center text-slate-300">
-            <Info className="h-3 w-3 shrink-0" />
-            <span className="font-medium text-sm">{t.whatToExpect}</span>
+      
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left p-5 relative z-10"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4 flex-1 min-w-0">
+            <div className={cn(
+              "shrink-0 p-3 rounded-xl transition-all duration-300",
+              "bg-white/10 backdrop-blur-sm",
+              "group-hover:scale-110 group-hover:rotate-3"
+            )}>
+              {icon}
+            </div>
+            
+            <div className="flex-1 min-w-0 pt-1">
+              <h3 className={cn("font-semibold text-lg mb-1.5 transition-colors", color)}>
+                {title}
+              </h3>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {description}
+              </p>
+            </div>
           </div>
-          <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
-            {details.map((detail, idx) => (
-              <li key={idx}>{detail}</li>
-            ))}
-          </ul>
+          
+          <ChevronRight 
+            className={cn(
+              "w-5 h-5 text-slate-400 shrink-0 mt-2 transition-all duration-300",
+              isExpanded ? "rotate-90 text-slate-200" : "group-hover:translate-x-1"
+            )} 
+          />
         </div>
+      </button>
 
-        <div className="space-y-1">
-          <div className="flex gap-2 items-center text-slate-300">
-            <HelpCircle className="h-3 w-3 shrink-0" />
-            <span className="font-medium text-sm">{t.whatToDo}</span>
+      {/* Expanded content */}
+      <div 
+        className={cn(
+          "overflow-hidden transition-all duration-500 relative z-10",
+          isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <div className="px-5 pb-5">
+          {/* Divider with gradient */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
+          
+          {/* What to expect - full width */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-slate-200">
+              <div className="p-1.5 rounded-lg bg-blue-500/20">
+                <Eye className="h-4 w-4 text-blue-400" />
+              </div>
+              <span className="font-medium text-sm">{t.whatToExpect}</span>
+            </div>
+            <div className="space-y-2 pl-1">
+              {details.map((detail, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex items-start gap-2.5 text-sm text-slate-400"
+                  style={{
+                    animationDelay: `${idx * 50}ms`,
+                    animation: isExpanded ? "fadeInRight 0.4s ease-out forwards" : "none"
+                  }}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400/60 mt-2 shrink-0" />
+                  <span className="leading-relaxed">{detail}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <ul className="ml-5 space-y-0.5 text-sm text-slate-400 list-disc">
-            {recommendations.map((rec, idx) => (
-              <li key={idx}>{rec}</li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>
@@ -72,69 +152,114 @@ export const RiskLegendContent = () => {
   const t = translations[language].riskLegend;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="font-semibold text-lg text-slate-200">
-          {t.title}
-        </h2>
-        <p className="text-sm text-slate-400">
-          {t.description}
-        </p>
+    <div className="space-y-8 relative">
+      {/* Header with modern design */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 blur-3xl" />
+        <div className="relative space-y-3 text-center py-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm mb-2">
+            <CloudRain className="w-7 h-7 text-blue-400" />
+          </div>
+          <h2 className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-purple-200 to-blue-200">
+            {t.title}
+          </h2>
+          <p className="text-sm text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            {t.description}
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6">
+      {/* Risk levels grid */}
+      <div className="grid gap-4">
         <RiskLevel
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />}
-          color="text-emerald-500"
+          icon={<CheckCircle2 className="h-6 w-6 text-emerald-400" />}
+          color="text-emerald-300"
+          bgGradient="bg-gradient-to-br from-emerald-900/30 via-emerald-800/20 to-emerald-900/30"
+          borderColor="border-emerald-700/40"
           title={t.goodConditions.title}
           description={t.goodConditions.description}
           details={t.goodConditions.details}
-          recommendations={t.goodConditions.recommendations}
+          index={0}
         />
 
         <RiskLevel
-          icon={<AlertTriangle className="h-5 w-5 text-orange-500" />}
-          color="text-orange-500"
+          icon={<AlertCircle className="h-6 w-6 text-amber-400" />}
+          color="text-amber-300"
+          bgGradient="bg-gradient-to-br from-amber-900/30 via-amber-800/20 to-amber-900/30"
+          borderColor="border-amber-700/40"
           title={t.minorImpact.title}
           description={t.minorImpact.description}
           details={t.minorImpact.details}
-          recommendations={t.minorImpact.recommendations}
+          index={1}
         />
 
         <RiskLevel
-          icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
-          color="text-red-500"
+          icon={<AlertTriangle className="h-6 w-6 text-orange-400" />}
+          color="text-orange-300"
+          bgGradient="bg-gradient-to-br from-orange-900/30 via-orange-800/20 to-orange-900/30"
+          borderColor="border-orange-700/40"
           title={t.weatherAdvisory.title}
           description={t.weatherAdvisory.description}
           details={t.weatherAdvisory.details}
-          recommendations={t.weatherAdvisory.recommendations}
+          index={2}
         />
 
         <RiskLevel
-          icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
-          color="text-red-500"
+          icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+          color="text-red-300"
+          bgGradient="bg-gradient-to-br from-red-900/30 via-red-800/20 to-red-900/30"
+          borderColor="border-red-700/40"
           title={t.majorImpact.title}
           description={t.majorImpact.description}
           details={t.majorImpact.details}
-          recommendations={t.majorImpact.recommendations}
+          index={3}
         />
       </div>
 
-      <div className="rounded-lg bg-slate-800/50 p-4 text-sm">
-        <div className="flex gap-3">
-          <Info className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
-          <div className="space-y-2">
-            <p className="font-medium text-slate-200">{t.proTips}</p>
-            <ul className="space-y-1.5 text-slate-400">
-              {t.tips.map((tip, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="block w-1 h-1 rounded-full bg-slate-600" />
-                  {tip}
-                </li>
-              ))}
-            </ul>
+      {/* Pro tips section with modern design */}
+      <div className="relative overflow-hidden rounded-2xl border border-blue-700/30 bg-gradient-to-br from-blue-900/20 via-slate-900/40 to-purple-900/20 backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+        
+        <div className="relative p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 backdrop-blur-sm">
+              <Sparkles className="h-5 w-5 text-blue-300" />
+            </div>
+            <h3 className="font-semibold text-lg text-blue-200">{t.proTips}</h3>
+          </div>
+          
+          <div className="grid gap-3">
+            {t.tips.map((tip, i) => {
+              const icons = [Phone, Calendar, FileText];
+              const Icon = icons[i % icons.length];
+              return (
+                <div 
+                  key={i} 
+                  className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 group"
+                  style={{
+                    animationDelay: `${i * 100}ms`,
+                    animation: "fadeInUp 0.5s ease-out forwards"
+                  }}
+                >
+                  <div className="p-1.5 rounded-lg bg-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span className="text-sm text-slate-300 leading-relaxed pt-0.5">{tip}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
+      </div>
+
+      {/* Legal disclaimer */}
+      <div className="border-t border-slate-700/50 pt-4 mt-2">
+        <p className="text-xs text-slate-500 leading-relaxed text-center">
+          {language === 'pl' 
+            ? 'Informacje mają charakter wyłącznie orientacyjny i edukacyjny. Nie stanowią porady ani rekomendacji. Wszystkie decyzje dotyczące podróży należy podejmować wyłącznie na podstawie oficjalnych komunikatów przewoźnika i lotniska. Operator serwisu nie ponosi odpowiedzialności za decyzje podjęte na podstawie tych informacji.'
+            : 'Information is for general guidance and educational purposes only. It does not constitute advice or recommendations. All travel decisions should be made based solely on official communications from your airline and airport. The service operator assumes no liability for decisions made based on this information.'}
+        </p>
       </div>
     </div>
   );

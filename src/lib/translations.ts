@@ -287,84 +287,79 @@ export const translations = {
         } as const,
         riskLegend: {
             title: "Weather Impact Guide",
-            description: "This guide helps you understand how weather conditions might affect your flight and what actions to take.",
-            whatToExpect: "What to expect:",
-            whatToDo: "What you should do:",
-            proTips: "Pro Tips",
+            description: "This information is for guidance only. Always check official information directly with your airline - that's the only source you should rely on.",
+            whatToExpect: "Possible impact:",
+            whatToDo: "Airline procedures:",
+            proTips: "Helpful tips",
             close: "Close",
             
             // Risk levels
             goodConditions: {
                 title: "Good Flying Conditions",
-                description: "Weather conditions are favorable for normal flight operations.",
+                description: "Weather is favorable - flights typically operate normally.",
                 details: [
-                    "Regular flight schedules maintained",
-                    "Standard visibility and ceiling conditions",
-                    "Normal approach and landing procedures",
-                    "Routine ground operations"
+                    "Flights typically on schedule",
+                    "Clear skies, good visibility",
+                    "Planes landing and taking off without weather restrictions",
+                    "Airport operations without weather disruptions"
                 ],
                 recommendations: [
-                    "Check in at regular time",
-                    "Follow standard airport procedures",
-                    "No special preparations needed"
+                    "Flights operate as planned",
+                    "Standard flight operations",
+                    "Normal airport capacity"
                 ]
             },
             minorImpact: {
                 title: "Minor Weather Impact",
-                description: "Some weather-related disruptions possible, but generally manageable.",
+                description: "Weather may affect schedules, but typically manageable.",
                 details: [
-                    "Possible short delays (15-30 minutes)",
-                    "Light precipitation or reduced visibility",
-                    "De-icing procedures may be required",
-                    "Slight adjustments to flight paths"
+                    "Possible minor delays (15-30 min)",
+                    "Some precipitation or slightly reduced visibility",
+                    "Aircraft may require de-icing",
+                    "Minor adjustments to flight routes possible"
                 ],
                 recommendations: [
-                    "Check flight status before leaving",
-                    "Allow extra 15-30 minutes for travel",
-                    "Keep your phone charged",
-                    "Monitor airport/airline updates"
+                    "Airlines provide schedule updates",
+                    "Flight status information available",
+                    "Flight operations continue with minor adjustments"
                 ]
             },
             weatherAdvisory: {
                 title: "Weather Advisory",
-                description: "Significant weather conditions affecting flight operations.",
+                description: "Weather is affecting flight operations.",
                 details: [
-                    "Moderate to long delays (30-90 minutes)",
-                    "Possible flight cancellations",
-                    "Extended de-icing procedures",
-                    "Modified approach procedures",
-                    "Reduced airport capacity"
+                    "Possible delays of 30-90 minutes or more",
+                    "Some flights may be cancelled",
+                    "De-icing procedures may take longer",
+                    "Modified approach procedures possible",
+                    "Airport capacity may be reduced"
                 ],
                 recommendations: [
-                    "Check flight status frequently",
-                    "Arrive 30-45 minutes earlier than usual",
-                    "Have airline contact information ready",
-                    "Consider flexible booking options",
-                    "Monitor weather updates"
+                    "Airlines actively communicate situation updates",
+                    "Frequent flight status updates available",
+                    "Airlines manage schedules according to conditions"
                 ]
             },
             majorImpact: {
                 title: "Major Weather Impact",
-                description: "Severe weather conditions causing significant disruptions.",
+                description: "Severe weather conditions - significant flight disruptions possible.",
                 details: [
-                    "Extended delays (2+ hours)",
-                    "High probability of cancellations",
-                    "Possible airport operational changes",
-                    "Limited runway availability",
-                    "Ground stop programs possible"
+                    "Possible extended delays (2h+) or longer",
+                    "High probability of flight cancellations",
+                    "Operations may be temporarily suspended",
+                    "Some aircraft may be diverted",
+                    "Operations may be significantly restricted"
                 ],
                 recommendations: [
-                    "Contact airline before traveling to airport",
-                    "Check rebooking/refund policies",
-                    "Consider alternative travel dates",
-                    "Monitor airport operational status",
-                    "Have backup travel plans ready"
+                    "Airlines provide detailed situation information",
+                    "Carriers apply extreme weather procedures",
+                    "Official communications available from airlines and airport"
                 ]
             },
             tips: [
-                "Download your airline's mobile app for instant updates",
-                "Save airline contact numbers in your phone",
-                "Take a screenshot of your booking details"
+                "Airline mobile apps often provide quick notifications",
+                "Airline contact information can be saved for reference",
+                "Screenshots of booking confirmations can be helpful backups"
             ]
         },
         banner: {
@@ -689,84 +684,79 @@ export const translations = {
         } as const,
         riskLegend: {
             title: "Informacje o wpływie warunków pogodowych",
-            description: "Poniższe informacje mają charakter orientacyjny i przedstawiają możliwy wpływ warunków pogodowych na operacje lotnicze.",
-            whatToExpect: "Możliwe scenariusze:",
-            whatToDo: "Sugerowane działania:",
-            proTips: "Dodatkowe wskazówki",
+            description: "Te informacje mają charakter orientacyjny. Zawsze sprawdź oficjalne informacje bezpośrednio u swojego przewoźnika - to jedyne źródło, na którym możesz polegać.",
+            whatToExpect: "Możliwy wpływ:",
+            whatToDo: "Działania przewoźników:",
+            proTips: "Przydatne wskazówki",
             close: "Zamknij",
             
             // Risk levels
             goodConditions: {
                 title: "Korzystne warunki pogodowe",
-                description: "Warunki pogodowe sprzyjają normalnym operacjom lotniczym.",
+                description: "Pogoda sprzyja - wszystko zazwyczaj leci normalnie.",
                 details: [
-                    "Regularne rozkłady lotów",
-                    "Standardowa widoczność i podstawa chmur",
-                    "Normalne procedury podejścia i lądowania",
-                    "Rutynowe operacje naziemne"
+                    "Loty zazwyczaj wg rozkładu",
+                    "Dobra widoczność",
+                    "Samoloty lądują i startują bez przeszkód",
+                    "Operacje lotniskowe bez zakłóceń"
                 ],
                 recommendations: [
-                    "Standardowa odprawa",
-                    "Standardowe procedury lotniskowe",
-                    "Nie są wymagane dodatkowe przygotowania"
+                    "Loty przebiegają zgodnie z planem",
+                    "Standardowe operacje lotnicze",
+                    "Normalna przepustowość lotniska"
                 ]
             },
             minorImpact: {
                 title: "Niewielki wpływ pogody",
-                description: "Możliwe niewielkie zakłócenia związane z pogodą, ale sytuacja pod kontrolą.",
+                description: "Pogoda może wpłynąć na harmonogram, ale zazwyczaj nic poważnego.",
                 details: [
-                    "Możliwe krótkie opóźnienia (15-30 minut)",
-                    "Lekkie opady lub ograniczona widoczność",
-                    "Może być wymagane odladzanie",
-                    "Niewielkie korekty ścieżek lotu"
+                    "Możliwe niewielkie opóźnienia (15-30 min)",
+                    "Opady lub nieco ograniczona widoczność",
+                    "Samolot może wymagać odladzania",
+                    "Możliwe niewielkie korekty tras lotów"
                 ],
                 recommendations: [
-                    "Sprawdź status lotu przed wyjazdem",
-                    "Zaplanuj dodatkowe 15-30 minut na podróż",
-                    "Naładuj telefon",
-                    "Śledź aktualizacje lotniska/linii lotniczej"
+                    "Przewoźnicy informują o zmianach w rozkładzie",
+                    "Dostępne są aktualizacje statusu lotów",
+                    "Operacje lotnicze kontynuowane z niewielkimi korektami"
                 ]
             },
             weatherAdvisory: {
                 title: "Alert pogodowy",
-                description: "Znaczące warunki pogodowe wpływające na operacje lotnicze.",
+                description: "Pogoda utrudnia operacje lotnicze.",
                 details: [
-                    "Umiarkowane do długich opóźnienia (30-90 minut)",
-                    "Możliwe odwołania lotów",
-                    "Wydłużone procedury odladzania",
-                    "Zmodyfikowane procedury podejścia",
-                    "Zmniejszona przepustowość lotniska"
+                    "Możliwe opóźnienia 30-90 minut lub dłużej",
+                    "Niektóre loty mogą zostać odwołane",
+                    "Procedury odladzania mogą trwać dłużej",
+                    "Możliwe zmodyfikowane procedury podejścia",
+                    "Przepustowość lotniska może być ograniczona"
                 ],
                 recommendations: [
-                    "Często sprawdzaj status lotu",
-                    "Przybądź 30-45 minut wcześniej niż zwykle",
-                    "Przygotuj dane kontaktowe linii lotniczej",
-                    "Rozważ elastyczne opcje rezerwacji",
-                    "Monitoruj aktualizacje pogody"
+                    "Przewoźnicy aktywnie informują o sytuacji",
+                    "Dostępne są częste aktualizacje statusu",
+                    "Linie lotnicze zarządzają harmonogramami zgodnie z warunkami"
                 ]
             },
             majorImpact: {
                 title: "Trudne warunki pogodowe",
-                description: "Poważne warunki pogodowe powodujące znaczące zakłócenia.",
+                description: "Poważne warunki pogodowe - znaczące zakłócenia w ruchu lotniczym.",
                 details: [
-                    "Długie opóźnienia (2+ godziny)",
-                    "Wysokie prawdopodobieństwo odwołań",
-                    "Możliwe zmiany w operacjach lotniska",
-                    "Ograniczona dostępność pasa startowego",
-                    "Możliwe wstrzymanie operacji naziemnych"
+                    "Możliwe długie opóźnienia (2h+) lub dłużej",
+                    "Wysokie prawdopodobieństwo odwołań lotów",
+                    "Możliwe czasowe zawieszenie operacji",
+                    "Niektóre samoloty mogą zostać przekierowane",
+                    "Operacje mogą być znacznie ograniczone"
                 ],
                 recommendations: [
-                    "Skontaktuj się z linią lotniczą przed przyjazdem na lotnisko",
-                    "Sprawdź zasady zmiany rezerwacji/zwrotów",
-                    "Rozważ alternatywne daty podróży",
-                    "Monitoruj status operacyjny lotniska",
-                    "Przygotuj plan awaryjny"
+                    "Linie lotnicze zapewniają szczegółowe informacje o sytuacji",
+                    "Przewoźnicy stosują procedury na wypadek ekstremalnej pogody",
+                    "Dostępne są oficjalne komunikaty od przewoźników i lotniska"
                 ]
             },
             tips: [
-                "Warto rozważyć zainstalowanie aplikacji mobilnej przewoźnika w celu otrzymywania aktualizacji",
-                "Zalecane zapisanie numerów kontaktowych przewoźnika w telefonie",
-                "Warto zachować kopię szczegółów rezerwacji"
+                "Aplikacje mobilne przewoźników często wysyłają szybsze powiadomienia",
+                "Można zapisać kontakt do infolinii przewoźnika",
+                "Screenshoty potwierdzenia rezerwacji mogą być pomocne"
             ]
         },
         banner: {

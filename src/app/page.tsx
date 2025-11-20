@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, memo } from 'react';
+import dynamic from 'next/dynamic';
 import { Alert } from "@/components/ui/alert";
 import type { WeatherResponse } from '@/lib/types/weather';
 import { getAirportWeather } from "@/lib/weather";
@@ -10,7 +11,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
 import { 
   AlertTriangle, 
-  AlertCircle,
   CheckCircle2,
   Shield,
   X,
@@ -21,25 +21,45 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { 
-  WindCompass, 
-  VisibilityIndicator, 
-  RiskGauge
-} from "@/components/BetaVisualizations";
-import { RiskLegendContent } from "@/components/RiskLegend";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerHeader, 
-  DrawerTitle, 
-  DrawerTrigger,
-  DrawerClose 
-} from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-// Compact legend button component
-function CompactLegendButton() {
+// Dynamic imports for heavy components
+const WindCompass = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.WindCompass })), {
+  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const VisibilityIndicator = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.VisibilityIndicator })), {
+  loading: () => <div className="w-full h-32 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const RiskGauge = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.RiskGauge })), {
+  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const HourlyBreakdown = dynamic(() => import("@/components/HourlyBreakdown").then(mod => ({ default: mod.HourlyBreakdown })), {
+  loading: () => <div className="w-full h-64 bg-slate-700/30 rounded-xl animate-pulse" />,
+  ssr: false
+});
+
+const RiskLegendContent = dynamic(() => import("@/components/RiskLegend").then(mod => ({ default: mod.RiskLegendContent })), {
+  loading: () => <div className="w-full h-32 bg-slate-700/30 rounded-lg animate-pulse" />,
+  ssr: false
+});
+
+const Dialog = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.Dialog })), { ssr: false });
+const DialogContent = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.DialogContent })), { ssr: false });
+const DialogTrigger = dynamic(() => import("@/components/ui/dialog").then(mod => ({ default: mod.DialogTrigger })), { ssr: false });
+
+const Drawer = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.Drawer })), { ssr: false });
+const DrawerContent = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerContent })), { ssr: false });
+const DrawerTrigger = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerTrigger })), { ssr: false });
+const DrawerClose = dynamic(() => import("@/components/ui/drawer").then(mod => ({ default: mod.DrawerClose })), { ssr: false });
+
+// Compact legend button component - memoized
+const CompactLegendButton = memo(function CompactLegendButton() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const { language } = useLanguage();
   const t = translations[language].riskLegend;
@@ -56,10 +76,7 @@ function CompactLegendButton() {
           </button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] bg-slate-900 border border-slate-800 shadow-xl">
-          <DialogHeader className="border-b border-slate-800 pb-4">
-            <DialogTitle className="text-slate-200 px-1">{t.title}</DialogTitle>
-          </DialogHeader>
-          <div className="overflow-y-auto px-2 custom-scrollbar" style={{ maxHeight: "calc(90vh - 120px)" }}>
+          <div className="overflow-y-auto px-2 py-4 custom-scrollbar" style={{ maxHeight: "calc(90vh - 80px)" }}>
             <RiskLegendContent />
           </div>
         </DialogContent>
@@ -78,11 +95,8 @@ function CompactLegendButton() {
         </button>
       </DrawerTrigger>
       <DrawerContent className="flex flex-col h-[85vh]">
-        <DrawerHeader className="border-b border-slate-800">
-          <DrawerTitle className="text-slate-200 px-1 pl-7">{t.title}</DrawerTitle>
-        </DrawerHeader>
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="px-6 py-6">
+          <div className="px-6 py-8">
             <RiskLegendContent />
           </div>
         </div>
@@ -99,10 +113,10 @@ function CompactLegendButton() {
       </DrawerContent>
     </Drawer>
   );
-}
+});
 
-// Risk visualization component with radial design - Enhanced with forecast ring
-function RiskRadial({ 
+// Risk visualization component with radial design - Enhanced with forecast ring - memoized
+const RiskRadial = memo(function RiskRadial({ 
   level, 
   forecastLevel,
   size = 200 
@@ -112,7 +126,6 @@ function RiskRadial({
   size?: number;
 }) {
   const { language } = useLanguage();
-  const t = translations[language];
   
   const colors = {
     1: { stroke: '#10b981', glow: '#10b981', bg: '#10b98120' },
@@ -259,7 +272,7 @@ function RiskRadial({
       </div>
     </div>
   );
-}
+});
 
 // Helper function to get forecast risk level for current time window
 function getForecastRiskForCurrentTime(forecast: WeatherResponse['forecast']): {
@@ -284,286 +297,12 @@ function getForecastRiskForCurrentTime(forecast: WeatherResponse['forecast']): {
   return { level: maxRisk, period };
 }
 
-// User-focused forecast timeline with accordion
-function ForecastTimeline({ forecast }: { forecast: WeatherResponse['forecast'] }) {
-  const { language } = useLanguage();
-  const now = new Date();
-  const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
-  
-  const nextPeriods = forecast
-    .filter(p => new Date(p.to) > now)
-    .slice(0, 12);
-
-  if (nextPeriods.length === 0) return null;
-
-  // Group periods by time blocks for better readability
-  const groupedPeriods: Array<{
-    timeLabel: string;
-    status: string;
-    level: number;
-    periods: typeof nextPeriods;
-  }> = [];
-
-  let currentGroup: typeof nextPeriods = [];
-  let lastLevel = nextPeriods[0]?.riskLevel.level;
-
-  nextPeriods.forEach((period, index) => {
-    if (period.riskLevel.level !== lastLevel && currentGroup.length > 0) {
-      // New group
-      const firstPeriod = currentGroup[0];
-      const lastPeriod = currentGroup[currentGroup.length - 1];
-      
-      groupedPeriods.push({
-        timeLabel: formatTimeRange(new Date(firstPeriod.from), new Date(lastPeriod.to), language),
-        status: getSimpleStatus(lastLevel, language),
-        level: lastLevel,
-        periods: currentGroup
-      });
-      
-      currentGroup = [period];
-      lastLevel = period.riskLevel.level;
-    } else {
-      currentGroup.push(period);
-    }
-
-    // Last group
-    if (index === nextPeriods.length - 1 && currentGroup.length > 0) {
-      const firstPeriod = currentGroup[0];
-      const lastPeriod = currentGroup[currentGroup.length - 1];
-      
-      groupedPeriods.push({
-        timeLabel: formatTimeRange(new Date(firstPeriod.from), new Date(lastPeriod.to), language),
-        status: getSimpleStatus(period.riskLevel.level, language),
-        level: period.riskLevel.level,
-        periods: currentGroup
-      });
-    }
-  });
-
-  return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Compact Timeline blocks */}
-      <div className="space-y-2 md:space-y-3">
-        {groupedPeriods.map((group, index) => {
-          const isExpanded = expandedIndex === index;
-          const bgColor = group.level >= 3 ? 'bg-red-900/30' : group.level >= 2 ? 'bg-orange-900/30' : 'bg-emerald-900/20';
-          const borderColor = group.level >= 3 ? 'border-red-700/50' : group.level >= 2 ? 'border-orange-700/50' : 'border-emerald-700/30';
-          const iconColor = group.level >= 3 ? 'text-red-300' : group.level >= 2 ? 'text-orange-300' : 'text-emerald-300';
-          
-          // Get all unique phenomena from the group
-          const allPhenomena = Array.from(new Set(
-            group.periods.flatMap(p => p.conditions.phenomena)
-          ));
-          
-          // Get operational impacts
-          const allImpacts = Array.from(new Set(
-            group.periods.flatMap(p => p.operationalImpacts || [])
-          ));
-
-          const hasTemporary = group.periods.some(p => p.isTemporary);
-          
-          // Get weather details from the most representative period
-          const repPeriod = group.periods[Math.floor(group.periods.length / 2)];
-          
-          return (
-            <div
-              key={index}
-              className={`${bgColor} border ${borderColor} rounded-lg shadow-lg p-4 md:p-5`}
-            >
-              {/* Compact Header - Always Visible */}
-              <button
-                onClick={() => setExpandedIndex(isExpanded ? null : index)}
-                className="w-full flex items-center gap-3 md:gap-4 text-left"
-              >
-                <div className="flex-shrink-0">
-                  {group.level >= 3 ? (
-                    <AlertTriangle className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />
-                  ) : group.level >= 2 ? (
-                    <AlertCircle className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />
-                  ) : (
-                    <CheckCircle2 className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />
-                  )}
-            </div>
-
-                <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
-                  <span className="text-sm md:text-base font-semibold text-white">
-                    {group.timeLabel}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 md:px-2.5 md:py-1 rounded-full ${bgColor} border ${borderColor} ${iconColor} font-medium`}>
-                    {group.status}
-                  </span>
-                  </div>
-
-                <ChevronDown className={`w-4 h-4 md:w-5 md:h-5 text-slate-300 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Expanded Details */}
-              {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-white/10 space-y-4 animate-in fade-in duration-200">
-                  {/* Phenomena */}
-                  {allPhenomena.length > 0 && (
-                    <div>
-                      {hasTemporary && (
-                        <p className="text-sm text-slate-300 mb-3">
-                          {language === 'pl' ? 'Możliwe tymczasowe warunki:' : 'Possible temporary conditions:'}
-                        </p>
-                      )}
-                  <div className="flex flex-wrap gap-2">
-                        {allPhenomena.map((phenomenon, idx) => (
-                          <span
-                            key={idx}
-                            className="text-sm px-3 py-2 bg-slate-800/70 rounded-md text-slate-100 shadow-md"
-                          >
-                            {phenomenon}
-                          </span>
-                        ))}
-                </div>
-              </div>
-                  )}
-
-                  {/* Operational Impacts - Only show specific/actionable ones */}
-                  {(() => {
-                    // Filter out generic impacts, keep only specific/actionable ones
-                    const genericImpacts = [
-                      'możliwe opóźnienia',
-                      'possible delays',
-                      'delays possible',
-                      'opóźnienia',
-                      'delays'
-                    ];
-                    
-                    const specificImpacts = allImpacts.filter(impact => {
-                      if (!impact || !impact.trim()) return false;
-                      const lowerImpact = impact.toLowerCase();
-                      
-                      // Check if it's a generic impact (exact match or starts with)
-                      const isGeneric = genericImpacts.some(generic => 
-                        lowerImpact === generic || 
-                        lowerImpact.startsWith('⚠️') && lowerImpact.includes(generic)
-                      );
-                      
-                      return !isGeneric;
-                    });
-                    
-                    if (specificImpacts.length === 0) return null;
-                    
-                    return (
-                      <div>
-                        <p className="text-sm text-slate-300 mb-3">
-                          {language === 'pl' ? 'Wpływ na operacje:' : 'Operational impacts:'}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {specificImpacts.map((impact, idx) => (
-                            <span
-                              key={idx}
-                              className="text-sm px-3 py-2 bg-slate-800/70 rounded-md text-slate-100 shadow-md"
-                            >
-                              {impact}
-                            </span>
-            ))}
-          </div>
-        </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* Passenger Rights CTA Tile */}
-      <Card className="border-blue-700/30 bg-blue-900/20 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200">
-        <CardContent className="p-5 md:p-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <h4 className="font-bold text-blue-200 text-sm md:text-base">
-                {language === 'pl' ? 'Opóźnienie lub odwołanie?' : 'Flight delayed or cancelled?'}
-              </h4>
-            </div>
-            <p className="text-sm text-blue-100/80 leading-relaxed">
-              {language === 'pl'
-                ? 'Przysługuje Ci odszkodowanie do 600€. Sprawdź swoje prawa pasażera.'
-                : 'You may be entitled to up to €600 compensation. Check your passenger rights.'}
-            </p>
-            <Link 
-              href="/passengerrights" 
-              className="inline-flex items-center gap-2 text-sm text-blue-300 hover:text-blue-200 font-medium group"
-            >
-              <span className="underline underline-offset-4">
-                {language === 'pl' ? 'Dowiedz się więcej' : 'Learn more'}
-              </span>
-              <span className="transition-transform group-hover:translate-x-1">→</span>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Helper functions
-function formatTimeRange(from: Date, to: Date, language: string): string {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const fromHour = from.getHours();
-  const toHour = to.getHours();
-  
-  const fromDay = from.getDate();
-  const nowDay = now.getDate();
-  const tomorrowDay = tomorrow.getDate();
-  
-  // If it's happening now
-  if (from <= now && to > now) {
-    if (fromDay === nowDay) {
-      return language === 'pl' 
-        ? `Teraz do ${toHour}:00`
-        : `Now until ${toHour}:00`;
-    }
-  }
-  
-  // Future today
-  if (fromDay === nowDay) {
-    if (fromHour === toHour) {
-      return language === 'pl' ? `Dziś ${fromHour}:00` : `Today ${fromHour}:00`;
-    }
-    return language === 'pl' 
-      ? `Dziś ${fromHour}:00-${toHour}:00`
-      : `Today ${fromHour}:00-${toHour}:00`;
-  }
-  
-  // Tomorrow
-  if (fromDay === tomorrowDay) {
-    return language === 'pl'
-      ? `Jutro ${fromHour}:00-${toHour}:00`
-      : `Tomorrow ${fromHour}:00-${toHour}:00`;
-  }
-  
-  // Later
-  return language === 'pl'
-    ? `${fromHour}:00-${toHour}:00`
-    : `${fromHour}:00-${toHour}:00`;
-}
-
-function getSimpleStatus(level: number, language: string): string {
-  const t = translations[language === 'pl' ? 'pl' : 'en'];
-  const statuses = {
-    1: t.riskLevel1Title,
-    2: t.riskLevel2Title,
-    3: t.riskLevel3Title,
-    4: t.riskLevel4Title
-  };
-  return statuses[level as 1 | 2 | 3 | 4];
-}
 
 
 
 
-// Key metrics display with advanced visualizations
-function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
+// Key metrics display with advanced visualizations - memoized
+const KeyMetrics = memo(function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -623,7 +362,7 @@ function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
       )}
     </div>
   );
-}
+});
 
 
 export default function Home() {
@@ -640,73 +379,28 @@ export default function Home() {
     return true;
   });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('alertExpanded', isAlertExpanded.toString());
-    }
-  }, [isAlertExpanded]);
-
-  async function fetchData() {
-    try {
-        setIsLoading(true);
-      setError(null);
-      const weatherData = await getAirportWeather(language);
-      if (!weatherData) {
-        throw new Error('Failed to fetch data');
-      }
-      setWeather(weatherData);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load data');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [language]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-300">{language === 'pl' ? 'Ładowanie...' : 'Loading...'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !weather) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto" />
-          <p className="text-slate-300">{error || 'Failed to load data'}</p>
-          <button 
-            onClick={fetchData}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            {language === 'pl' ? 'Spróbuj ponownie' : 'Try Again'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const highRiskPeriods = weather?.forecast?.filter(
-    period => period.riskLevel.level >= 3 && new Date(period.to) > new Date()
-  ) || [];
+  // ALL MEMOIZED VALUES MUST BE BEFORE ANY CONDITIONAL RETURNS
+  // Memoized expensive calculations
+  const highRiskPeriods = useMemo(() => 
+    weather?.forecast?.filter(
+      period => period.riskLevel.level >= 3 && new Date(period.to) > new Date()
+    ) || [], 
+    [weather?.forecast]
+  );
 
   // Check if we're currently within a forecast period with different risk
-  const forecastRiskNow = getForecastRiskForCurrentTime(weather.forecast);
-  const currentRisk = weather.current.riskLevel.level;
-  const showAlert = highRiskPeriods.length > 0 || (forecastRiskNow && forecastRiskNow.level >= 3);
+  const forecastRiskNow = useMemo(() => 
+    weather?.forecast ? getForecastRiskForCurrentTime(weather.forecast) : null,
+    [weather?.forecast]
+  );
+  
+  const currentRisk = weather?.current?.riskLevel?.level ?? 1;
+  const showAlert = useMemo(() => 
+    highRiskPeriods.length > 0 || (forecastRiskNow && forecastRiskNow.level >= 3),
+    [highRiskPeriods.length, forecastRiskNow]
+  );
 
-  const formatHighRiskTimes = () => {
+  const formatHighRiskTimes = useMemo(() => {
     if (!highRiskPeriods.length) return '';
     const firstPeriod = highRiskPeriods[0];
     const periodStart = new Date(firstPeriod.from);
@@ -750,7 +444,67 @@ export default function Home() {
     };
 
     return formatTimeRange();
-  };
+  }, [highRiskPeriods, language]);
+
+  // EFFECTS AFTER ALL HOOKS
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('alertExpanded', isAlertExpanded.toString());
+    }
+  }, [isAlertExpanded]);
+
+  async function fetchData() {
+    try {
+        setIsLoading(true);
+      setError(null);
+      const weatherData = await getAirportWeather(language);
+      if (!weatherData) {
+        throw new Error('Failed to fetch data');
+      }
+      setWeather(weatherData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
+
+  // CONDITIONAL RETURNS AFTER ALL HOOKS
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-slate-300">{language === 'pl' ? 'Ładowanie...' : 'Loading...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !weather) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto" />
+          <p className="text-slate-300">{error || 'Failed to load data'}</p>
+          <button 
+            onClick={fetchData}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            {language === 'pl' ? 'Spróbuj ponownie' : 'Try Again'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -830,8 +584,8 @@ export default function Home() {
                       <div className="space-y-2">
                         <p className="text-sm leading-relaxed text-white/95">
                           {language === 'pl'
-                            ? `⚠️ Obecnie warunki są korzystne (${weather.current.riskLevel.title}), ale prognoza przewiduje pogorszenie do poziomu ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes()}.`
-                            : `⚠️ Current conditions are favorable (${weather.current.riskLevel.title}), but forecast predicts deterioration to level ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes()}.`}
+                            ? `⚠️ Obecnie warunki są korzystne (${weather.current.riskLevel.title}), ale prognoza przewiduje pogorszenie do poziomu ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`
+                            : `⚠️ Current conditions are favorable (${weather.current.riskLevel.title}), but forecast predicts deterioration to level ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`}
                         </p>
                         <p className="text-xs text-white/80">
                           {language === 'pl'
@@ -845,7 +599,7 @@ export default function Home() {
                         {(currentRisk >= 4 || highRiskPeriods.some(p => p.riskLevel.level === 4))
                           ? t.flightDisruptions
                           : t.severeWeather}
-                        {formatHighRiskTimes()}
+                        {formatHighRiskTimes}
                         {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
                           && `. ${t.laterInDay}`}
                         {`. ${t.checkStatus}`}
@@ -965,15 +719,13 @@ export default function Home() {
 
         {/* Forecast Timeline */}
         <div className="mb-6 md:mb-8">
-          <div className="flex items-center justify-between mb-4 md:mb-6">
-            <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold text-white">
                 {language === 'pl' ? 'Prognoza' : 'Forecast'}
               </h2>
               <CompactLegendButton />
             </div>
-          </div>
-          <ForecastTimeline forecast={weather.forecast} />
+          <HourlyBreakdown forecast={weather.forecast} language={language} />
         </div>
       </div>
 

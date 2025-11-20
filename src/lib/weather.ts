@@ -36,6 +36,12 @@ const MINIMUMS = {
   CROSSWIND: 20      // knots
 } as const;
 
+// EPKK runway configuration for crosswind calculations
+const EPKK_RUNWAYS = {
+  '07': { heading: 69, opposite: '25' },
+  '25': { heading: 249, opposite: '07' }
+} as const;
+
 // Add a constant for "close to minimums" threshold
 const NEAR_MINIMUMS = {
   CEILING: MINIMUMS.CEILING * 1.5, // 300ft for CAT I minimums of 200ft
@@ -586,8 +592,55 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
   });
 }
 
+// Helper function to calculate crosswind component for EPKK runways
+function calculateCrosswind(windDirection: number, windSpeed: number, gustKts?: number): {
+  crosswind: number;
+  runway: string;
+  headwind: number;
+} {
+  const runways = [
+    { name: '07', heading: 69 },
+    { name: '25', heading: 249 }
+  ];
+  
+  let maxCrosswind = 0;
+  let maxHeadwind = 0;
+  let affectedRunway = '07';
+  
+  for (const rwy of runways) {
+    // Calculate angle between wind and runway
+    let angleDiff = windDirection - rwy.heading;
+    
+    // Normalize to -180 to +180 range
+    while (angleDiff > 180) angleDiff -= 360;
+    while (angleDiff < -180) angleDiff += 360;
+    
+    const windSpeedToUse = gustKts || windSpeed;
+    
+    // Crosswind component = wind speed × sin(angle)
+    const crosswind = Math.abs(windSpeedToUse * Math.sin(angleDiff * Math.PI / 180));
+    
+    // Headwind component = wind speed × cos(angle) (negative = tailwind)
+    const headwind = windSpeedToUse * Math.cos(angleDiff * Math.PI / 180);
+    
+    // Select runway with most headwind (since reciprocal runways have identical crosswind)
+    // This selects the runway pilots would actually use (landing into the wind)
+    if (headwind > maxHeadwind) {
+      maxCrosswind = crosswind;
+      maxHeadwind = headwind;
+      affectedRunway = rwy.name;
+    }
+  }
+  
+  return {
+    crosswind: Math.round(maxCrosswind),
+    runway: affectedRunway,
+    headwind: Math.round(maxHeadwind)
+  };
+}
+
 // Helper function to calculate wind risk from both OpenMeteo and TAF data
-function calculateWindRisk(wind: HourlyCondition | { speed_kts: number; gust_kts?: number } | undefined): 1 | 2 | 3 | 4 {
+function calculateWindRisk(wind: HourlyCondition | { speed_kts: number; gust_kts?: number; direction?: number } | undefined): 1 | 2 | 3 | 4 {
   if (!wind) return 1; // Return lowest risk level when no wind data
 
   // Handle OpenMeteo data
@@ -600,12 +653,31 @@ function calculateWindRisk(wind: HourlyCondition | { speed_kts: number; gust_kts
   }
 
   // Handle TAF/METAR data
-  const { speed_kts, gust_kts } = wind;
-  if (gust_kts && gust_kts >= 40 || speed_kts >= 35) return 4;
-  if (gust_kts && gust_kts >= 35) return 3;
-  if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) return 3;
-  if (speed_kts >= 15) return 2;
-  return 1;
+  const { speed_kts, gust_kts, direction } = wind;
+  
+  // Calculate crosswind risk if we have direction
+  let crosswindRisk = 0;
+  if (direction !== undefined) {
+    const { crosswind } = calculateCrosswind(direction, speed_kts, gust_kts);
+    
+    if (crosswind >= MINIMUMS.CROSSWIND) {
+      crosswindRisk = 4; // Exceeds crosswind limit
+    } else if (crosswind >= MINIMUMS.CROSSWIND * 0.8) {
+      crosswindRisk = 3; // Near crosswind limit
+    } else if (crosswind >= MINIMUMS.CROSSWIND * 0.6) {
+      crosswindRisk = 2; // Moderate crosswind
+    }
+  }
+  
+  // Base wind risk
+  let baseRisk = 1;
+  if (gust_kts && gust_kts >= 40 || speed_kts >= 35) baseRisk = 4;
+  else if (gust_kts && gust_kts >= 35) baseRisk = 3;
+  else if (speed_kts >= 25 || (gust_kts && gust_kts >= 25)) baseRisk = 3;
+  else if (speed_kts >= 15) baseRisk = 2;
+  
+  // Return maximum of base wind risk and crosswind risk
+  return Math.max(baseRisk, crosswindRisk) as 1 | 2 | 3 | 4;
 }
 
 // Helper function to calculate precipitation-specific risk from OpenMeteo data
@@ -843,8 +915,11 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
     // Merge TAF with OpenMeteo data
     const enhancedForecast = mergeTafWithOpenMeteo(tafPeriods, openMeteoData, language);
     
+    // Fill ALL gaps (including within TAF coverage) with Open-Meteo data for complete 48h coverage
+    const extendedForecast = extendForecastWithOpenMeteo(enhancedForecast, openMeteoData, language);
+    
     // First merge overlapping periods
-    const mergedOverlapping = mergeOverlappingPeriods(enhancedForecast);
+    const mergedOverlapping = mergeOverlappingPeriods(extendedForecast);
     console.log('Forecast after merging overlapping periods:', mergedOverlapping.length);
     
     // Then merge consecutive similar periods
@@ -935,6 +1010,7 @@ interface WeatherPeriod {
   wind?: {
     speed_kts: number;
     gust_kts?: number;
+    direction?: number;
   };
   change?: {
     probability?: number;
@@ -993,7 +1069,7 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   );
 
   // Process each base period (now with async/await)
-  for (const [index, period] of basePeriods.entries()) {
+  for (const [_index, period] of basePeriods.entries()) {
     const conditions = new Set<string>();
 
     // Process visibility (FIX: use !== undefined to handle 0m!)
@@ -1057,10 +1133,11 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
     changes.push(forecastChange);
   }
 
-  // Process TEMPO periods with the new risk assessment (now with async/await)
-  const tempoPeriods = validPeriods.filter(p => 
-    p.change?.indicator?.code === 'TEMPO'
-  );
+  // Process TEMPO periods (including PROB30, PROB40) with the new risk assessment (now with async/await)
+  const tempoPeriods = validPeriods.filter(p => {
+    const code = p.change?.indicator?.code;
+    return code === 'TEMPO' || code?.startsWith('PROB');
+  });
   
   for (const period of tempoPeriods) {
     const conditions = new Set<string>();
@@ -1152,28 +1229,10 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   });
 }
 
-// Helper function to check if two weather periods can be merged
-function areWeatherPeriodsSimilar(a: WeatherPeriod, b: WeatherPeriod): boolean {
-  // Don't merge if they have different probabilities
-  if (a.change?.probability !== b.change?.probability) return false;
-  
-  // Don't merge if they have different change types
-  if (a.change?.indicator?.code !== b.change?.indicator?.code) return false;
-  
-  // Compare conditions
-  const aConditions = new Set(a.conditions?.map(c => c.code) || []);
-  const bConditions = new Set(b.conditions?.map(c => c.code) || []);
-  
-  if (aConditions.size !== bConditions.size) return false;
-  
-  return Array.from(aConditions).every(code => bConditions.has(code));
-}
-
-
 // Helper function to calculate operational impacts
 async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): Promise<string[]> {
   const impacts: string[] = [];
-  const riskScore = await calculateRiskScore(period);
+  const _riskScore = await calculateRiskScore(period);
 
   // Calculate base risks (await async ones)
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
@@ -1367,26 +1426,6 @@ function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): s
     const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
     return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
   }
-}
-
-function getWeatherDescription(reasons: string[], impacts: string[], language: 'en' | 'pl'): string {
-  const t = translations[language].weatherConditionMessages;
-  
-  if (!reasons.length && !impacts.length) {
-    return t.clearSkies;
-  }
-    
-  // Combine weather reasons with operational impacts
-  const allImpacts = [...impacts];
-  if (reasons.length > 0) {
-    const primaryReason = reasons[0];
-    const description = getDetailedDescription(primaryReason, language);
-    if (description) {
-      allImpacts.unshift(description);
-    }
-  }
-    
-  return allImpacts.join(" • ");
 }
 
 export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
@@ -1845,6 +1884,159 @@ function mergeTafWithOpenMeteo(tafPeriods: ForecastChange[], openMeteoData: Open
   return mergedPeriods;
 }
 
+/**
+ * Fill ALL gaps in forecast with Open-Meteo data
+ * This creates complete 48h coverage using real Open-Meteo data for missing periods
+ */
+function extendForecastWithOpenMeteo(
+  tafPeriods: ForecastChange[], 
+  openMeteoData: OpenMeteoResponse, 
+  language: 'en' | 'pl'
+): ForecastChange[] {
+  const t = translations[language];
+  const now = new Date();
+  
+  // Create a map of hours that are covered by TAF
+  const tafCoverage = new Set<string>();
+  tafPeriods.forEach(period => {
+    const start = new Date(period.from);
+    const end = new Date(period.to);
+    
+    for (let time = start.getTime(); time < end.getTime(); time += 60 * 60 * 1000) {
+      const hourKey = new Date(time).toISOString().split(':')[0]; // "2024-01-20T14"
+      tafCoverage.add(hourKey);
+    }
+  });
+  
+  // Create hourly periods from Open-Meteo for ALL gaps (not just after TAF)
+  const openMeteoPeriods: ForecastChange[] = [];
+  
+  for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
+    const hourTime = new Date(openMeteoData.hourly.time[i]);
+    const hourKey = hourTime.toISOString().split(':')[0];
+    
+    // Only create periods for gaps and within 48h from now
+    const hoursFromNow = (hourTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (tafCoverage.has(hourKey) || hoursFromNow > 48 || hoursFromNow < 0) {
+      continue;
+    }
+    
+    // Get Open-Meteo data for this hour
+    const temp = openMeteoData.hourly.temperature_2m[i];
+    const windSpeedMs = openMeteoData.hourly.wind_speed_10m[i]; // m/s
+    const windGustsMs = openMeteoData.hourly.wind_gusts_10m[i]; // m/s
+    const visibility = openMeteoData.hourly.visibility[i];
+    const precipitation = openMeteoData.hourly.precipitation[i];
+    
+    // Convert wind from m/s to knots (1 m/s = 1.94384 knots)
+    const windSpeed = Math.round(windSpeedMs * 1.94384);
+    const windGusts = Math.round(windGustsMs * 1.94384);
+    
+    // Calculate risk level from Open-Meteo data
+    const windRisk = calculateWindRisk({ speed_kts: windSpeed, gust_kts: windGusts });
+    const visibilityRisk = calculateVisibilityRisk(visibility);
+    
+    // Simple precipitation risk from Open-Meteo data
+    let precipRisk: 1 | 2 | 3 | 4 = 1;
+    if (precipitation > 10) precipRisk = 4;
+    else if (precipitation > 5) precipRisk = 3;
+    else if (precipitation > 1) precipRisk = 2;
+    
+    const riskLevel = Math.max(windRisk, visibilityRisk, precipRisk) as 1 | 2 | 3 | 4;
+    
+    // Generate phenomena based on Open-Meteo data
+    const phenomena: string[] = [];
+    
+    // Precipitation phenomena
+    if (precipitation > 0.5) {
+      // Freezing rain: heavy precipitation at or below freezing
+      if (temp <= 0 && precipitation > 2) {
+        phenomena.push(language === 'pl' ? 'Marznący deszcz' : 'Freezing rain');
+      } else if (temp <= 0) {
+        phenomena.push(language === 'pl' ? 'Śnieg' : 'Snow');
+      } else {
+        phenomena.push(language === 'pl' ? 'Deszcz' : 'Rain');
+      }
+    }
+    
+    // Visibility phenomena
+    if (visibility < 5000) {
+      if (temp <= 0 && visibility < 1000) {
+        phenomena.push(language === 'pl' ? 'Mgła marznąca' : 'Freezing fog');
+      } else if (visibility < 1000) {
+        phenomena.push(language === 'pl' ? 'Mgła' : 'Fog');
+      } else {
+        phenomena.push(language === 'pl' ? 'Zamglenie' : 'Mist');
+      }
+    }
+    
+    // Wind phenomena
+    if (windGusts > 35) {
+      phenomena.push(language === 'pl' ? 'Silne podmuchy wiatru' : 'Strong wind gusts');
+    } else if (windSpeed > 25) {
+      phenomena.push(language === 'pl' ? 'Silny wiatr' : 'Strong winds');
+    }
+    
+    // Generate operational impacts
+    const operationalImpacts: string[] = [];
+    
+    if (visibility < 550) {
+      const deviation = Math.round(((550 - visibility) / 550) * 100);
+      operationalImpacts.push(
+        language === 'pl'
+          ? `Widoczność ${visibility}m - ${deviation}% poniżej minimum (550m)`
+          : `Visibility ${visibility}m - ${deviation}% below minimum (550m)`
+      );
+    }
+    
+    if (windGusts > 20) {
+      operationalImpacts.push(
+        language === 'pl'
+          ? `Podmuchy wiatru ${Math.round(windGusts)}kt mogą wpłynąć na operacje naziemne`
+          : `Wind gusts ${Math.round(windGusts)}kt may affect ground operations`
+      );
+    }
+    
+    // Create the period (hourly)
+    const periodEnd = new Date(hourTime);
+    periodEnd.setHours(periodEnd.getHours() + 1);
+    
+    openMeteoPeriods.push({
+      timeDescription: `${hourTime.getHours()}:00`,
+      from: hourTime,
+      to: periodEnd,
+      changeType: 'PERSISTENT',
+      conditions: {
+        visibility: {
+          meters: Math.round(visibility)
+        },
+        phenomena: phenomena.length > 0 ? phenomena : []
+      },
+      wind: {
+        speed_kts: Math.round(windSpeed),
+        gust_kts: windGusts ? Math.round(windGusts) : undefined
+      },
+      visibility: {
+        meters: Math.round(visibility)
+      },
+      riskLevel: {
+        level: riskLevel,
+        title: t[`riskLevel${riskLevel}Title` as keyof typeof t] as string,
+        message: t[`riskLevel${riskLevel}Message` as keyof typeof t] as string,
+        statusMessage: t[`riskLevel${riskLevel}Status` as keyof typeof t] as string,
+        color: getRiskColor(riskLevel)
+      },
+      operationalImpacts: operationalImpacts.length > 0 ? operationalImpacts : undefined,
+      isTemporary: false,
+      probability: undefined,
+      language: language
+    });
+  }
+  
+  // Combine TAF and Open-Meteo periods and sort chronologically
+  return [...tafPeriods, ...openMeteoPeriods].sort((a, b) => a.from.getTime() - b.from.getTime());
+}
+
 
 async function getOpenMeteoData(): Promise<OpenMeteoResponse> {
   const data = await fetchOpenMeteoForecast();
@@ -2090,7 +2282,7 @@ export async function calculateRiskLevel(
   const scaledWeatherRisk = weatherRisk * probabilityFactor;
   const scaledCeilingRisk = ceilingRisk * probabilityFactor;
 
-  // Count severe and moderate conditions using scaled risks
+  // Count severe and moderate conditions using base risks (before adjustments)
   const severeConditions = [
     visibilityRisk >= 85,
     windRisk >= 85,
@@ -2114,11 +2306,45 @@ export async function calculateRiskLevel(
     impacts.push(t.operationalImpactMessages.combinedConditions);
   }
 
-  // Special handling for freezing conditions
-  const hasFreezing = period.conditions?.some(c => 
-    c.code.includes('FZ') || // Any freezing condition
-    (c.code === 'FZFG' && period.visibility?.meters && period.visibility.meters <= 1000) // Freezing fog with low visibility
+  // Special handling for freezing conditions with temperature enhancement
+  const hasExtremeFreezing = period.conditions?.some(c => 
+    c.code === 'FZFG' || c.code === 'FZRA' || c.code === 'FZDZ'
   );
+  const _hasFreezing = period.conditions?.some(c => 
+    c.code.includes('FZ') // Any freezing condition
+  );
+
+  // Temperature-enhanced icing risk multiplier
+  let icingMultiplier = 1.0;
+  if (hasExtremeFreezing && period.temperature?.celsius !== undefined) {
+    const temp = period.temperature.celsius;
+    
+    if (temp <= -5) {
+      icingMultiplier = 1.3;  // Severe icing: instant freeze
+      impacts.push(
+        language === 'pl'
+          ? `❄️ Ekstremalne ryzyko oblodzenia przy temperaturze ${temp}°C - natychmiastowe zamarzanie`
+          : `❄️ Extreme icing risk at ${temp}°C - instant freezing`
+      );
+    } else if (temp <= 0) {
+      icingMultiplier = 1.2;  // High icing: rapid accumulation
+      impacts.push(
+        language === 'pl'
+          ? `❄️ Wysokie ryzyko oblodzenia przy temperaturze ${temp}°C - szybka akumulacja`
+          : `❄️ High icing risk at ${temp}°C - rapid accumulation`
+      );
+    } else if (temp <= 3) {
+      icingMultiplier = 1.1;  // Moderate icing: possible accumulation
+      impacts.push(
+        language === 'pl'
+          ? `❄️ Umiarkowane ryzyko oblodzenia przy temperaturze ${temp}°C`
+          : `❄️ Moderate icing risk at ${temp}°C`
+      );
+    }
+  }
+
+  // Apply icing multiplier to weather risk if we have freezing conditions
+  const adjustedWeatherRisk = hasExtremeFreezing ? weatherRisk * icingMultiplier : weatherRisk;
 
   // Determine risk level
   let riskLevel: 1 | 2 | 3 | 4;
@@ -2149,13 +2375,13 @@ export async function calculateRiskLevel(
   }
   // 5. Thunderstorm with multiple severe phenomena
   else if (period.conditions?.some(c => c.code.includes('TS')) && 
-           (weatherRisk >= 90 || severeConditions >= 2)) {
+           (adjustedWeatherRisk >= 90 || severeConditions >= 2)) {
     riskLevel = 4;
     impacts.push(t.operationalImpactMessages.severeThunderstorm);
   }
   // Automatic level 4 conditions
   else if (
-    (hasFreezing && probability >= 40) || // Lower threshold for freezing conditions
+    (hasExtremeFreezing && probability >= 30) || // FZFG/FZRA/FZDZ are extremely dangerous - lower threshold
     (severeConditions >= 2 && probability >= 30) ||
     (period.conditions?.some(c => 
       c.code.includes('TS') && 
@@ -2227,6 +2453,46 @@ export async function calculateRiskLevel(
     c.base_feet_agl < 200
   )) {
     impacts.push(t.operationalImpactMessages.veryLowScatteredClouds);
+  }
+
+  // Crosswind operational impacts for EPKK runways
+  if (period.wind?.direction !== undefined && period.wind?.speed_kts) {
+    const { crosswind, runway, headwind } = calculateCrosswind(
+      period.wind.direction,
+      period.wind.speed_kts,
+      period.wind.gust_kts
+    );
+    
+    // Check for tailwind (negative headwind)
+    if (headwind < 0) {
+      const tailwind = Math.abs(headwind);
+      if (tailwind >= 10) {
+        impacts.push(
+          language === 'pl'
+            ? `⚠️ Wiatr z tyłu ${tailwind}kt na pasie ${runway} - przekroczenie limitu (10kt)`
+            : `⚠️ Tailwind ${tailwind}kt on runway ${runway} - exceeds limit (10kt)`
+        );
+        riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
+      } else if (tailwind >= 5) {
+        impacts.push(
+          language === 'pl'
+            ? `⚠️ Wiatr z tyłu ${tailwind}kt na pasie ${runway} - wydłużony dobieg`
+            : `⚠️ Tailwind ${tailwind}kt on runway ${runway} - extended landing roll`
+        );
+        riskLevel = Math.max(riskLevel, 2) as 1 | 2 | 3 | 4;
+      }
+    }
+    
+    // Only show warning when crosswind exceeds operational limits
+    if (crosswind >= MINIMUMS.CROSSWIND) {
+      impacts.push(
+        language === 'pl'
+          ? `💨 Wiatr boczny ${crosswind}kt przekracza limit (${MINIMUMS.CROSSWIND}kt) dla pasa ${runway}`
+          : `💨 Crosswind ${crosswind}kt exceeds limit (${MINIMUMS.CROSSWIND}kt) for runway ${runway}`
+      );
+      // Ensure at least risk level 3 for crosswind exceedance
+      riskLevel = Math.max(riskLevel, 3) as 1 | 2 | 3 | 4;
+    }
   }
 
   // Get translations for the risk level

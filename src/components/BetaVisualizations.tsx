@@ -1,8 +1,6 @@
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Wind, Droplets, Snowflake, CloudRain, CloudLightning, Sun } from "lucide-react";
 
 // Wind compass component
 export function WindCompass({ 
@@ -106,38 +104,6 @@ export function WindCompass({
   );
 }
 
-// Animated weather icon
-export function AnimatedWeatherIcon({ 
-  condition,
-  size = 80 
-}: { 
-  condition: 'clear' | 'rain' | 'snow' | 'storm' | 'cloudy';
-  size?: number;
-}) {
-  const icons = {
-    clear: Sun,
-    rain: CloudRain,
-    snow: Snowflake,
-    storm: CloudLightning,
-    cloudy: Droplets
-  };
-
-  const colors = {
-    clear: 'text-yellow-400',
-    rain: 'text-blue-400',
-    snow: 'text-cyan-300',
-    storm: 'text-purple-400',
-    cloudy: 'text-slate-400'
-  };
-
-  const Icon = icons[condition];
-
-  return (
-    <div className={cn("relative animate-pulse", colors[condition])}>
-      <Icon size={size} strokeWidth={1.5} />
-    </div>
-  );
-}
 
 // Risk gauge meter
 export function RiskGauge({ 
@@ -216,65 +182,6 @@ export function RiskGauge({
   );
 }
 
-// Progress ring
-export function ProgressRing({ 
-  value,
-  max,
-  label,
-  unit,
-  color = '#3b82f6',
-  size = 120 
-}: { 
-  value: number;
-  max: number;
-  label: string;
-  unit?: string;
-  color?: string;
-  size?: number;
-}) {
-  const percentage = (value / max) * 100;
-  const radius = (size - 20) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="rgba(255, 255, 255, 0.1)"
-          strokeWidth="8"
-          fill="none"
-        />
-        
-        {/* Progress circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth="8"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          className="transition-all duration-1000"
-        />
-      </svg>
-      
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-2xl font-bold text-white">
-          {value}
-          {unit && <span className="text-sm ml-1">{unit}</span>}
-        </div>
-        <div className="text-xs text-slate-400 mt-1">{label}</div>
-      </div>
-    </div>
-  );
-}
 
 // Visibility indicator
 export function VisibilityIndicator({ 
@@ -326,97 +233,6 @@ export function VisibilityIndicator({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// Hourly forecast bar chart
-export function HourlyForecastBars({ 
-  forecast 
-}: { 
-  forecast: Array<{ hour: number; risk: number; temp?: number }>;
-}) {
-  const maxRisk = 4;
-  
-  const getRiskColor = (risk: number) => {
-    if (risk >= 4) return '#dc2626';
-    if (risk >= 3) return '#ef4444';
-    if (risk >= 2) return '#f59e0b';
-    return '#10b981';
-  };
-
-  return (
-    <div className="w-full">
-      <div className="flex items-end justify-between gap-1 h-40">
-        {forecast.map((item, index) => {
-          const height = (item.risk / maxRisk) * 100;
-          return (
-            <div 
-              key={index}
-              className="flex-1 flex flex-col items-center gap-2 group cursor-pointer"
-            >
-              <div className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                Risk: {item.risk}
-              </div>
-              <div 
-                className="w-full rounded-t-lg transition-all duration-500 hover:opacity-80"
-                style={{ 
-                  height: `${height}%`,
-                  backgroundColor: getRiskColor(item.risk),
-                  minHeight: '4px'
-                }}
-              ></div>
-              <div className="text-xs text-slate-400 font-medium">
-                {item.hour}:00
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// Weather conditions pills with animation
-export function WeatherConditionPill({ 
-  icon,
-  label,
-  value,
-  trend 
-}: { 
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  trend?: 'up' | 'down' | 'stable';
-}) {
-  const trendColors = {
-    up: 'text-red-400',
-    down: 'text-green-400',
-    stable: 'text-slate-400'
-  };
-
-  const trendSymbols = {
-    up: '↑',
-    down: '↓',
-    stable: '→'
-  };
-
-  return (
-    <div className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-slate-600/50 transition-all">
-      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-xs text-slate-400">{label}</div>
-        <div className="text-lg font-bold text-white flex items-center gap-2">
-          {value}
-          {trend && (
-            <span className={cn("text-sm", trendColors[trend])}>
-              {trendSymbols[trend]}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
