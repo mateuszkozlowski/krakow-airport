@@ -584,8 +584,8 @@ export default function Home() {
                       <div className="space-y-2">
                         <p className="text-sm leading-relaxed text-white/95">
                           {language === 'pl'
-                            ? `⚠️ Obecnie warunki są korzystne (${weather.current.riskLevel.title}), ale prognoza przewiduje pogorszenie do poziomu ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes()}.`
-                            : `⚠️ Current conditions are favorable (${weather.current.riskLevel.title}), but forecast predicts deterioration to level ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes()}.`}
+                            ? `⚠️ Obecnie warunki są korzystne (${weather.current.riskLevel.title}), ale prognoza przewiduje pogorszenie do poziomu ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`
+                            : `⚠️ Current conditions are favorable (${weather.current.riskLevel.title}), but forecast predicts deterioration to level ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`}
                         </p>
                         <p className="text-xs text-white/80">
                           {language === 'pl'
@@ -599,7 +599,7 @@ export default function Home() {
                         {(currentRisk >= 4 || highRiskPeriods.some(p => p.riskLevel.level === 4))
                           ? t.flightDisruptions
                           : t.severeWeather}
-                        {formatHighRiskTimes()}
+                        {formatHighRiskTimes}
                         {highRiskPeriods.filter(p => p.riskLevel.level >= 3).length > 1 
                           && `. ${t.laterInDay}`}
                         {`. ${t.checkStatus}`}

@@ -1069,7 +1069,7 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   );
 
   // Process each base period (now with async/await)
-  for (const [index, period] of basePeriods.entries()) {
+  for (const [_index, period] of basePeriods.entries()) {
     const conditions = new Set<string>();
 
     // Process visibility (FIX: use !== undefined to handle 0m!)
@@ -1229,28 +1229,10 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   });
 }
 
-// Helper function to check if two weather periods can be merged
-function areWeatherPeriodsSimilar(a: WeatherPeriod, b: WeatherPeriod): boolean {
-  // Don't merge if they have different probabilities
-  if (a.change?.probability !== b.change?.probability) return false;
-  
-  // Don't merge if they have different change types
-  if (a.change?.indicator?.code !== b.change?.indicator?.code) return false;
-  
-  // Compare conditions
-  const aConditions = new Set(a.conditions?.map(c => c.code) || []);
-  const bConditions = new Set(b.conditions?.map(c => c.code) || []);
-  
-  if (aConditions.size !== bConditions.size) return false;
-  
-  return Array.from(aConditions).every(code => bConditions.has(code));
-}
-
-
 // Helper function to calculate operational impacts
 async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): Promise<string[]> {
   const impacts: string[] = [];
-  const riskScore = await calculateRiskScore(period);
+  const _riskScore = await calculateRiskScore(period);
 
   // Calculate base risks (await async ones)
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
@@ -1444,26 +1426,6 @@ function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): s
     const endPrefix = end.getDate() === tomorrow.getDate() ? 'Tomorrow' : 'Next day';
     return `${startPrefix} ${startTime} - ${endPrefix} ${endTime}`;
   }
-}
-
-function getWeatherDescription(reasons: string[], impacts: string[], language: 'en' | 'pl'): string {
-  const t = translations[language].weatherConditionMessages;
-  
-  if (!reasons.length && !impacts.length) {
-    return t.clearSkies;
-  }
-    
-  // Combine weather reasons with operational impacts
-  const allImpacts = [...impacts];
-  if (reasons.length > 0) {
-    const primaryReason = reasons[0];
-    const description = getDetailedDescription(primaryReason, language);
-    if (description) {
-      allImpacts.unshift(description);
-    }
-  }
-    
-  return allImpacts.join(" • ");
 }
 
 export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
@@ -2348,7 +2310,7 @@ export async function calculateRiskLevel(
   const hasExtremeFreezing = period.conditions?.some(c => 
     c.code === 'FZFG' || c.code === 'FZRA' || c.code === 'FZDZ'
   );
-  const hasFreezing = period.conditions?.some(c => 
+  const _hasFreezing = period.conditions?.some(c => 
     c.code.includes('FZ') // Any freezing condition
   );
 

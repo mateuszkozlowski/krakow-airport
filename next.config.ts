@@ -16,7 +16,7 @@ const nextConfig = {
   },
 
   // Optimize webpack bundle
-  webpack: (config, { isServer }) => {
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     // Optimize client-side bundle
     if (!isServer) {
       config.optimization = {
@@ -60,7 +60,6 @@ const nextConfig = {
 
   // Experimental features for better performance
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-dialog',
