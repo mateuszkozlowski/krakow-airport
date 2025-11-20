@@ -139,7 +139,7 @@ function extractPhenomenaBars(hours: HourlyPeriod[]): PhenomenaBar[] {
     'snow': 8,
     'Śnieg': 8,
     'śnieg': 8,
-    'Opady': 8, // "Opady śniegu"
+    // Note: 'Opady' removed - too generic, matches rain/showers incorrectly
     'Rain': 7, // Increased! Rain higher than fog
     'Deszcz': 7,
     'deszcz': 7,
@@ -270,7 +270,7 @@ const getPhenomenaIcon = (label: string, size: string = 'w-4 h-4') => {
   
   // Check for phenomena - order matters! Check more specific first
   if (lower.includes('freez') || lower.includes('marzn')) return <Waves className={`${size} text-cyan-300`} />; // Freezing fog - cyan waves
-  if (lower.includes('snow') || lower.includes('śnieg') || lower.includes('snieg') || lower.includes('opady')) return <Snowflake className={`${size} text-blue-300`} />; // Snow (opady = precipitation)
+  if (lower.includes('snow') || lower.includes('śnieg') || lower.includes('snieg')) return <Snowflake className={`${size} text-blue-300`} />; // Snow
   if (lower.includes('rain') || lower.includes('deszcz')) return <CloudRain className={`${size} text-blue-400`} />;
   if (lower.includes('fog') || lower.includes('mgła')) return <Waves className={`${size} text-slate-400`} />;
   if (lower.includes('mist') || lower.includes('zamgle') || lower.includes('zamglenie')) return <Waves className={`${size} text-slate-400`} />;
@@ -586,7 +586,7 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                           const priorityMap: Record<string, number> = {
                             'Freezing': 10, 'Marznąc': 10, 'FZFG': 10, 'FZRA': 10,
                             'Thunderstorm': 9, 'Burza': 9, 'TS': 9, 'TSRA': 9,
-                            'Snow': 8, 'snow': 8, 'Śnieg': 8, 'śnieg': 8, 'Opady': 8, // Snow higher than fog!
+                            'Snow': 8, 'snow': 8, 'Śnieg': 8, 'śnieg': 8, // Snow higher than fog!
                             'Rain': 7, 'Deszcz': 7, 'deszcz': 7,
                             'Fog': 6, 'Mgła': 6, 'FG': 6,
                             'Mist': 5, 'Zamglenie': 5, 'BR': 5,
@@ -651,7 +651,7 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const priorityMap: Record<string, number> = {
                   'Freez': 9, 'Marzn': 9,
                   'Thunder': 8, 'Burz': 8,
-                  'Snow': 8, 'Śnieg': 8, 'Opady': 8,
+                  'Snow': 8, 'Śnieg': 8,
                   'Rain': 7, 'Deszcz': 7,
                   'Fog': 6, 'Mgła': 6,
                   'Mist': 5, 'Zamglenie': 5,
@@ -711,8 +711,8 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                                 
                                 // Check if they're different types (not just "Snow" vs "Light Snow")
                                 const isDifferentType = 
-                                  (first.includes('snow') || first.includes('śnieg') || first.includes('opady')) !==
-                                  (second.includes('snow') || second.includes('śnieg') || second.includes('opady')) ||
+                                  (first.includes('snow') || first.includes('śnieg')) !==
+                                  (second.includes('snow') || second.includes('śnieg')) ||
                                   (first.includes('rain') || first.includes('deszcz')) !==
                                   (second.includes('rain') || second.includes('deszcz')) ||
                                   (first.includes('fog') || first.includes('mgła')) !==

@@ -1899,7 +1899,7 @@ function extendForecastWithOpenMeteo(
     // Parse Open-Meteo time as UTC and adjust to Warsaw time
     const hourTimeUTC = new Date(openMeteoData.hourly.time[i]);
     const hourTime = adjustToWarsawTime(hourTimeUTC);
-    const hourKey = hourTimeUTC.toISOString().split(':')[0]; // Use UTC for key comparison with TAF
+    const hourKey = hourTime.toISOString().split(':')[0]; // Use Warsaw time for key comparison with TAF
     
     // Only create periods for gaps and within 48h from now
     const hoursFromNow = (hourTime.getTime() - now.getTime()) / (1000 * 60 * 60);
