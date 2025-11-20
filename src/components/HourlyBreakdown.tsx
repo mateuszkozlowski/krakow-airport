@@ -59,12 +59,24 @@ function splitIntoHourlyPeriods(forecast: ForecastChange[], hoursCount: number =
     
     // Find the period that covers this hour
     // Note: p.from and p.to are already adjusted to Warsaw time in getAirportWeather
-    const period = forecast.find(p => {
+    // If multiple periods cover this hour (e.g., BASE + TEMPO), prioritize TEMPO/PROB or highest risk
+    const matchingPeriods = forecast.filter(p => {
       return hourTime >= p.from && hourTime < p.to;
     });
     
+    // Select period: prioritize TEMPO/PROB (they have more specific conditions)
+    // Then by highest risk level
+    const period = matchingPeriods.sort((a, b) => {
+      // TEMPO/PROB first
+      if (a.isTemporary && !b.isTemporary) return -1;
+      if (!a.isTemporary && b.isTemporary) return 1;
+      // Then by risk level
+      return b.riskLevel.level - a.riskLevel.level;
+    })[0];
+    
     // Only add hour if period exists - Open-Meteo extension will happen in lib/weather.ts
     if (period) {
+      
       // Clean phenomena - remove emoji and filter out "good conditions" messages
       const cleanPhenomena = period.conditions.phenomena
         .filter(p => p && typeof p === 'string') // Filter out undefined/null
@@ -74,7 +86,16 @@ function splitIntoHourlyPeriods(forecast: ForecastChange[], hoursCount: number =
           !p.includes('No significant') &&
           !p.includes('Brak znaczących')
         )
-        .map(p => p.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim())
+        .map(p => {
+          // Remove ALL emoji and variation selectors more thoroughly
+          return p
+            .replace(/[\u{1F000}-\u{1F9FF}]/gu, '') // All emoji
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+            .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+            .replace(/[\u{E0000}-\u{E007F}]/gu, '') // Tags
+            .trim();
+        })
         .filter(p => p.length > 0); // Remove empty strings after cleaning
       
       // Clean warnings - filter out undefined/null
@@ -104,6 +125,7 @@ function extractPhenomenaBars(hours: HourlyPeriod[]): PhenomenaBar[] {
   const processedPhenomena = new Set<string>();
   
   // Priority map for phenomena (higher = more important)
+  // MUST match the priority in mobile view!
   const priorityMap: Record<string, number> = {
     'Freezing': 10,
     'Marznąc': 10,
@@ -113,16 +135,20 @@ function extractPhenomenaBars(hours: HourlyPeriod[]): PhenomenaBar[] {
     'Burza': 9,
     'TS': 9,
     'TSRA': 9,
-    'Fog': 8,
-    'Mgła': 8,
-    'FG': 8,
-    'Mist': 6,
-    'Zamglenie': 6,
-    'BR': 6,
-    'Rain': 5,
-    'Deszcz': 5,
-    'Snow': 5,
-    'Śnieg': 5,
+    'Snow': 8, // Increased! Snow higher than fog
+    'snow': 8,
+    'Śnieg': 8,
+    'śnieg': 8,
+    'Opady': 8, // "Opady śniegu"
+    'Rain': 7, // Increased! Rain higher than fog
+    'Deszcz': 7,
+    'deszcz': 7,
+    'Fog': 6, // Decreased
+    'Mgła': 6,
+    'FG': 6,
+    'Mist': 5, // Decreased
+    'Zamglenie': 5,
+    'BR': 5,
   };
   
   // For each unique phenomenon, find all its ranges
@@ -241,11 +267,13 @@ function getDayLabel(dayLabel: string | undefined, language: 'en' | 'pl'): strin
 // Helper to get phenomena icon - shared across component
 const getPhenomenaIcon = (label: string, size: string = 'w-4 h-4') => {
   const lower = label.toLowerCase();
+  
+  // Check for phenomena - order matters! Check more specific first
   if (lower.includes('freez') || lower.includes('marzn')) return <Waves className={`${size} text-cyan-300`} />; // Freezing fog - cyan waves
-  if (lower.includes('fog') || lower.includes('mgła')) return <Waves className={`${size} text-slate-400`} />;
-  if (lower.includes('mist') || lower.includes('zamgle')) return <Waves className={`${size} text-slate-400`} />;
+  if (lower.includes('snow') || lower.includes('śnieg') || lower.includes('snieg') || lower.includes('opady')) return <Snowflake className={`${size} text-blue-300`} />; // Snow (opady = precipitation)
   if (lower.includes('rain') || lower.includes('deszcz')) return <CloudRain className={`${size} text-blue-400`} />;
-  if (lower.includes('snow') || lower.includes('śnieg')) return <Snowflake className={`${size} text-blue-300`} />;
+  if (lower.includes('fog') || lower.includes('mgła')) return <Waves className={`${size} text-slate-400`} />;
+  if (lower.includes('mist') || lower.includes('zamgle') || lower.includes('zamglenie')) return <Waves className={`${size} text-slate-400`} />;
   if (lower.includes('hail') || lower.includes('grad')) return <CloudSnow className={`${size} text-cyan-400`} />;
   if (lower.includes('thunder') || lower.includes('burz')) return <CloudLightning className={`${size} text-purple-400`} />;
   if (lower.includes('wind') || lower.includes('wiatr')) return <Wind className={`${size} text-slate-400`} />;
@@ -554,13 +582,14 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                         </span>
                         {getRiskIcon(h.riskLevel, 'w-8 h-8')}
                         {h.phenomena.length > 0 && (() => {
-                          // Find highest priority phenomenon
+                          // Find highest priority phenomenon - prioritize precipitation over visibility
                           const priorityMap: Record<string, number> = {
                             'Freezing': 10, 'Marznąc': 10, 'FZFG': 10, 'FZRA': 10,
                             'Thunderstorm': 9, 'Burza': 9, 'TS': 9, 'TSRA': 9,
-                            'Fog': 8, 'Mgła': 8, 'FG': 8,
-                            'Mist': 6, 'Zamglenie': 6, 'BR': 6,
-                            'Rain': 5, 'Deszcz': 5, 'Snow': 5, 'Śnieg': 5,
+                            'Snow': 8, 'snow': 8, 'Śnieg': 8, 'śnieg': 8, 'Opady': 8, // Snow higher than fog!
+                            'Rain': 7, 'Deszcz': 7, 'deszcz': 7,
+                            'Fog': 6, 'Mgła': 6, 'FG': 6,
+                            'Mist': 5, 'Zamglenie': 5, 'BR': 5,
                           };
                           
                           let highestPriority = 0;
@@ -617,9 +646,30 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const isDayChange = i > 0 && h.dayLabel !== hours[i - 1].dayLabel;
                 const dayLabelText = getDayLabel(h.dayLabel, language);
                 
-                // Find phenomena for this hour and sort by priority
-                const hourPhenomena = phenomenaBars
-                  .filter(bar => i >= bar.startHour && i < bar.endHour)
+                // Use direct phenomena from this hour (not aggregated bars)
+                // This ensures we show the actual phenomena for each specific hour
+                const priorityMap: Record<string, number> = {
+                  'Freez': 9, 'Marzn': 9,
+                  'Thunder': 8, 'Burz': 8,
+                  'Snow': 8, 'Śnieg': 8, 'Opady': 8,
+                  'Rain': 7, 'Deszcz': 7,
+                  'Fog': 6, 'Mgła': 6,
+                  'Mist': 5, 'Zamglenie': 5,
+                  'Hail': 7, 'Grad': 7,
+                  'Wind': 4, 'Wiatr': 4
+                };
+                
+                const hourPhenomena = h.phenomena
+                  .map(label => {
+                    const lower = label.toLowerCase();
+                    let priority = 0;
+                    for (const [key, val] of Object.entries(priorityMap)) {
+                      if (lower.includes(key.toLowerCase())) {
+                        priority = Math.max(priority, val);
+                      }
+                    }
+                    return { label, priority };
+                  })
                   .sort((a, b) => b.priority - a.priority); // Sort by priority descending
                 
                 return (
@@ -646,16 +696,39 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                           {h.time.split(':')[0]}
                         </div>
                         
-                        {/* Phenomena icons - fixed space */}
+                        {/* Phenomena icons - fixed space - show top 2 */}
                         <div className="flex-1 flex justify-center items-center gap-1.5 mb-2 min-h-[20px]">
-                          {hourPhenomena.slice(0, 2).map((bar, idx) => (
-                            <div 
-                              key={idx}
-                              className="transition-transform group-hover:scale-110"
-                            >
-                              {getPhenomenaIcon(bar.label)}
-                            </div>
-                          ))}
+                          {hourPhenomena.length > 0 && (
+                            <>
+                              {/* Always show highest priority */}
+                              <div className="transition-transform group-hover:scale-110">
+                                {getPhenomenaIcon(hourPhenomena[0].label)}
+                              </div>
+                              {/* Show second if different type (not just intensity variant) */}
+                              {hourPhenomena.length > 1 && (() => {
+                                const first = hourPhenomena[0].label.toLowerCase();
+                                const second = hourPhenomena[1].label.toLowerCase();
+                                
+                                // Check if they're different types (not just "Snow" vs "Light Snow")
+                                const isDifferentType = 
+                                  (first.includes('snow') || first.includes('śnieg') || first.includes('opady')) !==
+                                  (second.includes('snow') || second.includes('śnieg') || second.includes('opady')) ||
+                                  (first.includes('rain') || first.includes('deszcz')) !==
+                                  (second.includes('rain') || second.includes('deszcz')) ||
+                                  (first.includes('fog') || first.includes('mgła')) !==
+                                  (second.includes('fog') || second.includes('mgła'));
+                                
+                                if (isDifferentType) {
+                                  return (
+                                    <div className="transition-transform group-hover:scale-110">
+                                      {getPhenomenaIcon(hourPhenomena[1].label)}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </>
+                          )}
                         </div>
                         
                         {/* Risk icon */}
@@ -670,13 +743,18 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                       className="bg-slate-900/95 border-slate-700 shadow-2xl backdrop-blur-xl max-w-xs p-3 z-[100]"
                     >
                       {(() => {
-                        // Check if we have any additional content beyond time/risk
-                        const hasCleanPhenomena = hourPhenomena.some(p => p && p.label && typeof p.label === 'string');
+                        // Use h.phenomena directly for tooltip (not phenomenaBars which may miss items in gaps)
+                        const tooltipPhenomena = h.phenomena.map(label => ({
+                          label: label,
+                          priority: 0 // Not needed for tooltip
+                        }));
+                        
+                        const hasCleanPhenomena = tooltipPhenomena.some(p => p && p.label && typeof p.label === 'string');
                         const hasCleanWarnings = h.warnings.some(w => w && typeof w === 'string');
                         const hasAdditionalContent = hasCleanPhenomena || hasCleanWarnings || h.probability;
                         
                         // Clean phenomena labels - remove emoji
-                        const cleanPhenomena = hourPhenomena
+                        const cleanPhenomena = tooltipPhenomena
                           .filter(p => p && p.label && typeof p.label === 'string')
                           .map(p => ({
                             ...p,

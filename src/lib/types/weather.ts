@@ -191,6 +191,9 @@ export const WEATHER_PHENOMENA = {
   RASN: 'RASN',
   '-RASN': '-RASN',
   '+RASN': '+RASN',
+  SNRA: 'SNRA',
+  '-SNRA': '-SNRA',
+  '+SNRA': '+SNRA',
   
   // Other precipitation
   GR: 'GR',
@@ -259,6 +262,9 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     RASN: '🌨️ Rain and Snow',
     '-RASN': '🌨️ Light Rain and Snow',
     '+RASN': '🌨️ Heavy Rain and Snow',
+    SNRA: '🌨️ Snow with Rain',
+    '-SNRA': '🌨️ Light Snow with Rain',
+    '+SNRA': '🌨️ Heavy Snow with Rain',
     
     // Other precipitation
     GR: '🌨️ Hail',
@@ -325,6 +331,9 @@ export const WEATHER_PHENOMENA_TRANSLATIONS = {
     RASN: '🌨️ Deszcz ze śniegiem',
     '-RASN': '🌨️ Słaby deszcz ze śniegiem',
     '+RASN': '🌨️ Intensywny deszcz ze śniegiem',
+    SNRA: '🌨️ Śnieg z deszczem',
+    '-SNRA': '🌨️ Słaby śnieg z deszczem',
+    '+SNRA': '🌨️ Intensywny śnieg z deszczem',
     
     // Other precipitation
     GR: '🌨️ Grad',
