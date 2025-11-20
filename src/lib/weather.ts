@@ -234,50 +234,10 @@ const previousVisibilityReading: {
   timestamp: number;
 } | null = null;
 
-// Add operational impact assessment
-async function assessOperationalImpacts(weather: WeatherData, language: 'en' | 'pl'): Promise<string[]> {
-  const t = translations[language].operationalImpactMessages;
-  const impacts: string[] = [];
-  
-  // Update snow tracking based on current weather (METAR) - this is the only place where snow state is updated
-  // Other functions (like calculateWeatherPhenomenaRisk) only READ the state, not update it
-  await updateSnowTracking(weather.conditions);
-  
-  // Ground operations impacts for snow conditions with duration consideration
-  const snowInfo = await getSnowDurationInfo();
-  if (snowInfo.duration > 0) {
-    const duration = snowInfo.duration;
-    
-    if (weather.conditions?.some(c => ['+SN', '+SHSN'].includes(c.code))) {
-      impacts.push(t.runwayClearing);
-      impacts.push(t.deicingDelay);
-      impacts.push(t.reducedCapacity);
-      
-      if (duration >= SNOW_DURATION.THRESHOLDS.PROLONGED) {
-      impacts.push(t.prolongedSnowOperations);
-      }
-    } else if (weather.conditions?.some(c => ['SN', 'SHSN'].includes(c.code))) {
-      impacts.push(t.runwayClearing);
-      impacts.push(t.likelyDeicing);
-      impacts.push(t.reducedCapacity);
-      
-      if (duration >= SNOW_DURATION.THRESHOLDS.EXTENDED) {
-      impacts.push(t.extendedSnowOperations);
-      }
-    } else if (weather.conditions?.some(c => ['-SN', '-SHSN'].includes(c.code))) {
-      // For light snow, only add minimal impacts
-      impacts.push(t.possibleDeicing);
-      // Don't add reduced capacity for light snow - airport can handle it
-    }
-  }
-
-  // Low visibility procedures
-  if (weather.visibility?.meters && weather.visibility.meters < 1500) {
-    impacts.push(t.reducedCapacity);
-  }
-
-  return impacts;
-}
+// NOTE: assessOperationalImpacts was removed as dead code
+// The snow tracking mechanism IS actively used in calculateWeatherPhenomenaRisk
+// to apply risk multipliers based on snow duration, but the operational impact
+// messages defined here were never displayed to users.
 
 // Add time-based forecast analysis
 function analyzeUpcomingConditions(forecast: ForecastChange[]): {
@@ -604,7 +564,7 @@ function calculateCrosswind(windDirection: number, windSpeed: number, gustKts?: 
   ];
   
   let maxCrosswind = 0;
-  let maxHeadwind = 0;
+  let maxHeadwind = -Infinity; // Initialize to -Infinity to handle perpendicular and tailwind cases
   let affectedRunway = '07';
   
   for (const rwy of runways) {
@@ -926,7 +886,7 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
     const mergedForecast = mergeConsecutiveSimilarPeriods(mergedOverlapping);
     console.log('Final merged forecast:', mergedForecast.length);
 
-    const currentAssessment = assessWeatherRisk(currentWeather, language);
+    const currentAssessment = await assessWeatherRisk(currentWeather, language);
     
     // Post alert for current conditions if needed
     await postWeatherAlert(currentAssessment, language, [{
@@ -1428,8 +1388,12 @@ function formatTimeDescription(start: Date, end: Date, language: 'en' | 'pl'): s
   }
 }
 
-export function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): RiskAssessment {
+export async function assessWeatherRisk(weather: WeatherData, language: 'en' | 'pl'): Promise<RiskAssessment> {
   const t = translations[language];
+  
+  // Update snow tracking for current weather (METAR only, not forecast periods)
+  // This ensures the snow duration tracking is based on actual observed conditions
+  await updateSnowTracking(weather.conditions);
   
   console.log('Debug - Weather Risk Assessment:', {
     language,

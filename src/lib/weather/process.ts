@@ -9,13 +9,13 @@ export async function processWeatherData(
   language: 'en' | 'pl' = 'pl'
 ): Promise<{
   current: {
-    riskLevel: ReturnType<typeof assessWeatherRisk>;
+    riskLevel: Awaited<ReturnType<typeof assessWeatherRisk>>;
     conditions: WeatherData['conditions'];
   };
   forecast: ForecastChange[];
 }> {
   // Assess current weather risk
-  const riskAssessment = assessWeatherRisk(currentWeather, language);
+  const riskAssessment = await assessWeatherRisk(currentWeather, language);
 
   // Post alert for current conditions if needed
   await postWeatherAlert(riskAssessment, language, [{
