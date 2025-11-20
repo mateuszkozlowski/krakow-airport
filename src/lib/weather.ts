@@ -1858,7 +1858,7 @@ function extendForecastWithOpenMeteo(
   language: 'en' | 'pl'
 ): ForecastChange[] {
   const t = translations[language];
-  const now = new Date();
+  const now = adjustToWarsawTime(new Date());
   
   // Create a map of hours that are covered by TAF
   const tafCoverage = new Set<string>();
@@ -1876,8 +1876,10 @@ function extendForecastWithOpenMeteo(
   const openMeteoPeriods: ForecastChange[] = [];
   
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    const hourTime = new Date(openMeteoData.hourly.time[i]);
-    const hourKey = hourTime.toISOString().split(':')[0];
+    // Parse Open-Meteo time as UTC and adjust to Warsaw time
+    const hourTimeUTC = new Date(openMeteoData.hourly.time[i]);
+    const hourTime = adjustToWarsawTime(hourTimeUTC);
+    const hourKey = hourTimeUTC.toISOString().split(':')[0]; // Use UTC for key comparison with TAF
     
     // Only create periods for gaps and within 48h from now
     const hoursFromNow = (hourTime.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -1961,7 +1963,7 @@ function extendForecastWithOpenMeteo(
       );
     }
     
-    // Create the period (hourly)
+    // Create the period (hourly) - adjusted to Warsaw time
     const periodEnd = new Date(hourTime);
     periodEnd.setHours(periodEnd.getHours() + 1);
     
