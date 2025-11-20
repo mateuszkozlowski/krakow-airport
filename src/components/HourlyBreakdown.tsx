@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { ForecastChange } from '@/lib/types/weather';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { adjustToWarsawTime } from '@/lib/utils/time';
 import { CheckCircle2, AlertCircle, AlertTriangle, XCircle, Waves, CloudRain, CloudLightning, Snowflake, CloudSnow, Wind } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -189,15 +188,6 @@ function createPhenomenaBar(phenomenon: string, start: number, end: number, prio
   };
 }
 
-function getRiskColor(level: number): string {
-  switch (level) {
-    case 4: return 'bg-red-500';
-    case 3: return 'bg-orange-500';
-    case 2: return 'bg-yellow-500';
-    default: return 'bg-green-500';
-  }
-}
-
 function getCardColors(level: number): { bg: string; border: string; text: string } {
   switch (level) {
     case 4:
@@ -224,15 +214,6 @@ function getCardColors(level: number): { bg: string; border: string; text: strin
         border: 'border-emerald-700/30',
         text: 'text-emerald-300'
       };
-  }
-}
-
-function getRiskBadgeColors(level: number): string {
-  switch (level) {
-    case 4: return 'bg-red-500/20 text-red-300 border border-red-500/30';
-    case 3: return 'bg-orange-500/20 text-orange-300 border border-orange-500/30';
-    case 2: return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
-    default: return 'bg-green-500/20 text-green-300 border border-green-500/30';
   }
 }
 
@@ -284,7 +265,6 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
   const hours = allHours; // Show all 48 hours
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollHint, setShowScrollHint] = useState(true);
-  const [showAllMobile, setShowAllMobile] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)'); // md breakpoint
   
   // Check if scrolled to end - only for desktop

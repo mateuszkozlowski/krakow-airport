@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 // Wind compass component
 export function WindCompass({ 

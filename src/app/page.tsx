@@ -126,7 +126,6 @@ const RiskRadial = memo(function RiskRadial({
   size?: number;
 }) {
   const { language } = useLanguage();
-  const t = translations[language];
   
   const colors = {
     1: { stroke: '#10b981', glow: '#10b981', bg: '#10b98120' },
@@ -475,6 +474,7 @@ export default function Home() {
     fetchData();
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
   // CONDITIONAL RETURNS AFTER ALL HOOKS
