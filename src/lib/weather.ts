@@ -472,7 +472,12 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
 
   // Process OpenMeteo data and calculate trends
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    const time = openMeteoData.hourly.time[i];
+    const timeString = openMeteoData.hourly.time[i];
+    // Parse as UTC and adjust to Warsaw time to match TAF period keys
+    const timeUTC = new Date(timeString.endsWith('Z') ? timeString : `${timeString}Z`);
+    const timeWarsaw = adjustToWarsawTime(timeUTC);
+    const adjustedTimeKey = timeWarsaw.toISOString().split('.')[0]; // "2024-01-20T12:00:00Z"
+    
     const prevHour = i > 0 ? {
       visibility: openMeteoData.hourly.visibility[i-1],
       windSpeed: openMeteoData.hourly.wind_speed_10m[i-1]
@@ -503,7 +508,8 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
       }
     }
 
-    hourlyConditions.set(time, { ...currentHour, trend });
+    // Use adjusted Warsaw time as key to match TAF period keys
+    hourlyConditions.set(adjustedTimeKey, { ...currentHour, trend });
   }
 
   // Helper function to adjust weight based on data age
@@ -1881,12 +1887,14 @@ function extendForecastWithOpenMeteo(
   const now = adjustToWarsawTime(new Date());
   
   // Create a map of hours that are covered by TAF
+  // Note: period.from and period.to are already in Warsaw time from processForecast
   const tafCoverage = new Set<string>();
   tafPeriods.forEach(period => {
     const start = new Date(period.from);
     const end = new Date(period.to);
     
     for (let time = start.getTime(); time < end.getTime(); time += 60 * 60 * 1000) {
+      // Keep in Warsaw time to match how we check it later (line 1902)
       const hourKey = new Date(time).toISOString().split(':')[0]; // "2024-01-20T14"
       tafCoverage.add(hourKey);
     }
@@ -1896,8 +1904,10 @@ function extendForecastWithOpenMeteo(
   const openMeteoPeriods: ForecastChange[] = [];
   
   for (let i = 0; i < openMeteoData.hourly.time.length; i++) {
-    // Parse Open-Meteo time as UTC and adjust to Warsaw time
-    const hourTimeUTC = new Date(openMeteoData.hourly.time[i]);
+    // Parse Open-Meteo time as UTC (ensure 'Z' suffix for explicit UTC parsing)
+    // Open-Meteo returns times without 'Z', which can be ambiguous
+    const timeString = openMeteoData.hourly.time[i];
+    const hourTimeUTC = new Date(timeString.endsWith('Z') ? timeString : `${timeString}Z`);
     const hourTime = adjustToWarsawTime(hourTimeUTC);
     const hourKey = hourTime.toISOString().split(':')[0]; // Use Warsaw time for key comparison with TAF
     

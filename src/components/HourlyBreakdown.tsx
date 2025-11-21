@@ -532,23 +532,83 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                   
                   {/* Warnings */}
                   {period.warnings.length > 0 && (() => {
-                    const cleanWarnings = period.warnings
-                      .filter(w => w && typeof w === 'string')
+                    // Use the SAME grouping logic as desktop for consistency
+                    const groupedWarnings: string[] = [];
+                    const gustWarnings: string[] = [];
+                    const otherWarnings: string[] = [];
+                    
+                    period.warnings.forEach(w => {
+                      const lower = w.toLowerCase();
+                      if (lower.includes('podmuchy') || lower.includes('gust')) {
+                        // Skip generic warnings without kt values
+                        if (!w.match(/\d+kt/)) {
+                          return;
+                        }
+                        gustWarnings.push(w);
+                      } else if (!lower.includes('widoczność') && !lower.includes('visibility')) {
+                        otherWarnings.push(w);
+                      }
+                    });
+                    
+                    // Combine gust warnings into one
+                    if (gustWarnings.length > 0) {
+                      const gustSpeeds = gustWarnings
+                        .map(w => {
+                          const match = w.match(/(\d+)kt/);
+                          return match ? parseInt(match[1]) : null;
+                        })
+                        .filter((s): s is number => s !== null);
+                      
+                      if (gustSpeeds.length > 0) {
+                        const minGust = Math.min(...gustSpeeds);
+                        const maxGust = Math.max(...gustSpeeds);
+                        const isPolish = gustWarnings[0].includes('Podmuchy');
+                        
+                        if (minGust === maxGust) {
+                          groupedWarnings.push(
+                            isPolish 
+                              ? `Podmuchy wiatru ${maxGust}kt mogą wpłynąć na operacje naziemne`
+                              : `Wind gusts ${maxGust}kt may affect ground operations`
+                          );
+                        } else {
+                          groupedWarnings.push(
+                            isPolish 
+                              ? `Podmuchy wiatru ${minGust}-${maxGust}kt mogą wpłynąć na operacje naziemne`
+                              : `Wind gusts ${minGust}-${maxGust}kt may affect ground operations`
+                          );
+                        }
+                      }
+                    }
+                    
+                    // Add other warnings (deduplicated)
+                    const uniqueOthers = [...new Set(otherWarnings)];
+                    groupedWarnings.push(...uniqueOthers);
+                    
+                    const cleanWarnings = groupedWarnings
+                      .slice(0, 3)
                       .map(w => w.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim())
-                      .filter(w => w.length > 0 && !w.toLowerCase().includes('widoczność') && !w.toLowerCase().includes('visibility'));
+                      .filter(w => w.length > 0);
                     
                     if (cleanWarnings.length === 0) return null;
                     
                     return (
                       <div className="space-y-2 pt-2 border-t border-slate-600/30">
-                        {cleanWarnings.map((warning, wIdx) => (
-                          <div key={wIdx} className="flex items-start gap-2 text-sm text-slate-100">
-                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="leading-relaxed">{warning}</span>
-                          </div>
-                        ))}
+                        {cleanWarnings.map((warning, wIdx) => {
+                          // Choose icon based on warning type (same as desktop)
+                          const lower = warning.toLowerCase();
+                          const isWindWarning = lower.includes('podmuchy') || lower.includes('gust') || lower.includes('wiatr') || lower.includes('wind');
+                          
+                          return (
+                            <div key={wIdx} className="flex items-start gap-2 text-sm text-slate-100">
+                              {isWindWarning ? (
+                                <Wind className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
+                              ) : (
+                                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" />
+                              )}
+                              <span className="leading-relaxed">{warning}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })()}
@@ -698,7 +758,7 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                         
                         {/* Phenomena icons - fixed space - show top 2 */}
                         <div className="flex-1 flex justify-center items-center gap-1.5 mb-2 min-h-[20px]">
-                          {hourPhenomena.length > 0 && (
+                          {hourPhenomena.length > 0 ? (
                             <>
                               {/* Always show highest priority */}
                               <div className="transition-transform group-hover:scale-110">
@@ -728,7 +788,12 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                                 return null;
                               })()}
                             </>
-                          )}
+                          ) : h.warnings.length > 0 ? (
+                            // Show wind icon if no phenomena but there are warnings (likely wind-related)
+                            <div className="transition-transform group-hover:scale-110">
+                              <Wind className="w-4 h-4 text-slate-400" />
+                            </div>
+                          ) : null}
                         </div>
                         
                         {/* Risk icon */}
@@ -793,7 +858,7 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                             
                             {/* Warnings */}
                             {cleanWarnings.length > 0 && (
-                              <div className="pt-2 border-t border-slate-700/50 space-y-1">
+                              <div className={`space-y-1 ${cleanPhenomena.length > 0 ? 'pt-2 border-t border-slate-700/50' : ''}`}>
                                 {cleanWarnings.map((warning, idx) => (
                                   <div key={idx} className="text-xs text-orange-300 flex items-start gap-1.5">
                                     <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
@@ -861,7 +926,8 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const timeDiff = hour.hour.getTime() - lastHour.hour.getTime();
                 const oneHour = 60 * 60 * 1000;
                 
-                // Group if consecutive and same risk level
+                // Group ONLY consecutive hours with same risk level
+                // Don't merge across gaps - it's confusing for users!
                 if (timeDiff <= oneHour && hour.riskLevel === lastHour.riskLevel) {
                   currentGroup.push(hour);
                 } else {
@@ -965,9 +1031,61 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                       
                       {/* Warnings - prioritize operational impacts */}
                       {allWarnings.length > 0 && (() => {
-                        const filteredWarnings = allWarnings
+                        // Group similar warnings (e.g., wind gusts)
+                        const groupedWarnings: string[] = [];
+                        const gustWarnings: string[] = [];
+                        const otherWarnings: string[] = [];
+                        
+                        allWarnings.forEach(w => {
+                          const lower = w.toLowerCase();
+                          if (lower.includes('podmuchy') || lower.includes('gust')) {
+                            // Skip generic warnings like "Silne podmuchy wiatru" if they don't have specific numbers
+                            if (!w.match(/\d+kt/)) {
+                              return; // Skip generic wind warnings without kt values
+                            }
+                            gustWarnings.push(w);
+                          } else if (!lower.includes('widoczność') && !lower.includes('visibility')) {
+                            otherWarnings.push(w);
+                          }
+                        });
+                        
+                        // Combine gust warnings into one
+                        if (gustWarnings.length > 0) {
+                          // Extract all gust speeds
+                          const gustSpeeds = gustWarnings
+                            .map(w => {
+                              const match = w.match(/(\d+)kt/);
+                              return match ? parseInt(match[1]) : null;
+                            })
+                            .filter((s): s is number => s !== null);
+                          
+                          if (gustSpeeds.length > 0) {
+                            const minGust = Math.min(...gustSpeeds);
+                            const maxGust = Math.max(...gustSpeeds);
+                            const isPolish = gustWarnings[0].includes('Podmuchy');
+                            
+                            if (minGust === maxGust) {
+                              groupedWarnings.push(
+                                isPolish 
+                                  ? `Podmuchy wiatru ${maxGust}kt mogą wpłynąć na operacje naziemne`
+                                  : `Wind gusts ${maxGust}kt may affect ground operations`
+                              );
+                            } else {
+                              groupedWarnings.push(
+                                isPolish 
+                                  ? `Podmuchy wiatru ${minGust}-${maxGust}kt mogą wpłynąć na operacje naziemne`
+                                  : `Wind gusts ${minGust}-${maxGust}kt may affect ground operations`
+                              );
+                            }
+                          }
+                        }
+                        
+                        // Add other warnings (deduplicated)
+                        const uniqueOthers = [...new Set(otherWarnings)];
+                        groupedWarnings.push(...uniqueOthers);
+                        
+                        const filteredWarnings = groupedWarnings
                           .slice(0, 3)
-                          .filter(w => !w.toLowerCase().includes('widoczność') && !w.toLowerCase().includes('visibility'))
                           .map(w => w.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim())
                           .filter(w => w.length > 0);
                         
@@ -975,14 +1093,22 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                         
                         return (
                           <div className="space-y-2 pt-2 border-t border-slate-600/30">
-                            {filteredWarnings.map((warning, wIdx) => (
-                              <div key={wIdx} className="flex items-start gap-2.5 text-sm text-slate-200">
-                                <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="leading-relaxed">{warning}</span>
-                              </div>
-                            ))}
+                            {filteredWarnings.map((warning, wIdx) => {
+                              // Choose icon based on warning type
+                              const lower = warning.toLowerCase();
+                              const isWindWarning = lower.includes('podmuchy') || lower.includes('gust') || lower.includes('wiatr') || lower.includes('wind');
+                              
+                              return (
+                                <div key={wIdx} className="flex items-start gap-2.5 text-sm text-slate-200">
+                                  {isWindWarning ? (
+                                    <Wind className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
+                                  ) : (
+                                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" />
+                                  )}
+                                  <span className="leading-relaxed">{warning}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })()}
