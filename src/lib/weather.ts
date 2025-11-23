@@ -1090,8 +1090,12 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
       null;
     if (windDesc) conditions.add(windDesc);
 
+    // Check if this period covers current time (for applying current conditions boost)
+    const now = new Date();
+    const isCurrentConditions = period.from <= now && now <= period.to;
+
     // Calculate risk level using the new sophisticated system (now with await)
-    const riskLevel = await calculateRiskLevel(period, language, t.operationalWarnings);
+    const riskLevel = await calculateRiskLevel(period, language, t.operationalWarnings, isCurrentConditions);
 
     // Add period
     const phenomena = Array.from(conditions);
@@ -1158,8 +1162,12 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
       null;
     if (windDesc) conditions.add(windDesc);
 
+    // Check if this period covers current time (for applying current conditions boost)
+    const now = new Date();
+    const isCurrentConditions = period.from <= now && now <= period.to;
+
     // Calculate risk level using the new sophisticated system (now with await)
-    const riskLevel = await calculateRiskLevel(period, language, t.operationalWarnings);
+    const riskLevel = await calculateRiskLevel(period, language, t.operationalWarnings, isCurrentConditions);
 
     const phenomena = Array.from(conditions);
 
