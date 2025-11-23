@@ -58,7 +58,7 @@ const RISK_WEIGHTS = {
     FZDZ: 90,    
     FZFG: 100,   // Increased from 95 to 100 - freezing fog is extremely dangerous
     FC: 100,     
-    '+SN': 85,   
+    '+SN': 92,   // Increased from 85 to 92 - heavy snow causes significant operational disruption
     '+SHSN': 90, 
     'SHSN': 80,
     'BLSN': 85,  // Blowing snow - very poor visibility and high wind
@@ -67,9 +67,9 @@ const RISK_WEIGHTS = {
   
   // Moderate phenomena
   PHENOMENA_MODERATE: {
-    SN: 70,
-    '-SN': 45,   // Light snow - still requires de-icing but less severe
-    BR: 60,     // Increased from 50 to 60 - mist is more significant
+    SN: 80,      // Increased from 70 to 80 - snow always requires de-icing and causes ground delays
+    '-SN': 55,   // Increased from 45 to 55 - light snow still requires de-icing
+    BR: 60,      // Increased from 50 to 60 - mist is more significant
     FG: 85,     
     RA: 30,
     '-RA': 20,   // Light rain - minimal impact
@@ -1223,7 +1223,11 @@ async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en'
   // Calculate base risks (await async ones)
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
-  const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
+  const weatherRisk = await calculateWeatherPhenomenaRisk(
+    period.conditions,
+    period.visibility?.meters,
+    period.temperature?.celsius
+  );
   const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Calculate compound effects (no time multiplier)
@@ -1293,7 +1297,11 @@ async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en'
 async function calculateRiskScore(period: WeatherPeriod): Promise<number> {
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
-  const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
+  const weatherRisk = await calculateWeatherPhenomenaRisk(
+    period.conditions,
+    period.visibility?.meters,
+    period.temperature?.celsius
+  );
   const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Calculate compound effects (no time multiplier)
@@ -1529,8 +1537,48 @@ export async function assessWeatherRisk(weather: WeatherData, language: 'en' | '
     };
   }
 
-  // Check for poor visibility - more granular assessment with descriptive impacts (FIX: !== undefined to handle 0m!)
-  if (weather.visibility?.meters !== undefined) {
+  // Check for SNOW + MIST + LOW VISIBILITY combination (CRITICAL FIX for real-world scenario)
+  const hasSnow = weather.conditions?.some(c => 
+    ['SN', '-SN', '+SN', 'SHSN', '-SHSN', '+SHSN'].some(code => c.code.includes(code))
+  );
+  const hasMist = weather.conditions?.some(c => c.code === 'BR');
+  
+  // CRITICAL: Snow + Mist + Low Visibility causes MAJOR delays (observed: 70+ minutes)
+  if (hasSnow && hasMist && weather.visibility?.meters !== undefined && weather.visibility.meters < 2500) {
+    baseRiskLevel = Math.max(baseRiskLevel, 3); // At least Level 3
+    operationalImpactsSet.add(language === 'pl'
+      ? `❄️🌫️ Opady śniegu z zamgleniem: ${weather.visibility.meters}m - DUŻE opóźnienia naziemne`
+      : `❄️🌫️ Snow with mist: ${weather.visibility.meters}m - MAJOR ground delays`);
+    operationalImpactsSet.add(language === 'pl'
+      ? '✈️ Wydłużone procedury odladzania - spodziewane opóźnienia 30-90 minut'
+      : '✈️ Extended de-icing procedures - expect 30-90 minute delays');
+    operationalImpactsSet.add(language === 'pl'
+      ? '🛫 Starty poważnie opóźnione - operacje naziemne utrudnione'
+      : '🛫 Takeoffs significantly delayed - ground operations impaired');
+    
+    // If visibility is VERY low with snow, escalate to Level 4
+    if (weather.visibility.meters < 1500) {
+      baseRiskLevel = Math.max(baseRiskLevel, 4);
+      operationalImpactsSet.add(language === 'pl'
+        ? '🚨 Krytyczne warunki - możliwe zawieszenie niektórych operacji'
+        : '🚨 Critical conditions - possible suspension of some operations');
+    }
+    
+    reasons.push(`Snow with mist and reduced visibility (${weather.visibility.meters}m) - major operational impact`);
+  }
+  // Check for SNOW + LOW VISIBILITY (without mist - still problematic)
+  else if (hasSnow && weather.visibility?.meters !== undefined && weather.visibility.meters < 2000) {
+    baseRiskLevel = Math.max(baseRiskLevel, 3);
+    operationalImpactsSet.add(language === 'pl'
+      ? `❄️ Opady śniegu przy niskiej widoczności: ${weather.visibility.meters}m`
+      : `❄️ Snowfall with low visibility: ${weather.visibility.meters}m`);
+    operationalImpactsSet.add(language === 'pl'
+      ? '✈️ Opóźnienia 20-60 minut z powodu odladzania'
+      : '✈️ Delays of 20-60 minutes due to de-icing');
+    reasons.push(`Snow with low visibility (${weather.visibility.meters}m)`);
+  }
+  // Standard visibility checks (for non-snow conditions)
+  else if (weather.visibility?.meters !== undefined) {
     if (weather.visibility.meters < 1000) {
       baseRiskLevel = Math.max(baseRiskLevel, 3);
       const percentOfMinimum = Math.round((weather.visibility.meters / MINIMUMS.VISIBILITY) * 100);
@@ -2253,14 +2301,19 @@ const COMPOUND_EFFECTS = {
 export async function calculateRiskLevel(
   period: WeatherPeriod, 
   language: 'en' | 'pl', 
-  warnings: Record<string, string>
+  warnings: Record<string, string>,
+  isCurrentConditions: boolean = false  // SOLUTION 4: Distinguish METAR (current) from TAF (forecast)
 ): Promise<RiskLevel> {
   const t = translations[language];
   
   // Calculate base risks (await the async ones)
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
   const windRisk = calculateWindRisk(period.wind);
-  const weatherRisk = await calculateWeatherPhenomenaRisk(period.conditions);
+  let weatherRisk = await calculateWeatherPhenomenaRisk(
+    period.conditions, 
+    period.visibility?.meters,
+    period.temperature?.celsius
+  );
   const ceilingRisk = calculateCeilingRisk(period.clouds, period.conditions);
 
   // Get probability from TAF
@@ -2268,14 +2321,58 @@ export async function calculateRiskLevel(
   
   // Calculate initial operational impacts (await the async function)
   const impacts = await calculateOperationalImpacts(period, language, warnings);
+  
+  // Detect snow and visibility conditions
+  const hasSnow = period.conditions?.some(c => 
+    ['SN', '-SN', '+SN', 'SHSN', '-SHSN', '+SHSN'].some(code => c.code.includes(code))
+  );
+  const hasMist = period.conditions?.some(c => c.code === 'BR');
+  const hasLowVisibility = period.visibility?.meters !== undefined && period.visibility.meters < 2500;
+  
+  // SOLUTION 5: Special operational disruption threshold for snow + mist + low visibility
+  // This combination causes significant ground operation delays (de-icing, runway clearing)
+  let operationalDisruptionBoost = 0;
+  if (hasSnow && hasMist && hasLowVisibility) {
+    // This scenario causes major delays (observed: 70+ minutes)
+    operationalDisruptionBoost = 15; // Add significant boost to risk scores
+    impacts.push(
+      language === 'pl'
+        ? '❄️ Śnieg z zamgleniem i ograniczoną widocznością - spodziewane znaczące opóźnienia w operacjach naziemnych'
+        : '❄️ Snow with mist and reduced visibility - expect significant ground operation delays'
+    );
+  } else if (hasSnow && hasLowVisibility) {
+    // Snow with low visibility alone is also problematic
+    operationalDisruptionBoost = 10;
+    impacts.push(
+      language === 'pl'
+        ? '❄️ Śnieg przy ograniczonej widoczności - możliwe opóźnienia w odladzaniu'
+        : '❄️ Snow with reduced visibility - possible de-icing delays'
+    );
+  }
+  
+  // SOLUTION 4: Boost risk for current snow conditions (they're affecting operations NOW)
+  if (isCurrentConditions && hasSnow) {
+    weatherRisk = Math.min(100, weatherRisk * 1.25); // +25% for active snow operations
+    
+    // Additional boost if visibility is also low
+    if (hasLowVisibility) {
+      weatherRisk = Math.min(100, weatherRisk * 1.15); // Another +15% for low vis + active snow
+      
+      impacts.push(
+        language === 'pl'
+          ? '⚠️ Trwające opady śniegu przy ograniczonej widoczności - aktywne opóźnienia naziemne'
+          : '⚠️ Active snowfall with reduced visibility - ongoing ground delays'
+      );
+    }
+  }
 
   // Probability scaling (no time-based adjustments)
   const probabilityFactor = getProbabilityFactor(probability);
 
-  // Apply probability scaling to risks
-  const scaledVisibilityRisk = visibilityRisk * probabilityFactor;
+  // Apply probability scaling to risks, plus operational disruption boost
+  const scaledVisibilityRisk = (visibilityRisk + operationalDisruptionBoost) * probabilityFactor;
   const scaledWindRisk = windRisk * probabilityFactor;
-  const scaledWeatherRisk = weatherRisk * probabilityFactor;
+  const scaledWeatherRisk = (weatherRisk + operationalDisruptionBoost) * probabilityFactor;
   const scaledCeilingRisk = ceilingRisk * probabilityFactor;
 
   // Count severe and moderate conditions using base risks (before adjustments)
@@ -2287,9 +2384,9 @@ export async function calculateRiskLevel(
   ].filter(Boolean).length;
 
   const moderateConditions = [
-    visibilityRisk >= 70,
+    visibilityRisk >= 65,  // Lowered from 70 to 65 for better sensitivity
     windRisk >= 70,
-    weatherRisk >= 70,
+    weatherRisk >= 70,     // Now SN will be 80, so this will count
     ceilingRisk >= 70
   ].filter(Boolean).length;
 
@@ -2546,7 +2643,11 @@ function calculateVisibilityRisk(meters: number | undefined): number {
 
 
 // Add helper function for weather phenomena risk calculation
-async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | undefined): Promise<number> {
+async function calculateWeatherPhenomenaRisk(
+  conditions: { code: string }[] | undefined, 
+  visibility?: number,
+  temperature?: number
+): Promise<number> {
   if (!conditions) return 0;
   
   // Note: Snow tracking is updated only in assessOperationalImpacts() for current weather (METAR)
@@ -2554,6 +2655,7 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
   
   let maxRisk = 0;
   let severeCount = 0;
+  let hasSnow = false;
   
   conditions.forEach(condition => {
     // Split codes by space to handle combinations like 'FZRA FZFG' or 'SHSN BLSN'
@@ -2566,6 +2668,11 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
       
       if (risk >= 70) severeCount++;
       maxRisk = Math.max(maxRisk, risk);
+      
+      // Track if we have snow
+      if (code.includes('SN')) {
+        hasSnow = true;
+      }
     });
     
     // Add synergy bonus for combinations (e.g., FZRA + FZFG is worse than either alone)
@@ -2573,6 +2680,25 @@ async function calculateWeatherPhenomenaRisk(conditions: { code: string }[] | un
       maxRisk = Math.min(100, maxRisk * 1.05); // +5% bonus for dangerous combinations
     }
   });
+  
+  // SOLUTION 3: Context-aware snow risk - increase based on visibility and temperature
+  if (hasSnow && visibility !== undefined) {
+    if (visibility < 2000) {
+      // Snow with very low visibility causes severe ground operation delays
+      maxRisk = Math.min(100, maxRisk * 1.5); // +50% multiplier
+    } else if (visibility < 3000) {
+      // Snow with low visibility significantly impacts operations
+      maxRisk = Math.min(100, maxRisk * 1.35); // +35% multiplier
+    } else if (visibility < 5000) {
+      // Snow with reduced visibility increases delays
+      maxRisk = Math.min(100, maxRisk * 1.2); // +20% multiplier
+    }
+    
+    // Additional boost for cold temperatures (slower de-icing, longer ground times)
+    if (temperature !== undefined && temperature < -5) {
+      maxRisk = Math.min(100, maxRisk * 1.15); // +15% for extreme cold
+    }
+  }
   
   // Apply snow duration multiplier if applicable (only read state, don't update)
   const snowInfo = await getSnowDurationInfo();
