@@ -427,8 +427,8 @@ export default function Home() {
       
       if (dayDifference === 0) {
         return language === 'pl'
-          ? `do ${endTime} dzisiaj`
-          : `until ${endTime} today`;
+          ? `dzisiaj w godzinach ${startTime} do ${endTime}`
+          : `today between ${startTime} and ${endTime}`;
       } else if (dayDifference === 1) {
         return language === 'pl'
           ? `jutro w godzinach ${startTime} do ${endTime}`
@@ -584,13 +584,13 @@ export default function Home() {
                       <div className="space-y-2">
                         <p className="text-sm leading-relaxed text-white/95">
                           {language === 'pl'
-                            ? `⚠️ Obecnie warunki są korzystne (${weather.current.riskLevel.title}), ale prognoza przewiduje pogorszenie do poziomu ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`
-                            : `⚠️ Current conditions are favorable (${weather.current.riskLevel.title}), but forecast predicts deterioration to level ${forecastRiskNow.level} (${forecastRiskNow.period?.riskLevel.title}) ${formatHighRiskTimes}.`}
+                            ? `Obecnie warunki są dobre, ale prognoza przewiduje pogorszenie ${formatHighRiskTimes}. Warunki mogą się szybko zmienić.`
+                            : `Current conditions are favorable, but the forecast predicts deterioration ${formatHighRiskTimes}. Conditions may change rapidly.`}
                         </p>
                         <p className="text-xs text-white/80">
                           {language === 'pl'
-                            ? 'Warunki mogą się szybko zmienić. Sprawdź status lotu bezpośrednio u przewoźnika.'
-                            : 'Conditions may change rapidly. Check your flight status directly with your airline.'}
+                            ? 'Sprawdź status lotu bezpośrednio u przewoźnika.'
+                            : 'Check your flight status directly with your airline.'}
                         </p>
                       </div>
                     ) : (
