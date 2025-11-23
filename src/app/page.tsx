@@ -427,19 +427,19 @@ export default function Home() {
       
       if (dayDifference === 0) {
         return language === 'pl'
-          ? `dzisiaj do godziny ${endTime}`
-          : `today by ${endTime}`;
+          ? `dzisiaj w godzinach ${startTime} do ${endTime}`
+          : `today between ${startTime} and ${endTime}`;
       } else if (dayDifference === 1) {
         return language === 'pl'
-          ? `jutro od godziny ${startTime}`
-          : `tomorrow from ${startTime}`;
+          ? `jutro w godzinach ${startTime} do ${endTime}`
+          : `tomorrow between ${startTime} and ${endTime}`;
       } else {
         // For dates beyond tomorrow, show the actual date
         const dateFormat = { month: 'short', day: 'numeric', timeZone: 'Europe/Warsaw' } as const;
         const dateStr = periodStart.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-GB', dateFormat);
         return language === 'pl'
-          ? `${dateStr} od godziny ${startTime}`
-          : `${dateStr} from ${startTime}`;
+          ? `${dateStr} w godzinach ${startTime} do ${endTime}`
+          : `${dateStr} between ${startTime} and ${endTime}`;
       }
     };
 
