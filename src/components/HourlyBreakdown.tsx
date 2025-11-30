@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { ForecastChange } from '@/lib/types/weather';
 import { adjustToWarsawTime } from '@/lib/utils/time';
-import { CheckCircle2, AlertCircle, AlertTriangle, XCircle, Waves, CloudRain, CloudLightning, Snowflake, CloudSnow, Wind } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, XCircle, Waves, CloudRain, CloudLightning, Snowflake, CloudSnow, Wind, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
@@ -108,7 +108,7 @@ function splitIntoHourlyPeriods(forecast: ForecastChange[], hoursCount: number =
         riskLevel: period.riskLevel.level,
         riskTitle: period.riskLevel.title,
         phenomena: cleanPhenomena,
-        visibility: period.visibility?.meters,
+        visibility: period.visibility?.meters ?? undefined, // Ensure we get undefined if meters doesn't exist
         warnings: cleanWarnings,
         isProbable: period.isTemporary,
         probability: period.probability,
@@ -217,31 +217,35 @@ function createPhenomenaBar(phenomenon: string, start: number, end: number, prio
   };
 }
 
-function getCardColors(level: number): { bg: string; border: string; text: string } {
+function getCardColors(level: number): { bg: string; border: string; text: string; accent: string } {
   switch (level) {
     case 4:
       return {
-        bg: 'bg-red-900/30',
-        border: 'border-red-700/50',
-        text: 'text-red-300'
+        bg: 'bg-gradient-to-br from-red-900/30 to-red-950/20',
+        border: 'border-red-600/60',
+        text: 'text-red-300',
+        accent: 'bg-red-500/10 border-red-500/20'
       };
     case 3:
       return {
-        bg: 'bg-orange-900/30',
-        border: 'border-orange-700/50',
-        text: 'text-orange-300'
+        bg: 'bg-gradient-to-br from-orange-900/30 to-orange-950/20',
+        border: 'border-orange-600/60',
+        text: 'text-orange-300',
+        accent: 'bg-orange-500/10 border-orange-500/20'
       };
     case 2:
       return {
-        bg: 'bg-orange-900/30',
-        border: 'border-orange-700/50',
-        text: 'text-orange-300'
+        bg: 'bg-gradient-to-br from-yellow-900/25 to-yellow-950/15',
+        border: 'border-yellow-600/50',
+        text: 'text-yellow-300',
+        accent: 'bg-yellow-500/10 border-yellow-500/20'
       };
     default:
       return {
-        bg: 'bg-emerald-900/20',
-        border: 'border-emerald-700/30',
-        text: 'text-emerald-300'
+        bg: 'bg-gradient-to-br from-emerald-900/20 to-emerald-950/10',
+        border: 'border-emerald-700/40',
+        text: 'text-emerald-300',
+        accent: 'bg-emerald-500/10 border-emerald-500/20'
       };
   }
 }
@@ -291,12 +295,126 @@ const getRiskIcon = (level: number, size: string = 'w-7 h-7') => {
   }
 };
 
+// Prioritize and simplify phenomena - remove redundancies
+function prioritizePhenomena(phenomena: string[], language: 'en' | 'pl'): string[] {
+  if (phenomena.length === 0) return [];
+  
+  // Filter out generic descriptions - keep only specific weather phenomena
+  const filtered = phenomena.filter(p => {
+    const lower = p.toLowerCase();
+    
+    // Remove generic visibility/ceiling descriptions (they're shown in header or warnings)
+    if (lower.includes('widoczność') || lower.includes('visibility')) return false;
+    if (lower.includes('podstawa chmur poniżej') || lower.includes('ceiling below')) return false;
+    if (lower.includes('bardzo niska podstawa') || lower.includes('very low ceiling')) return false;
+    if (lower.includes('niska podstawa') || lower.includes('low ceiling')) return false;
+    
+    return true;
+  });
+  
+  // Priority map - higher = more important
+  const priorityMap: Record<string, number> = {
+    // Freezing conditions - highest priority
+    'marznąc': 100, 'freezing': 100, 'fzfg': 100, 'fzra': 100, 'fzdz': 100,
+    // Thunderstorms
+    'burz': 95, 'thunder': 95, 'ts': 95,
+    // Severe precipitation
+    'heavy': 85, 'silny': 85, 'obfity': 85,
+    // Snow
+    'śnieg': 80, 'snow': 80, 'sn': 80,
+    // Rain
+    'deszcz': 70, 'rain': 70, 'ra': 70,
+    // Fog/mist - lower priority (less specific than freezing fog)
+    'mgła': 60, 'fog': 60, 'fg': 60,
+    'zamglenie': 50, 'mist': 50, 'br': 50,
+    'haze': 45, 'hmg': 45
+  };
+  
+  // Calculate priority for each phenomenon
+  const withPriority = filtered.map(p => {
+    let priority = 0;
+    const lower = p.toLowerCase();
+    
+    for (const [key, value] of Object.entries(priorityMap)) {
+      if (lower.includes(key)) {
+        priority = Math.max(priority, value);
+      }
+    }
+    
+    return { phenomenon: p, priority };
+  });
+  
+  // Remove duplicates based on type (e.g., "Mgła marznąca" supersedes "Mgła")
+  const deduplicated: typeof withPriority = [];
+  const seen = new Set<string>();
+  
+  // Sort by priority descending
+  withPriority.sort((a, b) => b.priority - a.priority);
+  
+  for (const item of withPriority) {
+    const lower = item.phenomenon.toLowerCase();
+    
+    // Check if this is a more specific version of something we already have
+    let isDuplicate = false;
+    
+    // If we have "Mgła marznąca", skip plain "Mgła"
+    if (lower.includes('mgła') || lower.includes('fog')) {
+      if (seen.has('freezing-fog') && !lower.includes('marzn') && !lower.includes('freez')) {
+        isDuplicate = true;
+      }
+      if (lower.includes('marzn') || lower.includes('freez')) {
+        seen.add('freezing-fog');
+      } else {
+        seen.add('fog');
+      }
+    }
+    
+    // If we have "Deszcz marznący", skip plain "Deszcz"
+    if (lower.includes('deszcz') || lower.includes('rain')) {
+      if (seen.has('freezing-rain') && !lower.includes('marzn') && !lower.includes('freez')) {
+        isDuplicate = true;
+      }
+      if (lower.includes('marzn') || lower.includes('freez')) {
+        seen.add('freezing-rain');
+      } else {
+        seen.add('rain');
+      }
+    }
+    
+    if (!isDuplicate) {
+      deduplicated.push(item);
+    }
+  }
+  
+  // Return top 4 most important phenomena
+  return deduplicated
+    .slice(0, 4)
+    .map(item => item.phenomenon);
+}
+
 export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
   const allHours = splitIntoHourlyPeriods(forecast, 48);
-  const hours = allHours; // Show all 48 hours
+  const hours = allHours;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollHint, setShowScrollHint] = useState(true);
-  const isDesktop = useMediaQuery('(min-width: 768px)'); // md breakpoint
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set([0])); // First card expanded by default
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  
+  const toggleCard = (idx: number) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+        // Haptic feedback on mobile
+        if ('vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
+      }
+      return next;
+    });
+  };
   
   // Check if scrolled to end - only for desktop
   useEffect(() => {
@@ -455,228 +573,9 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
   return (
     <TooltipProvider delayDuration={100}>
       <div className="space-y-3 md:space-y-4">
-        {/* Mobile: Smart Insights FIRST (top), then Horizontal Timeline */}
-        {!isDesktop && (
-          <div className="space-y-3">
-            {/* Smart Insights - NO TITLE on mobile */}
-            {criticalPeriods.length > 0 && criticalPeriods.map((period, idx) => {
-              const colors = getCardColors(period.riskLevel);
-              const description = period.riskLevel === 4
-                ? (language === 'pl' ? 'Warunki mogące wpłynąć na operacje lotnicze' : 'Conditions that may affect flight operations')
-                : period.riskLevel === 3
-                ? (language === 'pl' ? 'Zwróć uwagę na te warunki' : 'Pay attention to these conditions')
-                : (language === 'pl' ? 'Niewielki wpływ warunków pogodowych' : 'Minor weather impact');
-              
-              // Format day labels
-              const startDayText = period.startDayLabel ? getDayLabel(period.startDayLabel, language) : '';
-              const endDayText = period.endDayLabel ? getDayLabel(period.endDayLabel, language) : '';
-              const dayInfo = startDayText && endDayText && startDayText !== endDayText
-                ? `${startDayText} – ${endDayText}`
-                : startDayText;
-              
-              return (
-                <div
-                  key={idx}
-                  tabIndex={0}
-                  className={`${colors.bg} rounded-xl border ${colors.border} p-4 shadow-lg space-y-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
-                >
-                  {/* Header with time range and prominent visibility */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      {getRiskIcon(period.riskLevel, 'w-6 h-6')}
-                      <div>
-                        <div className="text-base font-bold text-white">
-                          {period.timeRange}
-                          {dayInfo && (
-                            <span className="text-sm text-slate-400 font-normal ml-2">
-                              ({dayInfo})
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-slate-200 mt-0.5">
-                          {description}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Visibility - PROMINENT (only show if reduced) */}
-                    {period.visibility !== undefined && period.visibility < 5000 && (
-                      <div className="flex flex-col items-end">
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wide">
-                          {language === 'pl' ? 'Widoczność' : 'Visibility'}
-                        </div>
-                        <div className={`text-2xl font-bold ${
-                          period.visibility < 1000 ? 'text-red-300' : 
-                          period.visibility < 3000 ? 'text-orange-300' : 'text-yellow-300'
-                        }`}>
-                          {period.visibility}m
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Phenomena chips */}
-                  {period.phenomena.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {period.phenomena.map((ph, pIdx) => (
-                        <div
-                          key={pIdx}
-                          className="inline-flex items-center gap-1.5 bg-slate-700/30 border border-slate-600/30 px-3 py-1.5 rounded-lg text-sm text-slate-100 font-medium"
-                        >
-                          {getPhenomenaIcon(ph, 'w-4 h-4')}
-                          <span>{ph}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Warnings */}
-                  {period.warnings.length > 0 && (() => {
-                    // Use the SAME grouping logic as desktop for consistency
-                    const groupedWarnings: string[] = [];
-                    const gustWarnings: string[] = [];
-                    const otherWarnings: string[] = [];
-                    
-                    period.warnings.forEach(w => {
-                      const lower = w.toLowerCase();
-                      if (lower.includes('podmuchy') || lower.includes('gust')) {
-                        // Skip generic warnings without kt values
-                        if (!w.match(/\d+kt/)) {
-                          return;
-                        }
-                        gustWarnings.push(w);
-                      } else if (!lower.includes('widoczność') && !lower.includes('visibility')) {
-                        otherWarnings.push(w);
-                      }
-                    });
-                    
-                    // Combine gust warnings into one
-                    if (gustWarnings.length > 0) {
-                      const gustSpeeds = gustWarnings
-                        .map(w => {
-                          const match = w.match(/(\d+)kt/);
-                          return match ? parseInt(match[1]) : null;
-                        })
-                        .filter((s): s is number => s !== null);
-                      
-                      if (gustSpeeds.length > 0) {
-                        const minGust = Math.min(...gustSpeeds);
-                        const maxGust = Math.max(...gustSpeeds);
-                        const isPolish = gustWarnings[0].includes('Podmuchy');
-                        
-                        if (minGust === maxGust) {
-                          groupedWarnings.push(
-                            isPolish 
-                              ? `Podmuchy wiatru ${maxGust}kt mogą wpłynąć na operacje naziemne`
-                              : `Wind gusts ${maxGust}kt may affect ground operations`
-                          );
-                        } else {
-                          groupedWarnings.push(
-                            isPolish 
-                              ? `Podmuchy wiatru ${minGust}-${maxGust}kt mogą wpłynąć na operacje naziemne`
-                              : `Wind gusts ${minGust}-${maxGust}kt may affect ground operations`
-                          );
-                        }
-                      }
-                    }
-                    
-                    // Add other warnings (deduplicated)
-                    const uniqueOthers = [...new Set(otherWarnings)];
-                    groupedWarnings.push(...uniqueOthers);
-                    
-                    const cleanWarnings = groupedWarnings
-                      .slice(0, 3)
-                      .map(w => w.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim())
-                      .filter(w => w.length > 0);
-                    
-                    if (cleanWarnings.length === 0) return null;
-                    
-                    return (
-                      <div className="space-y-2 pt-2 border-t border-slate-600/30">
-                        {cleanWarnings.map((warning, wIdx) => {
-                          // Choose icon based on warning type (same as desktop)
-                          const lower = warning.toLowerCase();
-                          const isWindWarning = lower.includes('podmuchy') || lower.includes('gust') || lower.includes('wiatr') || lower.includes('wind');
-                          
-                          return (
-                            <div key={wIdx} className="flex items-start gap-2 text-sm text-slate-100">
-                              {isWindWarning ? (
-                                <Wind className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
-                              ) : (
-                                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" />
-                              )}
-                              <span className="leading-relaxed">{warning}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              );
-            })}
-            
-            {/* Horizontal Timeline for Mobile */}
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-xl border border-slate-700/40 shadow-lg p-4 overflow-x-auto scrollbar-custom">
-              <div className="flex gap-2 min-w-max">
-                {hours.map((h, i) => {
-                  const isDayChange = i > 0 && h.dayLabel !== hours[i - 1].dayLabel;
-                  const dayLabelText = getDayLabel(h.dayLabel, language);
-                  
-                  return (
-                    <React.Fragment key={`mobile-${i}-${h.hour.getTime()}`}>
-                      {/* Day separator */}
-                      {isDayChange && (
-                        <div className="flex flex-col items-center justify-center px-2">
-                          <div className="h-16 w-px bg-gradient-to-b from-transparent via-slate-500 to-transparent" />
-                          <span className="text-[10px] text-slate-400 font-semibold mt-1 whitespace-nowrap">
-                            {dayLabelText}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Hour cell */}
-                      <div className="flex flex-col items-center gap-1.5 min-w-[56px]">
-                        <span className="text-xs font-semibold text-slate-300">
-                          {h.time.split(':')[0]}
-                        </span>
-                        {getRiskIcon(h.riskLevel, 'w-8 h-8')}
-                        {h.phenomena.length > 0 && (() => {
-                          // Find highest priority phenomenon - prioritize precipitation over visibility
-                          const priorityMap: Record<string, number> = {
-                            'Freezing': 10, 'Marznąc': 10, 'FZFG': 10, 'FZRA': 10,
-                            'Thunderstorm': 9, 'Burza': 9, 'TS': 9, 'TSRA': 9,
-                            'Snow': 8, 'snow': 8, 'Śnieg': 8, 'śnieg': 8, // Snow higher than fog!
-                            'Rain': 7, 'Deszcz': 7, 'deszcz': 7,
-                            'Fog': 6, 'Mgła': 6, 'FG': 6,
-                            'Mist': 5, 'Zamglenie': 5, 'BR': 5,
-                          };
-                          
-                          let highestPriority = 0;
-                          let topPhenomenon = h.phenomena[0];
-                          
-                          for (const phenomenon of h.phenomena) {
-                            for (const [key, priority] of Object.entries(priorityMap)) {
-                              if (phenomenon.includes(key) && priority > highestPriority) {
-                                highestPriority = priority;
-                                topPhenomenon = phenomenon;
-                              }
-                            }
-                          }
-                          
-                          return getPhenomenaIcon(topPhenomenon, 'w-5 h-5 text-slate-400');
-                        })()}
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Desktop: Timeline - All-in-one cells */}
-        {isDesktop && (
+        {/* Timeline - Same for desktop and mobile */}
+        {isDesktop ? (
+          // Desktop: Timeline with tooltips
           <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-xl border border-slate-700/40 shadow-xl backdrop-blur-sm relative group/timeline">
           {/* Fade affordances on edges */}
           <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-slate-800/80 to-transparent pointer-events-none z-10 rounded-l-xl" />
@@ -814,8 +713,15 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                           priority: 0 // Not needed for tooltip
                         }));
                         
+                        // Deduplicate warnings and remove trailing/leading spaces from emoji
+                        const uniqueWarnings = Array.from(new Set(
+                          h.warnings
+                            .filter(w => w && typeof w === 'string')
+                            .map(w => w.trim().replace(/\s+/g, ' ')) // Normalize spaces
+                        ));
+                        
                         const hasCleanPhenomena = tooltipPhenomena.some(p => p && p.label && typeof p.label === 'string');
-                        const hasCleanWarnings = h.warnings.some(w => w && typeof w === 'string');
+                        const hasCleanWarnings = uniqueWarnings.length > 0;
                         const hasAdditionalContent = hasCleanPhenomena || hasCleanWarnings || h.probability;
                         
                         // Clean phenomena labels - remove emoji
@@ -826,12 +732,6 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                             label: p.label.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
                           }))
                           .filter(p => p.label.length > 0);
-                        
-                        // Clean warnings - remove emoji
-                        const cleanWarnings = h.warnings
-                          .filter(w => w && typeof w === 'string')
-                          .map(w => w.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim())
-                          .filter(w => w.length > 0);
                         
                         return (
                           <div className="space-y-2">
@@ -857,9 +757,9 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                             )}
                             
                             {/* Warnings */}
-                            {cleanWarnings.length > 0 && (
+                            {uniqueWarnings.length > 0 && (
                               <div className={`space-y-1 ${cleanPhenomena.length > 0 ? 'pt-2 border-t border-slate-700/50' : ''}`}>
-                                {cleanWarnings.map((warning, idx) => (
+                                {uniqueWarnings.map((warning, idx) => (
                                   <div key={idx} className="text-xs text-orange-300 flex items-start gap-1.5">
                                     <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
                                     <span>{warning}</span>
@@ -886,10 +786,78 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
             </div>
           </div>
           </div>
+        ) : (
+          // Mobile: Horizontal Timeline (no tooltips) with snap scrolling
+          <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-xl border border-slate-700/40 shadow-lg relative">
+            {/* Scroll indicators */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-800/90 to-transparent pointer-events-none z-10 rounded-l-xl" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-800/90 to-transparent pointer-events-none z-10 rounded-r-xl flex items-center justify-end pr-2">
+              {/* Subtle scroll hint */}
+              <svg className="w-4 h-4 text-slate-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            
+            <div className="overflow-x-auto scrollbar-custom snap-x snap-mandatory p-4" style={{ scrollPaddingLeft: '1rem' }}>
+              <div className="flex gap-2 min-w-max">
+                {hours.map((h, i) => {
+                  const isDayChange = i > 0 && h.dayLabel !== hours[i - 1].dayLabel;
+                  const dayLabelText = getDayLabel(h.dayLabel, language);
+                  
+                  return (
+                    <React.Fragment key={`mobile-${i}-${h.hour.getTime()}`}>
+                      {/* Day separator */}
+                      {isDayChange && (
+                        <div className="flex flex-col items-center justify-center px-2">
+                          <div className="h-16 w-px bg-gradient-to-b from-transparent via-slate-500 to-transparent" />
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1 whitespace-nowrap">
+                            {dayLabelText}
+                          </span>
+          </div>
         )}
 
-        {/* Desktop: Smart Highlights - Only noteworthy periods (mobile has its own version above) */}
-        {isDesktop && (() => {
+                      {/* Hour cell - with snap point */}
+                      <div className="flex flex-col items-center gap-1.5 min-w-[60px] snap-start">
+                        <span className="text-xs font-semibold text-slate-300">
+                          {h.time.split(':')[0]}
+                        </span>
+                        {getRiskIcon(h.riskLevel, 'w-9 h-9')}
+                        {h.phenomena.length > 0 && (() => {
+                          // Find highest priority phenomenon - prioritize precipitation over visibility
+                          const priorityMap: Record<string, number> = {
+                            'Freezing': 10, 'Marznąc': 10, 'FZFG': 10, 'FZRA': 10,
+                            'Thunderstorm': 9, 'Burza': 9, 'TS': 9, 'TSRA': 9,
+                            'Snow': 8, 'snow': 8, 'Śnieg': 8, 'śnieg': 8,
+                            'Rain': 7, 'Deszcz': 7, 'deszcz': 7,
+                            'Fog': 6, 'Mgła': 6, 'FG': 6,
+                            'Mist': 5, 'Zamglenie': 5, 'BR': 5,
+                          };
+                          
+                          let highestPriority = 0;
+                          let topPhenomenon = h.phenomena[0];
+                          
+                          for (const phenomenon of h.phenomena) {
+                            for (const [key, priority] of Object.entries(priorityMap)) {
+                              if (phenomenon.includes(key) && priority > highestPriority) {
+                                highestPriority = priority;
+                                topPhenomenon = phenomenon;
+                              }
+                            }
+                          }
+                          
+                          return getPhenomenaIcon(topPhenomenon, 'w-5 h-5 text-slate-400');
+                        })()}
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Smart Highlights - Same for desktop and mobile */}
+        {(() => {
           // Find noteworthy periods (level 2+)
           const noteworthyHours = hours.filter(h => h.riskLevel >= 2);
           
@@ -954,10 +922,53 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
               <div className="space-y-3 md:space-y-4">
                 {noteworthyGroups.map((group, idx) => {
                   const colors = getCardColors(group.start.riskLevel);
-                  const startDayLabel = getDayLabel(group.start.dayLabel, language);
-                  const endDayLabel = getDayLabel(group.end.dayLabel, language);
-                  const allPhenomena = [...new Set(group.hours.flatMap(h => h.phenomena))];
+                  
+                  // Collect and prioritize phenomena - remove redundancies
+                  const rawPhenomena = [...new Set(group.hours.flatMap(h => h.phenomena))];
+                  const allPhenomena = prioritizePhenomena(rawPhenomena, language);
+                  
                   const allWarnings = [...new Set(group.hours.flatMap(h => h.warnings))];
+                  const isExpanded = expandedCards.has(idx);
+                  
+                  // Calculate duration
+                  const durationHours = group.hours.length;
+                  const durationText = language === 'pl' 
+                    ? `${durationHours}${durationHours === 1 ? 'h' : 'h'}`
+                    : `${durationHours}h`;
+                  
+                  // Calculate end time (add 1 hour since each hour represents an hour-long period)
+                  const endHourDate = new Date(group.end.hour);
+                  endHourDate.setHours(endHourDate.getHours() + 1);
+                  const endTime = endHourDate.toLocaleTimeString('pl-PL', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    timeZone: 'Europe/Warsaw'
+                  }).slice(0, 5);
+                  
+                  // Calculate day labels for start and actual end
+                  const startDayLabel = getDayLabel(group.start.dayLabel, language);
+                  
+                  // Determine end day label based on actual end time
+                  const now = adjustToWarsawTime(new Date());
+                  const todayStart = new Date(now);
+                  todayStart.setHours(0, 0, 0, 0);
+                  const tomorrowStart = new Date(todayStart);
+                  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+                  const dayAfterStart = new Date(todayStart);
+                  dayAfterStart.setDate(dayAfterStart.getDate() + 2);
+                  
+                  let endDayLabelRaw: string | undefined;
+                  if (endHourDate >= dayAfterStart) {
+                    endDayLabelRaw = 'day_after';
+                  } else if (endHourDate >= tomorrowStart) {
+                    endDayLabelRaw = 'tomorrow';
+                  }
+                  const endDayLabel = getDayLabel(endDayLabelRaw, language);
+                  
+                  // Format day display - show both if different, otherwise just one
+                  const dayDisplay = startDayLabel && endDayLabel && startDayLabel !== endDayLabel
+                    ? `${startDayLabel} – ${endDayLabel}`
+                    : (endDayLabel || startDayLabel);
                   
                   // Get min visibility across the period
                   const visibilities = group.hours
@@ -972,64 +983,111 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                     ? (language === 'pl' ? 'Warunki wymagające uwagi' : 'Conditions requiring attention')
                     : (language === 'pl' ? 'Niewielki wpływ warunków pogodowych' : 'Minor weather impact');
                   
+                  // NO SUMMARY BADGES - we don't want to duplicate info that's shown in expanded state
+                  // Visibility is shown on the right side, phenomena will be shown when expanded
+                  
                   return (
                     <div 
                       key={idx}
-                      tabIndex={0}
-                      className={`${colors.bg} rounded-xl border ${colors.border} p-4 md:p-6 space-y-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all`}
+                      className={`relative ${colors.bg} rounded-xl border-2 ${colors.border} overflow-hidden transition-all duration-200 ${
+                        isExpanded ? 'shadow-xl' : 'shadow-lg hover:shadow-xl'
+                      } ${!isDesktop ? 'active:scale-[0.99]' : ''}`}
                     >
-                      {/* Header with time and visibility */}
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                        <div className="flex items-start gap-3">
-                          {getRiskIcon(group.start.riskLevel, 'w-6 h-6 md:w-7 md:h-7')}
-                          <div className="flex-1">
-                            <div className="text-base md:text-lg font-bold text-white">
+                      {/* Single gradient for high risk - simplified */}
+                      {group.start.riskLevel >= 3 && (
+                        <div 
+                          className="absolute inset-0 pointer-events-none opacity-30"
+                          style={{
+                            background: group.start.riskLevel === 4 
+                              ? 'radial-gradient(circle at top right, rgba(239, 68, 68, 0.15) 0%, transparent 60%)'
+                              : 'radial-gradient(circle at top right, rgba(249, 115, 22, 0.1) 0%, transparent 60%)'
+                          }}
+                        />
+                      )}
+                      {/* Header - Always visible, clickable on mobile */}
+                      <button
+                        onClick={() => !isDesktop && toggleCard(idx)}
+                        disabled={isDesktop}
+                        className={`relative w-full text-left p-5 transition-colors duration-150 ${
+                          !isDesktop ? 'cursor-pointer active:bg-white/5' : 'cursor-default'
+                        }`}
+                        aria-expanded={!isDesktop ? isExpanded : undefined}
+                        aria-label={!isDesktop ? (isExpanded ? (language === 'pl' ? 'Zwiń szczegóły' : 'Collapse details') : (language === 'pl' ? 'Rozwiń szczegóły' : 'Expand details')) : undefined}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            {getRiskIcon(group.start.riskLevel, 'w-8 h-8 flex-shrink-0')}
+                            <div className="flex-1 min-w-0">
+                              {/* Time + Duration + Day */}
+                              <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                                <span className="text-lg font-bold text-white">
                               {group.start.time}
-                              {group.hours.length > 1 && ` – ${group.end.time}`}
-                              {(startDayLabel || endDayLabel) && (
-                                <span className="text-sm text-slate-400 ml-2 font-normal">
-                                  ({startDayLabel || endDayLabel})
+                                  {group.hours.length > 1 && ` – ${endTime}`}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-slate-700/40 text-xs font-medium text-slate-400">
+                                  {durationText}
+                                </span>
+                                {dayDisplay && (
+                                  <span className="text-sm text-slate-500">
+                                    ({dayDisplay})
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm md:text-base text-slate-300 mt-1">
+                              
+                              {/* Description */}
+                              <div className="text-sm text-slate-300 leading-relaxed">
                               {friendlyDescription}
                             </div>
                           </div>
                         </div>
                         
-                        {/* Visibility - prominent if low, stacks on mobile */}
-                        {minVisibility !== undefined && minVisibility < 5000 && (
-                          <div className="flex items-center sm:flex-col sm:items-end gap-2 sm:gap-1 flex-shrink-0 ml-12 sm:ml-0">
-                            <div className="text-xs md:text-sm text-slate-400">
-                              {language === 'pl' ? 'Widoczność' : 'Visibility'}:
-                            </div>
-                            <div className={`text-xl md:text-2xl font-bold ${
-                              minVisibility < 1000 ? 'text-red-300' : 
-                              minVisibility < 3000 ? 'text-orange-300' : 'text-yellow-300'
+                          {/* Right side: Visibility + Chevron */}
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            {minVisibility !== undefined && minVisibility <= 1500 && (
+                              <div className={`text-right px-2 py-1 rounded-lg ${
+                                minVisibility < 800 ? 'bg-red-500/10' : 
+                                minVisibility < 1500 ? 'bg-orange-500/10' : 'bg-yellow-500/10'
+                              }`}>
+                                <div className={`text-2xl font-bold leading-none ${
+                                  minVisibility < 800 ? 'text-red-300' : 
+                                  minVisibility < 1500 ? 'text-orange-300' : 'text-yellow-300'
                             }`}>
                               {minVisibility}m
                             </div>
                           </div>
                         )}
+                            {!isDesktop && (
+                              <ChevronDown 
+                                className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${
+                                  isExpanded ? 'rotate-180' : ''
+                                }`}
+                              />
+                        )}
                       </div>
+                      </div>
+                      </button>
                       
-                      {/* Phenomena - secondary with better spacing */}
+                      {/* Details - Always visible on desktop, expandable on mobile */}
+                      {(isDesktop || isExpanded) && (
+                        <div className={`border-t border-slate-600/30 ${
+                          !isDesktop && isExpanded ? 'animate-in fade-in duration-200' : ''
+                        }`}>
+                          <div className="p-5 space-y-4">
+                            {/* Weather phenomena */}
                       {allPhenomena.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {allPhenomena.map((phenomenon, pIdx) => (
                             <div 
                               key={pIdx} 
-                              className="flex items-center gap-2 bg-slate-700/40 px-3 py-2 rounded-lg text-sm text-slate-200 border border-slate-600/30"
+                                    className="flex items-center gap-2 bg-slate-700/30 px-3 py-1.5 rounded-lg text-sm text-slate-200"
                             >
                               {getPhenomenaIcon(phenomenon, 'w-4 h-4')}
-                              <span className="font-medium">{phenomenon}</span>
+                                    <span>{phenomenon}</span>
                             </div>
                           ))}
                         </div>
                       )}
-                      
-                      {/* Warnings - prioritize operational impacts */}
+                            {/* Operational warnings */}
                       {allWarnings.length > 0 && (() => {
                         // Group similar warnings (e.g., wind gusts)
                         const groupedWarnings: string[] = [];
@@ -1092,39 +1150,35 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                         if (filteredWarnings.length === 0) return null;
                         
                         return (
-                          <div className="space-y-2 pt-2 border-t border-slate-600/30">
-                            {filteredWarnings.map((warning, wIdx) => {
-                              // Choose icon based on warning type
+                          <div className="space-y-2">
+                            {filteredWarnings.map((warning, wIdx) => (
+                              <div key={wIdx} className="flex items-start gap-2 text-sm text-slate-300">
+                                {(() => {
                               const lower = warning.toLowerCase();
-                              const isWindWarning = lower.includes('podmuchy') || lower.includes('gust') || lower.includes('wiatr') || lower.includes('wind');
-                              
-                              return (
-                                <div key={wIdx} className="flex items-start gap-2.5 text-sm text-slate-200">
-                                  {isWindWarning ? (
-                                    <Wind className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
-                                  ) : (
-                                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" />
-                                  )}
+                                  return lower.includes('podmuchy') || lower.includes('gust') || lower.includes('wiatr') || lower.includes('wind')
+                                    ? <Wind className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
+                                    : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" />;
+                                })()}
                                   <span className="leading-relaxed">{warning}</span>
                                 </div>
-                              );
-                            })}
+                            ))}
                           </div>
                         );
                       })()}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
                 
                 {/* Disclaimer */}
-                <div className="mt-4">
-                  <p className="text-[10px] md:text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed mt-6">
                     {language === 'pl' 
                       ? 'Powyższe informacje oparte są na prognozach pogodowych i mają charakter orientacyjny. Ostateczne decyzje operacyjne dotyczące lotów podejmują linie lotnicze i lotnisko na podstawie bieżących warunków oraz przepisów bezpieczeństwa.'
                       : 'The above information is based on weather forecasts and is for guidance only. Final operational decisions regarding flights are made by airlines and the airport based on current conditions and safety regulations.'
                     }
                   </p>
-                </div>
               </div>
             );
           }

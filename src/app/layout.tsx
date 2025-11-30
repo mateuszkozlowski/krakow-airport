@@ -33,6 +33,9 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false, // Prevent zoom on iOS for better app-like experience
+  themeColor: '#0f172a', // Dark theme color for mobile browsers
 };
 
 export default function RootLayout({

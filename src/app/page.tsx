@@ -378,6 +378,7 @@ export default function Home() {
     }
     return true;
   });
+  const [radialSize, setRadialSize] = useState(240);
 
   // ALL MEMOIZED VALUES MUST BE BEFORE ANY CONDITIONAL RETURNS
   // Memoized expensive calculations
@@ -452,6 +453,19 @@ export default function Home() {
       localStorage.setItem('alertExpanded', isAlertExpanded.toString());
     }
   }, [isAlertExpanded]);
+  
+  // Responsive radial size
+  useEffect(() => {
+    const updateRadialSize = () => {
+      if (typeof window !== 'undefined') {
+        setRadialSize(window.innerWidth < 640 ? 200 : 240);
+      }
+    };
+    
+    updateRadialSize();
+    window.addEventListener('resize', updateRadialSize);
+    return () => window.removeEventListener('resize', updateRadialSize);
+  }, []);
 
   async function fetchData() {
     try {
@@ -630,19 +644,19 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12 md:px-8 md:py-20 lg:px-12">
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 sm:py-12 md:px-8 md:py-20 lg:px-12">
         {/* Hero Section with Radial Display */}
-        <div className="mb-12 md:mb-16">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-12 text-center text-white tracking-tight">
+        <div className="mb-8 sm:mb-12 md:mb-16">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 md:mb-12 text-center text-white tracking-tight">
             {t.title}
           </h1>
 
-          {/* Main Radial Display */}
+          {/* Main Radial Display - Responsive size */}
           <div className="flex flex-col items-center mb-6">
             <RiskRadial 
               level={weather.current.riskLevel.level} 
               forecastLevel={getForecastRiskForCurrentTime(weather.forecast)?.level}
-              size={240} 
+              size={radialSize} 
             />
             
             {/* Legend - show only when forecast ring is visible */}
@@ -719,19 +733,29 @@ export default function Home() {
 
         {/* Forecast Timeline */}
         <div className="mb-6 md:mb-8">
-          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="flex items-center gap-2 md:gap-3">
               <h2 className="text-xl md:text-2xl font-bold text-white">
                 {language === 'pl' ? 'Prognoza' : 'Forecast'}
               </h2>
               <CompactLegendButton />
             </div>
+            {/* Auto-refresh indicator - subtle */}
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-800/30 px-2.5 py-1 rounded-full">
+              <svg className="w-3 h-3 animate-spin" style={{ animationDuration: '3s' }} fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{language === 'pl' ? 'Odświeża co 5min' : 'Updates every 5min'}</span>
+            </div>
+          </div>
           <HourlyBreakdown forecast={weather.forecast} language={language} />
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-700/50 py-8 md:py-12 bg-black/20 mt-12 md:mt-20">
-        <div className="max-w-6xl mx-auto px-6 md:px-8 lg:px-12">
+      <footer className="border-t border-slate-700/50 py-6 sm:py-8 md:py-12 bg-black/20 mt-8 sm:mt-12 md:mt-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <p className="text-xs md:text-sm text-slate-300 leading-relaxed mb-4 md:mb-6">{t.disclaimer}</p>
           <div className="border-t border-slate-700/50 my-4 md:my-6"></div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 md:gap-6">

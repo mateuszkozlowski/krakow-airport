@@ -268,19 +268,80 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
   };
 }
 
+/**
+ * Extract visibility from raw TAF text for a specific period
+ * TAF format: "TEMPO 3015/3017 3000 BR BKN002"
+ *                           ^^^^ visibility in meters
+ */
+function extractVisibilityFromRawTaf(rawTaf: string, timestamp: { from: string, to: string } | null, changeType: string): number | null {
+  if (!timestamp) return null;
+  
+  // Parse timestamps - CheckWX provides ISO strings WITHOUT 'Z', so JavaScript treats them as LOCAL time
+  // We need to force UTC interpretation by adding 'Z' suffix
+  const fromStr = timestamp.from.endsWith('Z') ? timestamp.from : timestamp.from + 'Z';
+  const toStr = timestamp.to.endsWith('Z') ? timestamp.to : timestamp.to + 'Z';
+  
+  const fromDate = new Date(fromStr);
+  const toDate = new Date(toStr);
+  
+  // TAF uses UTC time in DDHH format
+  const fromTaf = `${String(fromDate.getUTCDate()).padStart(2, '0')}${String(fromDate.getUTCHours()).padStart(2, '0')}`;
+  const toTaf = `${String(toDate.getUTCDate()).padStart(2, '0')}${String(toDate.getUTCHours()).padStart(2, '0')}`;
+  
+  console.log(`🕐 Parsing: ${timestamp.from} → ${fromTaf}/${toTaf}`);
+  
+  // Build pattern to find this specific period in raw TAF
+  // Note: CheckWX may modify end times, so we match by start time + change type
+  // e.g., "TEMPO 3015/3017 3000" or "BECMG 3019/3021 0400"
+  
+  let regex;
+  if (changeType === 'TEMPO') {
+    // Match: (PROB\d+ )?TEMPO DDHH/DDHH VVVV
+    // We match start time only since CheckWX may extend end times
+    regex = new RegExp(`(?:PROB\\d+\\s+)?TEMPO\\s*${fromTaf}/\\d{4}\\s+(\\d{4})`, 'i');
+  } else if (changeType === 'BECMG') {
+    // Match: BECMG DDHH/DDHH VVVV
+    regex = new RegExp(`BECMG\\s*${fromTaf}/\\d{4}\\s+(\\d{4})`, 'i');
+  } else if (changeType === 'BASE') {
+    // BASE pattern handled separately below
+    regex = null;
+  } else {
+    // Other change types - try generic pattern
+    regex = new RegExp(`${changeType}\\s*${fromTaf}/\\d{4}\\s+(\\d{4})`, 'i');
+  }
+  
+  if (regex) {
+    const match = rawTaf.match(regex);
+    if (match && match[1]) {
+      const visibility = parseInt(match[1], 10);
+      console.log(`✅ Extracted visibility ${visibility}m for ${changeType} ${fromTaf}/xxxx`);
+      return visibility;
+    }
+  }
+  
+  // If no match, try BASE period (first visibility value after wind)
+  if (changeType === 'BASE') {
+    // BASE format: "3015/0115 10004KT 6000 OVC005"
+    //                         ^^^^^^^^^ wind
+    //                                  ^^^^ visibility
+    const baseMatch = rawTaf.match(/\d{4}\/\d{4}\s+(?:VRB|\d{3})\d{2}(?:G\d{2})?KT\s+(\d{4})/);
+    if (baseMatch && baseMatch[1]) {
+      const visibility = parseInt(baseMatch[1], 10);
+      console.log(`✅ Extracted BASE visibility ${visibility}m`);
+      return visibility;
+    }
+  }
+  
+  console.log(`⚠️ Could not extract visibility for ${changeType} ${fromTaf}/${toTaf}`);
+  return null;
+}
+
 function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafResponse | null {
   if (!checkwxData.data?.[0]?.forecast) return null;
 
   const rawTaf = checkwxData.data[0].raw_text;
+  
   const forecast = checkwxData.data[0].forecast.map(period => {
-    // Log the raw period data
-    console.log('Transforming TAF period:', {
-      type: period.change?.indicator?.code || 'BASE',
-      conditions: period.conditions,
-      visibility: period.visibility,
-      clouds: period.clouds
-    });
-
     // Extract probability from indicator code or text
     let probability: number | undefined;
     if (period.change?.indicator) {
@@ -381,9 +442,26 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
         direction: period.wind.degrees,
         gust_kts: period.wind.gust_kts
       } : null,
-      visibility: period.visibility ? {
-        meters: period.visibility.meters_float
-      } : null,
+      visibility: (() => {
+        // First try CheckWX parsed visibility
+        if (period.visibility?.meters_float !== undefined) {
+          console.log('✅ Using CheckWX visibility:', period.visibility.meters_float);
+          return { meters: period.visibility.meters_float };
+        }
+        
+        // If CheckWX didn't provide it, extract from raw TAF
+        const changeType = period.change?.indicator?.code || 'BASE';
+        console.log('🔍 CheckWX visibility missing, extracting from raw TAF for:', changeType, period.timestamp);
+        const extractedVisibility = extractVisibilityFromRawTaf(rawTaf, period.timestamp, changeType);
+        
+        if (extractedVisibility !== null) {
+          console.log('✅ Extracted visibility from raw TAF:', extractedVisibility);
+          return { meters: extractedVisibility };
+        } else {
+          console.log('❌ Failed to extract visibility from raw TAF');
+          return null;
+        }
+      })(),
       ceiling: period.clouds?.length ? (() => {
         // Only consider BKN (broken) and OVC (overcast) for ceiling
         const ceilingClouds = period.clouds.filter(cloud => 
