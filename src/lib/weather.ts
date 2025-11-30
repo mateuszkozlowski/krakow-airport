@@ -537,11 +537,6 @@ function combineForecasts(tafForecast: ForecastChange[], openMeteoData: OpenMete
     // Calculate weighted risk level for different aspects
     const openMeteoRisk = calculateOpenMeteoRisk(openMeteoHour);
 
-    // Calculate separate weighted risks for different condition types
-    const windWeight = getOpenMeteoWeight('wind_speed', new Date(periodStart));
-    const tempWeight = getOpenMeteoWeight('temperature', new Date(periodStart));
-    const precipWeight = getOpenMeteoWeight('precipitation', new Date(periodStart));
-
     // Calculate OpenMeteo-based risks
     const windRisk = calculateWindRisk(openMeteoHour);
     const precipRisk = calculatePrecipitationRisk(openMeteoHour);
@@ -702,17 +697,13 @@ function calculateOpenMeteoRisk({
   visibility,
   windSpeed,
   windGusts,
-  precipProb,
-  rain,
-  snow
+  precipProb
 }: {
   weatherCode: number;
   visibility: number;
   windSpeed: number;
   windGusts: number;
   precipProb: number;
-  rain: number;
-  snow: number;
 }): 1 | 2 | 3 | 4 {
   // Visibility assessment - immediately return highest risk if below minimums
   if (visibility < MINIMUMS.VISIBILITY) {
@@ -763,93 +754,6 @@ function calculateOpenMeteoRisk({
          1;
 }
 
-// Helper function to get standardized visibility description
-function getStandardizedVisibilityDescription(meters: number): string {
-  if (meters < MINIMUMS.VISIBILITY) {
-    return `👁️ Very Poor Visibility`;
-  }
-  if (meters < 1000) {
-    return `👁️ Poor Visibility`;
-  }
-  if (meters < 3000) {
-    return `👁️ Reduced Visibility`;
-  }
-  if (meters < 5000) {
-    return `👁️ Moderate Visibility`;
-  }
-  return "";
-}
-
-function getOpenMeteoConditions({
-  weatherCode,
-  visibility,
-  windSpeed,
-  windGusts,
-  precipProb,
-  rain,
-  snow
-}: {
-  weatherCode: number;
-  visibility: number;
-  windSpeed: number;
-  windGusts: number;
-  precipProb: number;
-  rain: number;
-  snow: number;
-}, language: 'en' | 'pl'): string[] {
-  const t = translations[language].weatherConditionMessages;
-  const conditions: string[] = [];
-
-  // Add visibility condition first with correct thresholds
-  if (visibility < MINIMUMS.VISIBILITY) {
-    conditions.push(t.visibilityBelowMinimums);
-  } else if (visibility < 1000) {
-    conditions.push(t.veryPoorVisibilityMeters.replace('{meters}', visibility.toString()));
-  } else if (visibility < 3000) {
-    conditions.push(t.poorVisibility);
-  } else if (visibility < 5000) {
-    conditions.push(t.reducedVisibilitySimple);
-  }
-
-  // Standardize precipitation descriptions with probability check
-  const getPrecipitationDescription = (code: number, probability: number): string | null => {
-    // Only add precipitation if probability is significant (>40%)
-    if (probability < 30) return null;
-
-    const precipMap: Record<number, string> = {
-      51: t.lightDrizzle || '🌧️ Light Drizzle',
-      53: t.moderateDrizzle || '🌧️ Moderate Drizzle',
-      55: t.heavyDrizzle || '🌧️ Heavy Drizzle',
-      61: t.lightRain || '🌧️ Light Rain',
-      63: t.rain || '🌧️ Rain',
-      65: t.heavyRain || '🌧️ Heavy Rain',
-      71: t.lightSnow || '🌨️ Light Snow',
-      73: t.snow || '🌨️ Snow',
-      75: t.heavySnow || '🌨️ Heavy Snow',
-      95: t.thunderstorm || '⛈️ Thunderstorm',
-      96: t.thunderstormWithHail || '⛈️ Thunderstorm with Hail',
-      99: t.severeThunderstorm || '⛈️ Severe Thunderstorm'
-    };
-    return precipMap[code] || null;
-  };
-
-  // Add weather condition with probability check
-  if (weatherCode >= 45) {
-    const precipDescription = getPrecipitationDescription(weatherCode, precipProb);
-    if (precipDescription) {
-      conditions.push(precipDescription);
-    }
-  }
-
-  // Add standardized wind condition
-  const windDesc = getStandardizedWindDescription(windSpeed, language, windGusts);
-  if (windDesc) {
-    conditions.push(windDesc);
-  }
-
-  return conditions;
-}
-
 // Helper function to get standardized wind description
 export function getStandardizedWindDescription(speed: number, language: 'en' | 'pl', gusts?: number): string {
   const t = translations[language].weatherConditionMessages;
@@ -888,6 +792,18 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
 
     const currentWeather: WeatherData = metar.data[0];
     const forecast: TAFData = taf.data[0];
+
+    // Debug: Log what we receive from API
+    console.log('📋 Raw TAF from API:', forecast.raw_text);
+    console.log('📊 TAF Periods received from API:', forecast.forecast?.slice(0, 5).map((p, i: number) => ({
+      index: i,
+      type: p.change?.indicator?.code || 'BASE',
+      visibility: p.visibility,
+      visibilityMeters: p.visibility?.meters,
+      conditions: p.conditions?.map((c) => c.code),
+      from: p.timestamp?.from,
+      to: p.timestamp?.to
+    })));
 
     // First process TAF data
     console.log('Processing TAF data:', {
@@ -1012,14 +928,6 @@ interface WeatherPeriod {
   };
 }
 
-interface GroupedPeriod {
-  conditions: string[];
-  riskLevel: number;
-  timeDescription: string;
-  from: Date;
-  to: Date;
-}
-
 // Update the processForecast function to use the new risk assessment
 async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Promise<ForecastChange[]> {
   if (!taf || !taf.forecast) return [];
@@ -1055,7 +963,7 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
   );
 
   // Process each base period (now with async/await)
-  for (const [_index, period] of basePeriods.entries()) {
+  for (const period of basePeriods) {
     const conditions = new Set<string>();
 
     // Process visibility (FIX: use !== undefined to handle 0m!)
@@ -1226,7 +1134,6 @@ async function processForecast(taf: TAFData | null, language: 'en' | 'pl'): Prom
 // Helper function to calculate operational impacts
 async function calculateOperationalImpacts(period: WeatherPeriod, language: 'en' | 'pl', warnings: Record<string, string>): Promise<string[]> {
   const impacts: string[] = [];
-  const _riskScore = await calculateRiskScore(period);
 
   // Calculate base risks (await async ones)
   const visibilityRisk = calculateVisibilityRisk(period.visibility?.meters);
@@ -1832,21 +1739,6 @@ function formatCeiling(feet: number, language: 'en' | 'pl'): string {
   return '';
 }
 
-function getDetailedDescription(condition: string, language: 'en' | 'pl'): string {
-  const t = translations[language].weatherDescriptions;
-  
-  if (condition.includes('Strong Winds') || condition.includes('Strong Wind Gusts')) {
-    return t.strongWinds;
-  }
-  if (condition.includes('Rain') && condition.includes('Strong')) {
-    return t.rainAndWind;
-  }
-  if (condition.includes('Snow')) {
-    return t.snowConditions;
-  }
-  return condition;
-}
-
 // Add this interface for warnings
 
 function getWeatherPhenomenonDescription(code: string, language: 'en' | 'pl'): string {
@@ -1985,16 +1877,31 @@ function extendForecastWithOpenMeteo(
     const windGusts = Math.round(windGustsMs * 1.94384);
     
     // Calculate risk level from Open-Meteo data
-    const windRisk = calculateWindRisk({ speed_kts: windSpeed, gust_kts: windGusts });
-    const visibilityRisk = calculateVisibilityRisk(visibility);
+    const windRiskScore = calculateWindRisk({ speed_kts: windSpeed, gust_kts: windGusts });
+    const visibilityRiskScore = calculateVisibilityRisk(visibility);
     
-    // Simple precipitation risk from Open-Meteo data
-    let precipRisk: 1 | 2 | 3 | 4 = 1;
-    if (precipitation > 10) precipRisk = 4;
-    else if (precipitation > 5) precipRisk = 3;
-    else if (precipitation > 1) precipRisk = 2;
+    // Convert risk scores (0-100) to risk levels (1-4)
+    const convertScoreToLevel = (score: number): 1 | 2 | 3 | 4 => {
+      if (score >= 85) return 4;
+      if (score >= 70) return 3;
+      if (score >= 40) return 2;
+      return 1;
+    };
     
-    const riskLevel = Math.max(windRisk, visibilityRisk, precipRisk) as 1 | 2 | 3 | 4;
+    const windRiskLevel = convertScoreToLevel(windRiskScore);
+    const visibilityRiskLevel = convertScoreToLevel(visibilityRiskScore);
+    
+    // Simple precipitation risk level
+    let precipRiskLevel: 1 | 2 | 3 | 4 = 1;
+    if (precipitation > 10) precipRiskLevel = 4;
+    else if (precipitation > 5) precipRiskLevel = 3;
+    else if (precipitation > 1) precipRiskLevel = 2;
+    
+    // Extreme low visibility override (< 400m = automatic level 4)
+    let riskLevel = Math.max(windRiskLevel, visibilityRiskLevel, precipRiskLevel) as 1 | 2 | 3 | 4;
+    if (visibility < 400) {
+      riskLevel = 4;
+    }
     
     // Generate phenomena based on Open-Meteo data
     const phenomena: string[] = [];
@@ -2032,12 +1939,34 @@ function extendForecastWithOpenMeteo(
     // Generate operational impacts
     const operationalImpacts: string[] = [];
     
-    if (visibility < 550) {
+    // Extreme low visibility (< 400m) - Critical impacts
+    if (visibility < 400) {
+      operationalImpacts.push(
+        language === 'pl'
+          ? `🚫 Ekstremalna niska widoczność (${Math.round(visibility)}m) - operacje zawieszone lub znacznie ograniczone`
+          : `🚫 Extreme low visibility (${Math.round(visibility)}m) - operations suspended or severely restricted`
+      );
+    }
+    // Very low visibility (400-550m) - Below minimums
+    else if (visibility < 550) {
       const deviation = Math.round(((550 - visibility) / 550) * 100);
       operationalImpacts.push(
         language === 'pl'
-          ? `Widoczność ${visibility}m - ${deviation}% poniżej minimum (550m)`
-          : `Visibility ${visibility}m - ${deviation}% below minimum (550m)`
+          ? `Widoczność ${Math.round(visibility)}m - ${deviation}% poniżej minimum (550m)`
+          : `Visibility ${Math.round(visibility)}m - ${deviation}% below minimum (550m)`
+      );
+      operationalImpacts.push(
+        language === 'pl'
+          ? '⚠️ Możliwe opóźnienia'
+          : '⚠️ Possible delays'
+      );
+    }
+    // Low visibility (550-1500m) - Operational impact
+    else if (visibility < 1500) {
+      operationalImpacts.push(
+        language === 'pl'
+          ? '⚠️ Możliwe opóźnienia'
+          : '⚠️ Possible delays'
       );
     }
     
@@ -2411,9 +2340,6 @@ export async function calculateRiskLevel(
   const hasExtremeFreezing = period.conditions?.some(c => 
     c.code === 'FZFG' || c.code === 'FZRA' || c.code === 'FZDZ'
   );
-  const _hasFreezing = period.conditions?.some(c => 
-    c.code.includes('FZ') // Any freezing condition
-  );
 
   // Temperature-enhanced icing risk multiplier
   let icingMultiplier = 1.0;
@@ -2451,8 +2377,8 @@ export async function calculateRiskLevel(
   let riskLevel: 1 | 2 | 3 | 4;
 
   // Edge case: Extreme conditions - automatic level 4
-  // 1. Extreme low visibility (< 200m) - FIX: use !== undefined to handle 0m!
-  if (period.visibility?.meters !== undefined && period.visibility.meters < 200) {
+  // 1. Extreme low visibility (< 400m) - FIX: use !== undefined to handle 0m!
+  if (period.visibility?.meters !== undefined && period.visibility.meters < 400) {
     riskLevel = 4;
     impacts.push(t.operationalImpactMessages.operationsSuspended);
   }
