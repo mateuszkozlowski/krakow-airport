@@ -751,6 +751,38 @@ export default function Home() {
           </div>
           <HourlyBreakdown forecast={weather.forecast} language={language} />
         </div>
+
+        {/* Support Banner - Subtle */}
+        <div className="mt-6 md:mt-8">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-600/0 via-amber-600/5 to-amber-600/0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <a 
+              href="https://buycoffee.to/mateusz-kozlowski"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block relative bg-slate-800/30 hover:bg-slate-800/50 focus:bg-slate-800/50 rounded-xl border border-slate-700/30 hover:border-amber-600/30 focus:border-amber-600/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 p-4 md:p-5 transition-all duration-300"
+            >
+              <div className="flex items-start gap-3 md:gap-4">
+                <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-amber-600/20 to-amber-700/10 border border-amber-600/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-xl md:text-2xl">☕</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm md:text-base font-semibold text-slate-200 mb-1 group-hover:text-amber-300 transition-colors">
+                    {language === 'pl' ? 'Robię to za darmo w wolnym czasie' : 'I build this for free in my spare time'}
+                  </h3>
+                  <p className="text-xs md:text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
+                    {language === 'pl' 
+                      ? 'Jeśli chcesz, możesz mi postawić kawę.' 
+                      : 'If you want, you can buy me a coffee.'}
+                  </p>
+                </div>
+                <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
