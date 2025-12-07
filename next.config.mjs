@@ -16,7 +16,7 @@ const nextConfig = {
   },
 
   // Optimize webpack bundle
-  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+  webpack: (config, { isServer }) => {
     // Optimize client-side bundle
     if (!isServer) {
       config.optimization = {
@@ -69,4 +69,5 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
+
