@@ -882,7 +882,15 @@ export async function getAirportWeather(language: 'en' | 'pl' = 'en', isTwitterC
           ].filter(Boolean)
         },
         raw: currentWeather.raw_text,
-        observed: currentWeather.observed
+        observed: currentWeather.observed,
+        // Pass through visibility, wind, and ceiling for UI components
+        visibility: currentWeather.visibility,
+        wind: currentWeather.wind ? {
+          speed_kts: currentWeather.wind.speed_kts,
+          direction: currentWeather.wind.direction ?? currentWeather.wind.degrees ?? 0,
+          gust_kts: currentWeather.wind.gust_kts
+        } : undefined,
+        ceiling: currentWeather.ceiling
       },
       forecast: mergedForecast,
       raw_taf: forecast.raw_text
@@ -1438,6 +1446,30 @@ export async function assessWeatherRisk(weather: WeatherData, language: 'en' | '
       ? '⚠️ Wszystkie samoloty wymagają procedur antyoblodzeniowych'
       : '⚠️ All aircraft require anti-icing procedures');
     reasons.push(`Freezing conditions (${freezingCondition?.code})`);
+  }
+  
+  // CRITICAL: Check for SCT000/FEW000 - clouds at ground level
+  // This indicates ZERO ceiling and is as severe as visibility below minimums
+  const groundLevelClouds = weather.clouds?.find(c => 
+    (c.code === 'SCT' || c.code === 'FEW') && 
+    c.base_feet_agl === 0
+  );
+  if (groundLevelClouds && baseRiskLevel < 4) {
+    baseRiskLevel = 4;
+    operationalImpactsSet.clear();
+    operationalImpactsSet.add(language === 'pl' 
+      ? `☁️ Chmury na poziomie ziemi (${groundLevelClouds.code}000) - zerowa widoczność pionowa`
+      : `☁️ Clouds at ground level (${groundLevelClouds.code}000) - zero vertical visibility`);
+    operationalImpactsSet.add(language === 'pl'
+      ? '✈️ Operacje lotnicze zawieszone - pułap poniżej minimów'
+      : '✈️ Flight operations suspended - ceiling below minimums');
+    operationalImpactsSet.add(language === 'pl'
+      ? '🔄 Przekierowania i odwołania lotów'
+      : '🔄 Diversions and cancellations');
+    operationalImpactsSet.add(language === 'pl'
+      ? '📞 Sprawdź status lotu bezpośrednio u przewoźnika'
+      : '📞 Check flight status directly with your airline');
+    reasons.push(`Clouds at ground level (${groundLevelClouds.code}000) - zero ceiling`);
   }
 
   // If we already have severe conditions, return early
@@ -2695,17 +2727,25 @@ function calculateCeilingRisk(
       console.log(`⚠️ TCU (Towering Cumulus) detected at ${cloud.base_feet_agl}ft - Developing weather!`);
     }
     
-    // Check very low FEW/SCT clouds - but only if NOT in fog/mist
-    // In fog (FG/BR), low scattered clouds are part of the fog layer, not a separate concern
-    // Note: Kraków (EPKK) ILS minimums ~200ft, so only very low scattered clouds are concerning
+    // Check very low FEW/SCT clouds
+    // CRITICAL FIX: SCT000/FEW000 means clouds AT GROUND LEVEL - this is SEVERE regardless of fog!
+    // Kraków (EPKK) ILS CAT I minimums ~200ft
     const hasFogOrMist = conditions?.some(c => c.code === 'FG' || c.code === 'BR' || c.code === 'MIFG');
     
-    if ((cloud.code === 'FEW' || cloud.code === 'SCT') && cloud.base_feet_agl !== undefined && !hasFogOrMist) {
-      if (cloud.base_feet_agl < 200) {
-        // Extremely low scattered clouds WITHOUT fog - possible deterioration
+    if ((cloud.code === 'FEW' || cloud.code === 'SCT') && cloud.base_feet_agl !== undefined) {
+      // SCT000 or FEW000 = clouds at ground level = CRITICAL (ceiling effectively 0)
+      if (cloud.base_feet_agl === 0) {
+        maxRisk = Math.max(maxRisk, 100);
+        console.log(`🚨 CRITICAL: ${cloud.code}000 - clouds at ground level! Effective ceiling = 0ft`);
+      } else if (cloud.base_feet_agl < 100) {
+        // Extremely low scattered clouds (< 100ft) - very dangerous
+        maxRisk = Math.max(maxRisk, 90);
+        console.log(`🚨 SEVERE: ${cloud.code} clouds at ${cloud.base_feet_agl}ft - extremely low!`);
+      } else if (cloud.base_feet_agl < 200 && !hasFogOrMist) {
+        // Very low scattered clouds WITHOUT fog - possible deterioration
         maxRisk = Math.max(maxRisk, 50);
         console.log(`⚠️ Very low ${cloud.code} clouds at ${cloud.base_feet_agl}ft without fog - Watch for deterioration`);
-      } else if (cloud.base_feet_agl < 300) {
+      } else if (cloud.base_feet_agl < 300 && !hasFogOrMist) {
         // Low scattered clouds - monitor for deterioration
         maxRisk = Math.max(maxRisk, 30);
         console.log(`⚠️ Low ${cloud.code} clouds at ${cloud.base_feet_agl}ft - Monitoring conditions`);

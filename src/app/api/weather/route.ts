@@ -207,7 +207,7 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
   }
 
   // Extract visibility from raw METAR if CheckWX doesn't provide it
-  // Format: "0050" = 50m, "9999" = 10km+
+  // Format: "0050" = 50m, "9999" = 10km+, "0250" = 250m
   let visibility = observation.visibility?.meters_float;
   if (visibility === undefined || visibility === null) {
     const visMatch = rawText.match(/\s(\d{4})\s/);
@@ -216,8 +216,16 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       console.log(`⚠️ Extracted visibility from raw METAR: ${visibility}m (CheckWX didn't provide it)`);
     }
   }
+  
+  // Log critical visibility conditions
+  if (visibility !== undefined && visibility < 550) {
+    console.log(`🚨 CRITICAL: Visibility ${visibility}m is BELOW CAT I minimums (550m)!`);
+  } else if (visibility !== undefined && visibility < 1000) {
+    console.log(`⚠️ WARNING: Very low visibility ${visibility}m detected`);
+  }
 
   // Calculate ceiling from clouds (BKN or OVC)
+  // CRITICAL: Also check for SCT000/FEW000 which means clouds at ground level!
   let ceiling: { feet: number } | null = null;
   if (observation.ceiling) {
     ceiling = { feet: observation.ceiling.feet };
@@ -231,6 +239,21 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       const lowestCeiling = Math.min(...ceilingClouds.map(c => c.base_feet_agl!));
       ceiling = { feet: lowestCeiling };
       console.log(`⚠️ Calculated ceiling from clouds: ${lowestCeiling}ft (CheckWX didn't provide ceiling)`);
+    }
+  }
+  
+  // CRITICAL FIX: Check for SCT000/FEW000 - clouds at ground level
+  // This indicates ZERO effective ceiling even though it's not BKN/OVC!
+  const groundLevelClouds = clouds.find(c => 
+    (c.type === 'SCT' || c.type === 'FEW') && 
+    c.base_feet_agl === 0
+  );
+  if (groundLevelClouds) {
+    console.log(`🚨 CRITICAL: ${groundLevelClouds.type}000 detected - clouds at ground level!`);
+    // Set ceiling to 0 if we have ground-level clouds (even SCT/FEW)
+    if (!ceiling || ceiling.feet > 0) {
+      ceiling = { feet: 0 };
+      console.log(`🚨 Setting effective ceiling to 0ft due to ${groundLevelClouds.type}000`);
     }
   }
 
@@ -254,7 +277,8 @@ function transformMetarData(checkwxData: CheckWXMetarResponse): TransformedMetar
       raw_text: observation.raw_text,
       temp_air: observation.temperature.celsius,
       temp_dewpoint: observation.dewpoint.celsius,
-      visibility: visibility || 0,
+      // FIX: Return visibility as object { meters: number } to match WeatherData type
+      visibility: { meters: visibility ?? 9999 },
       visibility_units: 'meters',
       wind: {
         speed_kts: observation.wind?.speed_kts || 0,

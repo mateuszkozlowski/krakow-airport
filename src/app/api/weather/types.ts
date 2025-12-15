@@ -33,7 +33,7 @@ export interface TransformedMetar {
   raw_text: string;
   temp_air: number;
   temp_dewpoint: number;
-  visibility: number;
+  visibility: { meters: number };
   visibility_units: string;
   wind: Wind;
   ceiling: Ceiling | null;

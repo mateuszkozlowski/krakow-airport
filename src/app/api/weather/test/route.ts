@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         raw_text: testMetarData.data[0].raw_text,
         temp_air: testMetarData.data[0].temperature.celsius,
         temp_dewpoint: testMetarData.data[0].dewpoint.celsius,
-        visibility: testMetarData.data[0].visibility.meters_float,
+        visibility: { meters: testMetarData.data[0].visibility.meters_float },
         visibility_units: 'meters',
         wind: {
           speed_kts: testMetarData.data[0].wind.speed_kts,
