@@ -1,15 +1,18 @@
 // src/lib/types/weather.ts
 
 export interface WindInfo {
-  degrees: number;
+  degrees?: number;      // Legacy field
+  direction?: number;    // Direction in degrees (used by API)
   speed_kts: number;
   gust_kts?: number;
 }
 
 export interface CloudInfo {
   code: string;
-  coverage: 'SKC' | 'FEW' | 'SCT' | 'BKN' | 'OVC';
-  base_feet_agl: number;
+  coverage?: 'SKC' | 'FEW' | 'SCT' | 'BKN' | 'OVC';
+  base_feet_agl: number;  // Can be 0 for SCT000/FEW000 (clouds at ground level)
+  altitude?: number;      // Alternative to base_feet_agl from some APIs
+  cloudType?: 'CB' | 'TCU';  // Cumulonimbus or Towering Cumulus
 }
 
 export interface Visibility {
