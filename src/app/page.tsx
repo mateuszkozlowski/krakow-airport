@@ -24,20 +24,6 @@ import Link from "next/link";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Dynamic imports for heavy components
-const WindCompass = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.WindCompass })), {
-  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
-  ssr: false
-});
-
-const VisibilityIndicator = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.VisibilityIndicator })), {
-  loading: () => <div className="w-full h-32 bg-slate-700/30 rounded-lg animate-pulse" />,
-  ssr: false
-});
-
-const RiskGauge = dynamic(() => import("@/components/BetaVisualizations").then(mod => ({ default: mod.RiskGauge })), {
-  loading: () => <div className="w-40 h-40 bg-slate-700/30 rounded-lg animate-pulse" />,
-  ssr: false
-});
 
 const HourlyBreakdown = dynamic(() => import("@/components/HourlyBreakdown").then(mod => ({ default: mod.HourlyBreakdown })), {
   loading: () => <div className="w-full h-64 bg-slate-700/30 rounded-xl animate-pulse" />,
@@ -301,68 +287,6 @@ function getForecastRiskForCurrentTime(forecast: WeatherResponse['forecast']): {
 
 
 
-// Key metrics display with advanced visualizations - memoized
-const KeyMetrics = memo(function KeyMetrics({ current }: { current: WeatherResponse['current'] }) {
-  const { language } = useLanguage();
-  const t = translations[language];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-      {/* Wind Compass */}
-      {current.wind && (
-        <Card className="bg-slate-800/50 shadow-2xl border-0">
-          <CardContent className="p-6 md:p-8">
-            <h3 className="text-sm md:text-base font-semibold text-slate-200 mb-4 md:mb-6 text-center">
-              {t.windConditions}
-            </h3>
-            <div className="flex justify-center">
-              <WindCompass 
-                direction={current.wind.direction}
-                speed={current.wind.speed_kts}
-                gust={current.wind.gust_kts}
-                size={160}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Visibility Indicator */}
-      {current.visibility && (
-        <VisibilityIndicator meters={current.visibility.meters} size={220} />
-      )}
-
-      {/* Ceiling with gauge */}
-      {current.ceiling && (
-        <Card className="bg-slate-800/50 shadow-2xl border-0">
-          <CardContent className="p-6 md:p-8">
-            <h3 className="text-sm md:text-base font-semibold text-slate-200 mb-4 md:mb-6 text-center">
-              {t.ceilingConditions}
-            </h3>
-            <div className="flex flex-col items-center space-y-2">
-              <RiskGauge 
-                level={current.ceiling.feet < 200 ? 4 : current.ceiling.feet < 500 ? 3 : current.ceiling.feet < 1000 ? 2 : 1}
-                maxLevel={4}
-                size={160}
-              />
-              <div className="text-center mt-4">
-                <div className="text-2xl font-bold text-white">
-                  {current.ceiling.feet}
-                  <span className="text-sm ml-1">ft</span>
-                </div>
-                <div className="text-xs text-slate-400 mt-1">
-                  {current.ceiling.feet < 1000 
-                    ? (language === 'pl' ? 'Niska' : 'Low')
-                    : (language === 'pl' ? 'Dobra' : 'Good')}
-            </div>
-          </div>
-        </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-});
 
 
 export default function Home() {
@@ -724,11 +648,6 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Key Metrics */}
-        <div className="mb-12">
-          <KeyMetrics current={weather.current} />
         </div>
 
         {/* Forecast Timeline */}
