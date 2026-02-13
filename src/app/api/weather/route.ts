@@ -16,19 +16,32 @@ const CHECKWX_API_KEY = process.env.NEXT_PUBLIC_CHECKWX_API_KEY;
 const AIRPORT = 'EPKK';
 
 async function fetchFromCheckWX<T>(endpoint: string) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      'X-API-Key': CHECKWX_API_KEY || '',
-      'Accept': 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      headers: {
+        'X-API-Key': CHECKWX_API_KEY || '',
+        'Accept': 'application/json',
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`CheckWX API responded with status ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`❌ CheckWX API error for ${endpoint}:`, response.status, errorText);
+      throw new Error(`CheckWX API responded with status ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json() as T;
+    
+    // Log if we get unexpected structure
+    if (data && typeof data === 'object' && 'results' in data && data.results === 0) {
+      console.warn(`⚠️ CheckWX API returned 0 results for ${endpoint}`);
+    }
+    
+    return { data };
+  } catch (error) {
+    console.error(`❌ Failed to fetch from CheckWX ${endpoint}:`, error);
+    throw error;
   }
-
-  const data = await response.json() as T;
-  return { data };
 }
 
 // Fix the any types
@@ -368,7 +381,7 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
   const forecast = checkwxData.data[0].forecast.map(period => {
     // Extract probability from indicator code or text
     let probability: number | undefined;
-    if (period.change?.indicator) {
+    if (period.change?.indicator?.code) {
       const indicatorCode = period.change.indicator.code;
       const indicatorText = period.change.indicator.text || '';
       
@@ -387,11 +400,11 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
         from: period.timestamp.from,
         to: period.timestamp.to
       } : null,
-      change: period.change ? {
+      change: period.change?.indicator?.code ? {
         indicator: {
           code: period.change.indicator.code,
-          text: period.change.indicator.text,
-          desc: period.change.indicator.desc,
+          text: period.change.indicator.text || '',
+          desc: period.change.indicator.desc || '',
           probability
         }
       } : undefined,
@@ -509,26 +522,55 @@ function transformTafData(checkwxData: CheckWXTafResponse): TransformedTafRespon
 }
 
 async function fetchWeatherData() {
-  const [metarResponse, tafResponse] = await Promise.all([
-    fetchFromCheckWX<CheckWXMetarResponse>(`/metar/${AIRPORT}/decoded`),
-    fetchFromCheckWX<CheckWXTafResponse>(`/taf/${AIRPORT}/decoded`)
-  ]);
+  let metarResponse, tafResponse;
+  
+  try {
+    [metarResponse, tafResponse] = await Promise.allSettled([
+      fetchFromCheckWX<CheckWXMetarResponse>(`/metar/${AIRPORT}/decoded`),
+      fetchFromCheckWX<CheckWXTafResponse>(`/taf/${AIRPORT}/decoded`)
+    ]);
 
-  if (!metarResponse.data?.data?.length || !tafResponse.data?.data?.length) {
-    throw new Error('Incomplete weather data received');
+    // Handle METAR response
+    if (metarResponse.status === 'rejected') {
+      console.error('❌ METAR API failed:', metarResponse.reason);
+      throw new Error(`METAR API unavailable: ${metarResponse.reason instanceof Error ? metarResponse.reason.message : 'Unknown error'}`);
+    }
+    
+    if (!metarResponse.value.data?.data?.length) {
+      console.error('❌ METAR API returned no data');
+      throw new Error('METAR API returned no data');
+    }
+
+    // Handle TAF response
+    if (tafResponse.status === 'rejected') {
+      console.error('❌ TAF API failed:', tafResponse.reason);
+      throw new Error(`TAF API unavailable: ${tafResponse.reason instanceof Error ? tafResponse.reason.message : 'Unknown error'}`);
+    }
+    
+    if (!tafResponse.value.data?.data?.length) {
+      console.error('❌ TAF API returned no data');
+      throw new Error('TAF API returned no data');
+    }
+
+    const transformedMetar = transformMetarData(metarResponse.value.data);
+    const transformedTaf = transformTafData(tafResponse.value.data);
+
+    if (!transformedMetar) {
+      throw new Error('Failed to transform METAR data');
+    }
+    
+    if (!transformedTaf) {
+      throw new Error('Failed to transform TAF data');
+    }
+
+    return { 
+      metar: transformedMetar, 
+      taf: transformedTaf 
+    };
+  } catch (error) {
+    console.error('❌ Error in fetchWeatherData:', error);
+    throw error;
   }
-
-  const transformedMetar = transformMetarData(metarResponse.data);
-  const transformedTaf = transformTafData(tafResponse.data);
-
-  if (!transformedMetar || !transformedTaf) {
-    throw new Error('Failed to transform weather data');
-  }
-
-  return { 
-    metar: transformedMetar, 
-    taf: transformedTaf 
-  };
 }
 
 export async function GET() {
