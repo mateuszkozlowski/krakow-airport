@@ -896,9 +896,14 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 
                 // Group consecutive hours (allow different risk levels if they're close)
                 // Don't merge across gaps - it's confusing for users!
-                // Allow grouping if risk levels are within 1 level of each other (e.g., 2 and 3, or 3 and 4)
-                const riskLevelDiff = Math.abs(hour.riskLevel - lastHour.riskLevel);
-                if (timeDiff <= oneHour && riskLevelDiff <= 1) {
+                // Ensure the entire group spans at most 1 risk level (e.g., 2-3 or 3-4, but not 2-4)
+                const minRiskInGroup = Math.min(...currentGroup.map(h => h.riskLevel));
+                const maxRiskInGroup = Math.max(...currentGroup.map(h => h.riskLevel));
+                const newMinRisk = Math.min(minRiskInGroup, hour.riskLevel);
+                const newMaxRisk = Math.max(maxRiskInGroup, hour.riskLevel);
+                const groupSpan = newMaxRisk - newMinRisk;
+                
+                if (timeDiff <= oneHour && groupSpan <= 1) {
                   currentGroup.push(hour);
                 } else {
                   noteworthyGroups.push({
