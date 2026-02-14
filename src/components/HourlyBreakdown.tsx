@@ -894,9 +894,11 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                 const timeDiff = hour.hour.getTime() - lastHour.hour.getTime();
                 const oneHour = 60 * 60 * 1000;
                 
-                // Group ONLY consecutive hours with same risk level
+                // Group consecutive hours (allow different risk levels if they're close)
                 // Don't merge across gaps - it's confusing for users!
-                if (timeDiff <= oneHour && hour.riskLevel === lastHour.riskLevel) {
+                // Allow grouping if risk levels are within 1 level of each other (e.g., 2 and 3, or 3 and 4)
+                const riskLevelDiff = Math.abs(hour.riskLevel - lastHour.riskLevel);
+                if (timeDiff <= oneHour && riskLevelDiff <= 1) {
                   currentGroup.push(hour);
                 } else {
                   noteworthyGroups.push({
@@ -921,7 +923,9 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
             return (
               <div className="space-y-3 md:space-y-4">
                 {noteworthyGroups.map((group, idx) => {
-                  const colors = getCardColors(group.start.riskLevel);
+                  // Use max risk level from group for colors and display
+                  const maxRiskLevel = Math.max(...group.hours.map(h => h.riskLevel));
+                  const colors = getCardColors(maxRiskLevel);
                   
                   // Collect and prioritize phenomena - remove redundancies
                   const rawPhenomena = [...new Set(group.hours.flatMap(h => h.phenomena))];
@@ -976,10 +980,13 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                     .filter((v): v is number => v !== undefined);
                   const minVisibility = visibilities.length > 0 ? Math.min(...visibilities) : undefined;
                   
-                  // Friendly description based on risk level
-                  const friendlyDescription = group.start.riskLevel === 4
+                  // Get max risk level from the group (not just the start)
+                  const maxRiskLevel = Math.max(...group.hours.map(h => h.riskLevel));
+                  
+                  // Friendly description based on max risk level in the group
+                  const friendlyDescription = maxRiskLevel === 4
                     ? (language === 'pl' ? 'Warunki mogące wpłynąć na operacje lotnicze' : 'Conditions that may affect flight operations')
-                    : group.start.riskLevel === 3
+                    : maxRiskLevel === 3
                     ? (language === 'pl' ? 'Warunki wymagające uwagi' : 'Conditions requiring attention')
                     : (language === 'pl' ? 'Niewielki wpływ warunków pogodowych' : 'Minor weather impact');
                   
@@ -994,11 +1001,11 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                       } ${!isDesktop ? 'active:scale-[0.99]' : ''}`}
                     >
                       {/* Single gradient for high risk - simplified */}
-                      {group.start.riskLevel >= 3 && (
+                      {maxRiskLevel >= 3 && (
                         <div 
                           className="absolute inset-0 pointer-events-none opacity-30"
                           style={{
-                            background: group.start.riskLevel === 4 
+                            background: maxRiskLevel === 4 
                               ? 'radial-gradient(circle at top right, rgba(239, 68, 68, 0.15) 0%, transparent 60%)'
                               : 'radial-gradient(circle at top right, rgba(249, 115, 22, 0.1) 0%, transparent 60%)'
                           }}
@@ -1016,7 +1023,7 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            {getRiskIcon(group.start.riskLevel, 'w-8 h-8 flex-shrink-0')}
+                            {getRiskIcon(maxRiskLevel, 'w-8 h-8 flex-shrink-0')}
                             <div className="flex-1 min-w-0">
                               {/* Time + Duration + Day */}
                               <div className="flex items-baseline gap-2 flex-wrap mb-1">
