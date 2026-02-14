@@ -980,10 +980,8 @@ export function HourlyBreakdown({ forecast, language }: HourlyBreakdownProps) {
                     .filter((v): v is number => v !== undefined);
                   const minVisibility = visibilities.length > 0 ? Math.min(...visibilities) : undefined;
                   
-                  // Get max risk level from the group (not just the start)
-                  const maxRiskLevel = Math.max(...group.hours.map(h => h.riskLevel));
-                  
                   // Friendly description based on max risk level in the group
+                  // (maxRiskLevel is already calculated above at line 927)
                   const friendlyDescription = maxRiskLevel === 4
                     ? (language === 'pl' ? 'Warunki mogące wpłynąć na operacje lotnicze' : 'Conditions that may affect flight operations')
                     : maxRiskLevel === 3
