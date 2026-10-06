@@ -237,10 +237,24 @@ export function Timeline({
       ) : (
         <div className="timeline-surface">
           <div className="timeline-navigation">
-            <p>
-              <span>{date.format(new Date(edges.at ?? start))}</span>
+            <p className="timeline-preview">
+              <span>
+                {showPreview && readoutAt && readoutSegment
+                  ? `${formatTime(readoutAt, locale, true)} – ${formatTime(readoutSegment.end, locale)}`
+                  : date.format(new Date(edges.at ?? start))}
+              </span>
               <span className="muted">
-                {locale === "pl" ? "Czas w Krakowie" : "Kraków local time"}
+                {showPreview
+                  ? readoutPeriod
+                    ? t.weatherNames[
+                        weatherSymbol(readoutPeriod.conditions).key
+                      ]
+                    : locale === "pl"
+                      ? "Brak prognozy"
+                      : "No forecast"
+                  : locale === "pl"
+                    ? "Czas w Krakowie"
+                    : "Kraków local time"}
               </span>
             </p>
             <div>
@@ -448,7 +462,7 @@ export function Timeline({
                 .join("; ")}
             </p>
           )}
-          {readoutAt && readoutSegment && (showPreview || hasShortChanges) && (
+          {readoutAt && readoutSegment && hasShortChanges && (
             <div className="timeline-readout">
               {hasShortChanges && (
                 <div
@@ -491,34 +505,6 @@ export function Timeline({
                     </button>
                   ))}
                 </div>
-              )}
-              {showPreview && (
-                <>
-                  <span className="readout-time">
-                    <Icon name={operation} />
-                    {t[operation]} · {formatTime(readoutAt, locale, true)}
-                    {readoutAt !== selected &&
-                      ` – ${formatTime(readoutSegment.end, locale)}`}
-                  </span>
-                  {readoutPeriod ? (
-                    <>
-                      <span className="readout-weather">
-                        {
-                          t.weatherNames[
-                            weatherSymbol(readoutPeriod.conditions).key
-                          ]
-                        }
-                      </span>
-                      {readoutPeriod.source === "model" && (
-                        <span className="muted small">{t.model}</span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="muted">
-                      {locale === "pl" ? "Brak prognozy" : "No forecast"}
-                    </span>
-                  )}
-                </>
               )}
             </div>
           )}

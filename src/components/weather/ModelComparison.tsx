@@ -12,47 +12,42 @@ export function ModelComparison({
   const pl = locale === "pl";
   const paired = quality.paired.model;
   return (
-    <details className="explanation model-comparison">
-      <summary>
-        {pl ? "Sprawdzanie modelu mgły" : "Testing the fog model"}
-      </summary>
+    <section className="model-comparison" aria-labelledby="model-test-title">
+      <h2 id="model-test-title">
+        {pl ? "Bieżący test: co już wiemy?" : "The live test: what do we know?"}
+      </h2>
       <p>
         {pl
-          ? "Model przewiduje widzialność poniżej 550 m za 2 godziny od ostatniej obserwacji. Porównujemy go z prognozą lotniskową i utrzymaniem ostatniego pomiaru dla tych samych godzin. Nie zmienia ocen ani powiadomień dla pasażerów."
-          : "The model predicts visibility below 550 m two hours after the latest observation. We compare it with the airport forecast and persistence of the latest reading at exactly the same times. It does not change passenger assessments or notifications."}
+          ? "Porównujemy nasz model, prognozę synoptyka i prostą prognozę zakładającą, że obecne warunki się utrzymają. Wszystkie trzy sprawdzamy względem tych samych późniejszych pomiarów. Same godziny z dobrą widzialnością nie wystarczą — potrzebujemy również przypadków jej pogorszenia."
+          : "We compare our model, the airport forecaster’s prediction and a simple forecast that keeps the current conditions unchanged. All three are checked against the same later observations. Good-visibility hours alone are not enough: we also need cases of worsening visibility."}
       </p>
       <p>
         {!quality.available
           ? pl
-            ? "Pomiar wymaga dostępnej historii i regularnego zapisywania prognoz. Brak wyniku."
-            : "Evaluation requires available history and regular forecast collection. No result is available."
+            ? "Historia bieżącego testu jest chwilowo niedostępna. Nie możemy pokazać zweryfikowanego wyniku."
+            : "The live-test history is temporarily unavailable. We cannot show a verified result."
           : paired.samples === 0
             ? pl
-              ? "Czekamy na prognozy zapisane przed docelową godziną i późniejsze pomiary."
-              : "Waiting for forecasts recorded before their target time and subsequent observations."
-            : `${pl ? "Wspólne odczyty" : "Paired readings"}: ${paired.samples}. ${pl ? "Z widzialnością poniżej 550 m" : "With visibility below 550 m"}: ${paired.positiveReadings}.`}
+              ? "Test dopiero się zaczyna. Czekamy na prognozy zapisane przed docelową godziną oraz późniejsze pomiary, które pozwolą porównać wszystkie trzy źródła."
+              : "The test is just starting. We are waiting for forecasts saved before their target time and later observations that allow all three sources to be compared."
+            : pl
+              ? `Porównaliśmy ${paired.samples} prognoz z późniejszym pomiarem. W ${paired.positiveReadings} przypadkach widzialność spadła poniżej 550 m.`
+              : `We compared ${paired.samples} forecasts with later observations. Visibility was below 550 m in ${paired.positiveReadings} cases.`}
       </p>
-      {quality.missingNumericTaf > 0 && (
-        <p className="muted small">
-          {pl
-            ? `${quality.missingNumericTaf} dopasowanych odczytów nie ma liczbowej szansy w TAF-ie. Nie wliczamy ich do wspólnego porównania.`
-            : `${quality.missingNumericTaf} matched readings have no numeric TAF probability. They are excluded from the paired comparison.`}
-        </p>
-      )}
       {paired.samples >= 30 ? (
         <div className="comparison-table-scroll">
           <table>
             <caption>
               {pl
-                ? "Błąd prawdopodobieństw — niższy wynik jest lepszy"
-                : "Probability error — lower is better"}
+                ? "Porównanie prognoz — mniejszy błąd jest lepszy"
+                : "Forecast comparison — lower error is better"}
             </caption>
             <thead>
               <tr>
-                <th scope="col">{pl ? "Prognoza" : "Forecast"}</th>
-                <th scope="col">Brier</th>
-                <th scope="col">{pl ? "Fałszywe wskazania" : "False alarms"}</th>
-                <th scope="col">{pl ? "Pominięte odczyty" : "Missed readings"}</th>
+                <th scope="col">{pl ? "Źródło" : "Source"}</th>
+                <th scope="col">{pl ? "Błąd" : "Error"}</th>
+                <th scope="col">{pl ? "Fałszywe alarmy" : "False alarms"}</th>
+                <th scope="col">{pl ? "Pominięcia" : "Misses"}</th>
               </tr>
             </thead>
             <tbody>
@@ -62,10 +57,16 @@ export function ModelComparison({
                   <tr key={source}>
                     <th scope="row">
                       {source === "model"
-                        ? pl ? "Model badawczy" : "Research model"
+                        ? pl
+                          ? "Model mgły"
+                          : "Fog model"
                         : source === "taf"
-                          ? pl ? "Prognoza lotniskowa" : "Airport forecast"
-                          : pl ? "Ostatni pomiar" : "Latest reading"}
+                          ? pl
+                            ? "Synoptyk"
+                            : "Forecaster"
+                          : pl
+                            ? "Bez zmian"
+                            : "Unchanged"}
                     </th>
                     <td>{score.brier?.toFixed(4) ?? "—"}</td>
                     <td>{score.falseAlarms}</td>
@@ -79,15 +80,39 @@ export function ModelComparison({
       ) : (
         <p className="muted small">
           {pl
-            ? "Porównanie pokażemy po 30 wspólnych odczytach. Taka próba nie dowodzi jeszcze skuteczności w różnych sezonach."
-            : "The comparison is shown after 30 paired readings. This does not yet demonstrate performance across seasons."}
+            ? "Tabelę pokażemy po 30 wspólnych porównaniach. To próg wyświetlenia wyników, a nie dowód skuteczności. Do oceny modelu potrzeba większej próby, dni z mgłą i różnych pór roku."
+            : "The table appears after 30 paired comparisons. This is a display threshold, not evidence of accuracy. Evaluating the model requires a larger sample, foggy days and different seasons."}
         </p>
       )}
-      <p className="muted small">
-        {pl
-          ? "Próg wskazania: 30%. Liczymy odczyty, nie odwołane loty ani wysłane ostrzeżenia. Czas od zapisu do celu jest krótszy, jeśli ostatni METAR jest starszy. Kolejne odczyty z tego samego epizodu nie są niezależne."
-          : "Indication threshold: 30%. We count readings, not cancelled flights or sent alerts. Time from recording to target is shorter when the latest METAR is older. Successive readings in one episode are not independent."}
-      </p>
-    </details>
+      <details className="explanation">
+        <summary>
+          {pl
+            ? "Jak liczymy i czytamy wyniki?"
+            : "How are the results calculated?"}
+        </summary>
+        <p>
+          {pl
+            ? "Błąd prognozy to Brier score: porównuje przewidywane szanse z tym, co później zmierzono. Zero oznacza idealne prognozy; wynik 0,01 nie oznacza 99% trafności. Fałszywe wskazania i pominięcia liczymy przy progu 30% szans na widzialność poniżej 550 m. Liczymy pomiary pogody, nie odwołane loty ani wysłane ostrzeżenia."
+            : "Forecast error is the Brier score: it compares predicted probabilities with later observations. Zero means perfect forecasts; a score of 0.01 does not mean 99% accuracy. False alarms and misses use a 30% probability threshold for visibility below 550 m. We count weather observations, not cancelled flights or sent alerts."}
+        </p>
+        <p>
+          {pl
+            ? "Cel to dwie godziny po ostatnim pomiarze. Jeśli pomiar ma już 30 minut, do celu pozostaje 90 minut. Późniejszy pomiar musi przypadać najwyżej 15 minut przed lub po docelowej godzinie. Kolejne pomiary z tej samej mgły nie są niezależnymi przypadkami."
+            : "The target is two hours after the latest observation. If that observation is already 30 minutes old, 90 minutes remain. Verification must be within 15 minutes of the target time. Successive observations from the same fog episode are not independent cases."}
+        </p>
+        <p>
+          {pl
+            ? "Prognoza lotniskowa nie zawsze podaje liczbową szansę zmiany. Gdy takie okresowe lub stopniowe zmiany wpływają na oceniane zdarzenie, wyłączamy dany przypadek ze wspólnego porównania. Brak danych nie staje się prognozą dobrej pogody."
+            : "The airport forecast does not always assign a numeric probability to a change. When such temporary or gradual changes affect the event being evaluated, we exclude that case from the paired comparison. Missing data do not become a good-weather forecast."}
+        </p>
+        {quality.missingNumericTaf > 0 && (
+          <p className="muted small">
+            {pl
+              ? `${quality.missingNumericTaf} dodatkowych dopasowanych pomiarów nie ma liczbowej szansy w prognozie lotniskowej. Nie wliczamy ich do tabeli.`
+              : `${quality.missingNumericTaf} additional matched observations lack a numeric airport-forecast probability. They are excluded from the table.`}
+          </p>
+        )}
+      </details>
+    </section>
   );
 }

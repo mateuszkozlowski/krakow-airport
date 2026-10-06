@@ -12,7 +12,7 @@ import { formatTime, localInput, warsawToUtc } from "@/lib/weather/time";
 import { Reminder } from "./Reminder";
 import { WeatherDetails as Details } from "./WeatherDetails";
 import { Icon } from "./Icon";
-import { scenarioDescription } from "@/lib/weather/presentation";
+import { scenarioDescription, weatherSymbol } from "@/lib/weather/presentation";
 import { Timeline } from "./Timeline";
 import { VisibilityTrend } from "./VisibilityTrend";
 
@@ -32,13 +32,15 @@ export function Risk({
 function ReasonList({
   assessment,
   locale,
+  codes = assessment.reasons,
 }: {
   assessment: Assessment;
   locale: Locale;
+  codes?: string[];
 }) {
-  return assessment.reasons.length ? (
+  return codes.length ? (
     <ul className="reasons">
-      {assessment.reasons.map((r) => (
+      {codes.map((r) => (
         <li key={r}>
           {reasons[locale][r] ??
             (locale === "pl"
@@ -231,6 +233,12 @@ export function Dashboard({
       )
     : null;
   const better = improvement(snapshot, operation);
+  const currentReasons = [
+    ...new Set([
+      ...snapshot.current.arrival.reasons,
+      ...snapshot.current.departure.reasons,
+    ]),
+  ];
   const ensemble = selected
     ? snapshot.ensemble.find(
         (p) => Math.abs(Date.parse(p.at) - Date.parse(selected)) <= 30 * 60000,
@@ -381,14 +389,13 @@ export function Dashboard({
         </p>
       )}
       <div className="dashboard-top">
-        <section className="panel planner" aria-labelledby="planner-title">
-          <h2 id="planner-title">{t.planner}</h2>
-          <p id="planner-hint" className="muted small">
-            {t.plannerHint}
-          </p>
+        <section className="planner" aria-labelledby="planner-title">
+          <span id="planner-hint" className="sr-only">
+            {locale === "pl" ? "Czas w Krakowie" : "Kraków local time"}
+          </span>
           <form onSubmit={check}>
             <label>
-              {t.localTime}
+              <span id="planner-title">{t.planner}</span>
               <input
                 type="datetime-local"
                 aria-describedby="planner-hint"
@@ -400,7 +407,10 @@ export function Dashboard({
                 required
               />
             </label>
-            <button className="button">{t.check}</button>
+            <button className="button" aria-label={t.check} title={t.check}>
+              <span className="planner-action-label">{t.check}</span>
+              <Icon name="right" />
+            </button>
           </form>
           {error && (
             <p role="status" className="notice">
@@ -408,45 +418,72 @@ export function Dashboard({
             </p>
           )}
         </section>
-        <section className="panel" aria-labelledby="current-title">
-          <div className="section-heading">
-            <h2 id="current-title">{t.now}</h2>
+        <section className="current-section" aria-label={t.now}>
+          <div className="current-toolbar">
+            <details className="current-observation">
+              <summary>
+                <span className="current-heading">
+                  <span>{t.now}</span>
+                  <span className="muted small">
+                    {snapshot.observed
+                      ? formatTime(
+                          snapshot.observed.at,
+                          locale,
+                          snapshot.sources.metar.state !== "fresh",
+                        )
+                      : t.unavailable}
+                    {snapshot.sources.metar.state !== "fresh"
+                      ? ` · ${t[snapshot.sources.metar.state]}`
+                      : ""}
+                  </span>
+                </span>
+                {snapshot.observed && (
+                  <span className="current-reading muted small">
+                    <Icon
+                      name={weatherSymbol(snapshot.observed.conditions).icon}
+                    />
+                    {t.visibility}:{" "}
+                    {snapshot.observed.conditions.visibility === null
+                      ? "—"
+                      : snapshot.observed.conditions.visibility >= 9999
+                        ? "≥ 10 km"
+                        : `${Math.round(snapshot.observed.conditions.visibility)} m`}
+                  </span>
+                )}
+              </summary>
+              {snapshot.observed && (
+                <Details
+                  conditions={snapshot.observed.conditions}
+                  locale={locale}
+                />
+              )}
+              <div className="risk-pair">
+                {(["arrival", "departure"] as const).map((op) => (
+                  <div className="risk-card" key={op}>
+                    <h3>
+                      <Icon name={op} />
+                      {t[op]}
+                    </h3>
+                    <Risk assessment={snapshot.current[op]} locale={locale} />
+                  </div>
+                ))}
+              </div>
+            </details>
             <button
               className="button secondary"
               onClick={refresh}
               disabled={loading}
+              aria-label={loading ? t.refreshing : t.refresh}
+              title={t.refresh}
             >
               <Icon name="refresh" />
-              {loading ? t.refreshing : t.refresh}
             </button>
           </div>
-          <p className="muted">
-            {snapshot.observed
-              ? `${t.updated} ${formatTime(snapshot.observed.at, locale, true)}`
-              : t.unavailable}
-            {snapshot.sources.metar.state !== "fresh"
-              ? ` · ${t[snapshot.sources.metar.state]}`
-              : ""}
-          </p>
-          <div className="risk-pair">
-            {(["arrival", "departure"] as const).map((op) => (
-              <div className="risk-card" key={op}>
-                <h3>
-                  <Icon name={op} />
-                  {t[op]}
-                </h3>
-                <Risk assessment={snapshot.current[op]} locale={locale} />
-                <ReasonList assessment={snapshot.current[op]} locale={locale} />
-              </div>
-            ))}
-          </div>
-          {snapshot.observed && (
-            <Details
-              conditions={snapshot.observed.conditions}
-              locale={locale}
-            />
-          )}
-
+          <ReasonList
+            assessment={snapshot.current[operation]}
+            codes={currentReasons}
+            locale={locale}
+          />
           <VisibilityTrend snapshot={snapshot} locale={locale} />
           {snapshot.fogSignal &&
             !snapshot.observed?.conditions.weather.some((w) =>
@@ -458,17 +495,9 @@ export function Dashboard({
                   : t.fogPossible}
               </p>
             )}
-          {snapshot.current.arrival.reasons.some(
-            (r) => r === "deicing" || r === "snow",
-          ) && (
-            <p className="notice">
-              <strong>{t.ground}: </strong>
-              {t.deicing}
-            </p>
-          )}
         </section>
       </div>
-      <p className="notice">
+      <p className="flight-status-link">
         {t.caution}{" "}
         <a
           href={`https://krakowairport.pl/${locale}#nav-${operation === "arrival" ? "arrivals" : "departures"}`}
@@ -476,22 +505,22 @@ export function Dashboard({
           {t.statusLink} ↗
         </a>
       </p>
-      <details className="panel forecast-details">
-        <summary>
-          {t.forecast}{" "}
-          <span className="muted small">({snapshot.forecast.length})</span>
-        </summary>
-        {snapshot.forecast.length === 0 ? (
-          <p>{t.unavailable}</p>
-        ) : (
-          <div className="forecast-list">
-            {snapshot.forecast.map(renderPeriod)}
-          </div>
-        )}
-        <p className="muted small">{t.limitNote}</p>
-      </details>
       <details className="panel source-panel">
         <summary>{t.sources}</summary>
+        <details className="forecast-details">
+          <summary>
+            {t.forecast}{" "}
+            <span className="muted small">({snapshot.forecast.length})</span>
+          </summary>
+          {snapshot.forecast.length === 0 ? (
+            <p>{t.unavailable}</p>
+          ) : (
+            <div className="forecast-list">
+              {snapshot.forecast.map(renderPeriod)}
+            </div>
+          )}
+          <p className="muted small">{t.limitNote}</p>
+        </details>
         <ul className="source-list">
           {Object.entries(snapshot.sources).map(([key, s]) => (
             <li key={key}>
@@ -506,8 +535,8 @@ export function Dashboard({
         <p className="muted small">{t.rvrNote}</p>
         <p className="muted small">
           {locale === "pl"
-            ? "METAR to pomiar na lotnisku, a TAF to prognoza lotniskowa. W komunikatach: TEMPO oznacza warunki chwilowe, BECMG — stopniową zmianę, PROB30/40 — 30% lub 40% szans na dane warunki. Wiatr zapisano w węzłach (kt), wysokość chmur w stopach (ft). Prognoza komputerowa nie podaje widoczności na pasie ani podstawy chmur."
-            : "METAR is an airport measurement and TAF is an airport forecast. In these reports, TEMPO means temporary conditions, BECMG a gradual change, and PROB30/40 a 30% or 40% chance of the weather conditions. Wind uses knots (kt), cloud height uses feet (ft). The computer forecast has no runway visibility or cloud base."}
+            ? "METAR to pomiar na lotnisku, a TAF to prognoza lotniskowa. TEMPO oznacza okresowe zmiany pogody, BECMG — stopniową zmianę, PROB30/40 — 30% lub 40% szans na dane warunki. Prognoza dla okolicy lotniska pochodzi z Open-Meteo i uzupełnia godziny bez prognozy lotniskowej. Nie zawiera widoczności na pasie ani podstawy chmur."
+            : "METAR is an airport measurement and TAF is an airport forecast. TEMPO means temporary weather changes, BECMG a gradual change, and PROB30/40 a 30% or 40% chance of the weather. The forecast for the airport area comes from Open-Meteo and fills hours without an airport forecast. It has no runway visibility or cloud base."}
         </p>
         <details>
           <summary>{t.raw}</summary>

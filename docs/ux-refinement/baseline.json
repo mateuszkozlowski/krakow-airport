@@ -1,0 +1,24 @@
+{
+  "base": "https://www.krk.flights",
+  "at": "2026-10-06T13:58:40.356Z",
+  "before": {
+    "timelineHeight": 358,
+    "plannerTop": 684.34375,
+    "switchBottom": 408.34375,
+    "chartTop": 408.34375,
+    "pageHeight": 2001
+  },
+  "hover": {
+    "timelineHeight": 427.78125,
+    "plannerTop": 754.125,
+    "switchBottom": 408.34375,
+    "chartTop": 408.34375,
+    "readout": "Odlot · 6 paź, 16:00 – 17:00\nBez niskich chmur",
+    "pageHeight": 2070
+  },
+  "deltaHeight": 69.78125,
+  "deltaFollowingSection": 69.78125,
+  "targetLabel": "Odlot, 6 paź, 16:00 CEST – 17:00 CEST. Bez niskich chmur. Niskie ryzyko. . Prognoza lotniskowa",
+  "summaryLabel": "Sprawdzanie modelu mgły",
+  "pageErrors": []
+}

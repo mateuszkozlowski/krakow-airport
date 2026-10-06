@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { seo } from "@/lib/seo";
-import { slugs, text } from "@/lib/weather/copy";
+import { slugs } from "@/lib/weather/copy";
 import { getQuality } from "@/lib/weather/history";
 import type { Locale } from "@/lib/weather/model";
-import { ModelComparison } from "@/components/weather/ModelComparison";
+import { WeatherMethodology } from "@/components/weather/WeatherMethodology";
+import { FogModelGuide } from "@/components/weather/FogModelGuide";
 type Params = { locale: string; slug: string };
 function resolve({ locale, slug }: Params): {
   locale: Locale;
@@ -20,15 +21,15 @@ function resolve({ locale, slug }: Params): {
 const titles = {
   pl: {
     fog: "Mgła w Balicach: loty, widzialność i przygotowanie do podróży",
-    methodology: "Jak oceniamy pogodę i ryzyko utrudnień",
+    methodology: "Skąd bierze się prognoza pogody",
     rights: "Prawa pasażera przy opóźnieniu lub odwołaniu lotu",
-    accuracy: "Jakość prognozy: dane i ograniczenia",
+    accuracy: "Nasz model mgły: jak działa",
   },
   en: {
     fog: "Fog at Kraków Airport: flights, visibility and travel advice",
-    methodology: "How we assess weather and disruption risk",
+    methodology: "Where the weather forecast comes from",
     rights: "Passenger rights for delayed or cancelled flights",
-    accuracy: "Forecast quality: data and limitations",
+    accuracy: "Our fog model: how it works",
   },
 };
 export async function generateMetadata({
@@ -71,7 +72,8 @@ export default async function Article({ params }: { params: Promise<Params> }) {
               </li>
               <li>
                 Sprawdź ocenę dla swojej godziny i możliwe zmiany pogody.
-                Zobacz, czy to prognoza lotniskowa, czy komputerowa.
+                Zobacz, czy pochodzi z prognozy lotniskowej, czy z prognozy dla
+                okolicy.
               </li>
               <li>
                 Przeczytaj wiadomość od linii lotniczej i sprawdź oficjalną
@@ -127,7 +129,8 @@ export default async function Article({ params }: { params: Promise<Params> }) {
               </li>
               <li>
                 Read the assessment for your time and any possible changes.
-                Check whether the source is an airport or a computer forecast.
+                Check whether it comes from the airport forecast or the area
+                forecast.
               </li>
               <li>
                 Check your airline message and the official airport flight
@@ -168,124 +171,7 @@ export default async function Article({ params }: { params: Promise<Params> }) {
             </p>
           </>
         ))}
-      {key === "methodology" &&
-        (pl ? (
-          <>
-            <p>
-              Pokazujemy warunki pogodowe i możliwe utrudnienia. Bez rozkładu i
-              rzeczywistych wyników lotów nie przewidujemy odwołania ani
-              przekierowania konkretnego samolotu. Cztery poziomy są oceną
-              ekspercką, a nie wyuczonym prawdopodobieństwem.
-            </p>
-            <h2>Jakie dane bierzemy pod uwagę?</h2>
-            <ul>
-              <li>
-                METAR EPKK: ostatnia obserwacja oraz historia do oceny trendu.
-                Dane starsze niż 90 minut nie dają bieżącej oceny.
-              </li>
-              <li>
-                TAF EPKK: podstawowa prognoza i osobne scenariusze FM, BECMG,
-                TEMPO, PROB30/40. Używamy ważnego komunikatu wydanego do 12
-                godzin temu.
-              </li>
-              <li>
-                Open-Meteo: uzupełnia okres poza ważnym TAF-em. To mniej pewna
-                wskazówka modelowa, bez prognozy RVR i pułapu. Brakujące
-                wartości nie oznaczają dobrej pogody.
-              </li>
-            </ul>
-            <h2>RVR, widzialność i wiatr</h2>
-            <p>
-              RVR nie jest widzialnością ogólną. Jeśli jest raportowany,
-              pokazujemy go osobno i ostrożnie uwzględniamy najniższą wartość.
-              Pułap wyznaczają BKN, OVC i widzialność pionowa; niskie FEW/SCT
-              nie są pułapem. Wiatr analizujemy względem osi pasa w stopniach
-              względem północy geograficznej, uwzględniając porywy i zmienność.
-            </p>
-            <p>
-              Podstawowe pasma ostrzegawcze RVR wynoszą 550 m dla przylotu i 300
-              m dla odlotu, a pułapu 200 ft dla przylotu. Są konfigurowalne. Nie
-              są wiążącymi minimami konkretnego lotu. Stan nawierzchni i aktywny
-              kierunek pasa nie są dostępne; nie deklarujemy bezpieczeństwa
-              startu lub lądowania.
-            </p>
-            <h2>Co oznacza 40% w TAF-ie?</h2>
-            <p>
-              PROB40 oznacza szansę wystąpienia opisanych warunków, nie 40%
-              szans odwołania lotu. TEMPO nie ma arbitralnej wartości 30%:
-              pokazujemy je jako okresowe warunki dodatkowe. W okresie BECMG
-              prezentujemy warunki przed zmianą i możliwy stan po zmianie,
-              zamiast udawać, że zmiana następuje natychmiast.
-            </p>
-            <h2>Mgła i obsługa zimowa</h2>
-            <p>
-              Mała różnica temperatury i punktu rosy przy słabym wietrze jest
-              sygnałem sprzyjającym mgle. Trend METAR może go wzmacniać, lecz
-              nie wyznacza pewnej godziny początku. Marznąca mgła, śnieg i
-              odladzanie nie są automatycznym komunikatem o zawieszeniu
-              operacji. Nie podajemy wymyślonych minut opóźnienia.
-            </p>
-          </>
-        ) : (
-          <>
-            <p>
-              We show weather conditions and possible disruption. Without
-              schedules and actual flight outcomes, we do not predict
-              cancellation or diversion of an individual aircraft. The four
-              levels are expert weather guidance, not a trained probability.
-            </p>
-            <h2>Which data do we use?</h2>
-            <ul>
-              <li>
-                EPKK METAR: the latest observation and recent history for
-                trends. Observations older than 90 minutes cannot produce a
-                current assessment.
-              </li>
-              <li>
-                EPKK TAF: prevailing conditions and separate FM, BECMG, TEMPO
-                and PROB30/40 scenarios. We use a valid report issued within the
-                last 12 hours.
-              </li>
-              <li>
-                Open-Meteo: fills the period beyond the valid TAF. This is less
-                certain model guidance without an RVR or ceiling forecast.
-                Missing values do not mean good weather.
-              </li>
-            </ul>
-            <h2>RVR, visibility and wind</h2>
-            <p>
-              RVR is different from general visibility. When reported, we
-              display it separately and cautiously consider the lowest reading.
-              The ceiling comes from BKN, OVC or vertical visibility; low
-              FEW/SCT clouds are not a ceiling. We analyse wind relative to the
-              runway's true heading, including gusts and directional
-              variability.
-            </p>
-            <p>
-              Default RVR advisory bands are 550 m for arrivals and 300 m for
-              departures; the arrival ceiling band is 200 ft. These are
-              configurable and are not binding minima for a particular flight.
-              The runway surface and active direction are unknown; we do not
-              declare take-off or landing safe.
-            </p>
-            <h2>What does 40% in a TAF mean?</h2>
-            <p>
-              PROB40 describes the chance of the stated weather, not a 40%
-              cancellation probability. TEMPO is shown as temporary additional
-              conditions without an invented 30% figure. During BECMG we show
-              the conditions before the transition and the possible conditions
-              after it, rather than treating the change as instantaneous.
-            </p>
-            <h2>Fog and winter handling</h2>
-            <p>
-              A small temperature–dewpoint spread in light wind favours fog. A
-              METAR trend can strengthen the signal, but it does not provide a
-              certain onset time. Freezing fog, snow and deicing do not
-              automatically suspend operations. We do not invent delay
-              durations.
-            </p>
-          </>
-        ))}
+      {key === "methodology" && <WeatherMethodology locale={locale} />}
       {key === "rights" &&
         (pl ? (
           <>
@@ -393,68 +279,7 @@ export default async function Article({ params }: { params: Promise<Params> }) {
         </p>
       )}
       {key === "accuracy" && quality && (
-        <>
-          <p>
-            {pl
-              ? "Nie deklarujemy skuteczności w przewidywaniu odwołań lotów: nie mamy danych o faktycznych odwołaniach i przekierowaniach. Pierwszy pomiar sprawdza prognozę widzialności poniżej 1000 m względem późniejszego METAR-u EPKK."
-              : "We do not claim accuracy for flight cancellations: actual cancellation and diversion outcomes are unavailable. The first evaluation compares forecasts of visibility below 1000 m with subsequent EPKK METARs."}
-          </p>
-          <div className="panel">
-            <h2>{pl ? "Stan pomiaru" : "Evaluation status"}</h2>
-            <p>
-              {!quality.available
-                ? pl
-                  ? "Magazyn historii jest niedostępny. Nie ma zweryfikowanego wyniku."
-                  : "Historical storage is unavailable. No verified result is available."
-                : quality.matched === 0
-                  ? pl
-                    ? "Zbieramy historię. Brak dopasowanych prognoz i późniejszych obserwacji."
-                    : "Collecting history. No forecasts have yet been matched to later observations."
-                  : `${pl ? "Dopasowane prognozy" : "Matched forecasts"}: ${quality.matched}`}
-            </p>
-            <p>
-              {pl
-                ? "Próbki z liczbową prognozą widzialności"
-                : "Samples with a numeric visibility forecast"}
-              : {quality.scored}
-            </p>
-            {quality.scored >= 30 ? (
-              <p>
-                Brier score: {quality.brier?.toFixed(3)} ·{" "}
-                {pl ? "niższy wynik jest lepszy" : "lower is better"}
-              </p>
-            ) : (
-              <p>
-                {pl
-                  ? "Wynik Brier pokażemy od 30 dopasowanych próbek. To wciąż mała próba; nie dowodzi jakości modelu w różnych sezonach."
-                  : "Brier score is displayed after 30 matched samples. This is still a small sample and does not demonstrate performance across seasons."}
-              </p>
-            )}
-          </div>
-          <h2>{pl ? "Jak działa pomiar?" : "How does evaluation work?"}</h2>
-          <p>
-            {pl
-              ? "Zadanie cykliczne zapisuje prognozę raz na godzinę, z wyprzedzeniem 2–3 godzin. Nie odtwarzamy przewidywań po poznaniu wyniku. Obserwacja musi być oddalona od docelowej godziny o najwyżej 15 minut. Zmiany TEMPO/BECMG bez liczbowej szansy są wyłączane z punktowej oceny Brier, jeśli wpływają na zdarzenie. Braki danych nie są zaliczane jako dobra pogoda."
-              : "A scheduled job freezes one forecast per hour, 2–3 hours ahead. Predictions are not reconstructed after the outcome is known. The verifying observation must be within 15 minutes of the target time. TEMPO/BECMG changes without a numeric probability are excluded from point Brier scoring when they affect the event. Missing data are not counted as good weather."}
-          </p>
-          <p>
-            {pl
-              ? "Obecny wynik opisuje interpretację TAF-u, nie poprawę względem TAF-u ani trafność statusu lotów. Przed uruchomieniem modelu uczonego potrzebne są sezonowe dane, oddzielny test na późniejszych okresach i porównanie z TAF-em oraz utrzymaniem ostatniej obserwacji."
-              : "The current score evaluates our TAF interpretation, not improvement over TAF or flight-status accuracy. A trained model requires seasonal data, an independent later-period test, and comparison against TAF and persistence of the latest observation."}
-          </p>
-          {quality.scored >= 30 && (
-            <div className="panel">
-              <p>
-                {pl ? "Trafione pogorszenia" : "Hits"}: {quality.hits} ·{" "}
-                {pl ? "Pominięte pogorszenia" : "Misses"}: {quality.misses} ·{" "}
-                {pl ? "Fałszywe alarmy" : "False alarms"}: {quality.falseAlarms}{" "}
-                · {pl ? "Poprawne braki pogorszenia" : "Correct negatives"}:{" "}
-                {quality.correctNegatives}
-              </p>
-            </div>
-          )}
-          <ModelComparison quality={quality.shadow} locale={locale} />
-        </>
+        <FogModelGuide locale={locale} quality={quality} />
       )}
       <p>
         <Link className="button" href={`/${locale}`}>
@@ -463,13 +288,6 @@ export default async function Article({ params }: { params: Promise<Params> }) {
             : "Check weather for your trip"}
         </Link>
       </p>
-      {key === "methodology" && (
-        <p>
-          <Link href={`/${locale}/${slugs[locale].accuracy}`}>
-            {text[locale].accuracy} →
-          </Link>
-        </p>
-      )}
     </article>
   );
 }

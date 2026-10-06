@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-06T14:37:52.541Z",
+  "fixture": true,
+  "samples": 40,
+  "width": 320,
+  "locales": [
+    "pl",
+    "en"
+  ],
+  "checks": [
+    "three sources use paired sample",
+    "Brier values are presented without changing the score",
+    "horizontal scrolling contained inside table",
+    "technical explanation opens by keyboard"
+  ],
+  "liveScores": false
+}

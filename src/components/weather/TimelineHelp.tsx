@@ -64,8 +64,8 @@ export function TimelineHelp({ locale }: { locale: Locale }) {
         </p>
         <p>
           {locale === "pl"
-            ? "Ocena dotyczy pogody. O statusie lotu informuje przewoźnik. Prognoza komputerowa dla dalszych godzin jest mniej pewna; źródło pokazujemy w szczegółach."
-            : "The assessment covers weather. Your airline provides flight status. The computer forecast for later hours is less certain; its source is shown in the details."}
+            ? "Ocena dotyczy pogody. O statusie lotu informuje przewoźnik. Godziny bez prognozy lotniskowej uzupełnia prognoza dla okolicy; źródło zobaczysz przy wybranej godzinie."
+            : "The assessment covers weather. Your airline provides flight status. The area forecast fills hours without an airport forecast; the source appears beside your selected time."}
         </p>
       </div>
     </details>

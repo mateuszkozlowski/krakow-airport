@@ -1,0 +1,612 @@
+{
+  "origin": "http://127.0.0.1:3021",
+  "at": "2026-10-06T14:34:41.631Z",
+  "pageErrors": [],
+  "results": [
+    "Live local forecast: one selection displays all weather measurements before the form, inside the timeline surface.",
+    "pl: pointer/keyboard selection, 5-minute change, scenario/base separation, probability, one direction switch, gap, exact input focus and copied-link feedback.",
+    "pl: benign transition removed only from the primary view; new hazards at the same grade, unknown scenarios, area forecast label and separate RVR preserved.",
+    "en: pointer/keyboard selection, 5-minute change, scenario/base separation, probability, one direction switch, gap, exact input focus and copied-link feedback.",
+    "en: benign transition removed only from the primary view; new hazards at the same grade, unknown scenarios, area forecast label and separate RVR preserved.",
+    "Current freezing precipitation and storm warnings stay visible with the readings folded; keyboard opens the full measurements.",
+    "PL/EN methodology and fog-model pages explain sources, historical training, live-test status, separate visibility thresholds and optional technical details."
+  ],
+  "layouts": [
+    {
+      "locale": "pl",
+      "width": 390,
+      "resultTop": 663.34375,
+      "height": 255.5625,
+      "plotBottom": 643.34375,
+      "plannerTop": 955.90625,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 717.9375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 717.9375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 717.9375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 320,
+      "resultTop": 825.4375,
+      "height": 303.546875,
+      "plotBottom": 677.84375,
+      "plannerTop": 1165.984375,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 904.828125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 904.828125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 904.828125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "resultTop": 770.140625,
+      "height": 255.5625,
+      "plotBottom": 643.34375,
+      "plannerTop": 1062.703125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 824.734375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 824.734375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 824.734375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 768,
+      "resultTop": 724.5625,
+      "height": 250.984375,
+      "plotBottom": 597.765625,
+      "plannerTop": 1016.546875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 53,
+          "right": 264.328125,
+          "top": 779.15625
+        },
+        {
+          "left": 278.328125,
+          "right": 489.65625,
+          "top": 779.15625
+        },
+        {
+          "left": 503.65625,
+          "right": 714.984375,
+          "top": 779.15625
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "resultTop": 741.328125,
+      "height": 250.984375,
+      "plotBottom": 614.53125,
+      "plannerTop": 1033.3125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 133,
+          "right": 461.65625,
+          "top": 795.921875
+        },
+        {
+          "left": 475.65625,
+          "right": 804.328125,
+          "top": 795.921875
+        },
+        {
+          "left": 818.328125,
+          "right": 1146.984375,
+          "top": 795.921875
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 320,
+      "resultTop": 646.4375,
+      "height": 453.53125,
+      "plotBottom": 498.84375,
+      "plannerTop": 1136.96875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 725.828125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 725.828125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 725.828125
+        },
+        {
+          "left": 29,
+          "right": 107,
+          "top": 849.984375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "resultTop": 792.640625,
+      "height": 293.171875,
+      "plotBottom": 665.84375,
+      "plannerTop": 1122.8125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 872.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 872.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 872.03125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "resultTop": 770.140625,
+      "height": 253.96875,
+      "plotBottom": 643.34375,
+      "plannerTop": 1061.109375,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 824.734375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 824.734375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 824.734375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 768,
+      "resultTop": 724.5625,
+      "height": 250.984375,
+      "plotBottom": 597.765625,
+      "plannerTop": 1016.546875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 53,
+          "right": 264.328125,
+          "top": 779.15625
+        },
+        {
+          "left": 278.328125,
+          "right": 489.65625,
+          "top": 779.15625
+        },
+        {
+          "left": 503.65625,
+          "right": 714.984375,
+          "top": 779.15625
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "resultTop": 741.328125,
+      "height": 250.984375,
+      "plotBottom": 614.53125,
+      "plannerTop": 1033.3125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 133,
+          "right": 461.65625,
+          "top": 795.921875
+        },
+        {
+          "left": 475.65625,
+          "right": 804.328125,
+          "top": 795.921875
+        },
+        {
+          "left": 818.328125,
+          "right": 1146.984375,
+          "top": 795.921875
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "resultTop": 625.640625,
+      "height": 459.953125,
+      "plotBottom": 498.84375,
+      "plannerTop": 1122.59375,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 705.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 705.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 705.03125
+        },
+        {
+          "left": 29,
+          "right": 107,
+          "top": 818.8125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    }
+  ],
+  "hoverChecks": [
+    {
+      "locale": "pl",
+      "width": 320,
+      "state": "before selection",
+      "before": {
+        "height": 371.59375,
+        "followingTop": 858.4375,
+        "gap": 12
+      },
+      "hover": {
+        "height": 371.59375,
+        "followingTop": 858.4375,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 320,
+      "state": "after selection",
+      "before": {
+        "height": 679.140625,
+        "followingTop": 1165.984375,
+        "gap": 12
+      },
+      "hover": {
+        "height": 679.140625,
+        "followingTop": 1165.984375,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "state": "before selection",
+      "before": {
+        "height": 610.359375,
+        "followingTop": 1062.703125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 610.359375,
+        "followingTop": 1062.703125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "state": "after selection",
+      "before": {
+        "height": 610.359375,
+        "followingTop": 1062.703125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 610.359375,
+        "followingTop": 1062.703125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 768,
+      "state": "before selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 768,
+      "state": "after selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "state": "before selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "state": "after selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "state": "before selection",
+      "before": {
+        "height": 350.796875,
+        "followingTop": 825.640625,
+        "gap": 12
+      },
+      "hover": {
+        "height": 350.796875,
+        "followingTop": 825.640625,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "state": "after selection",
+      "before": {
+        "height": 647.96875,
+        "followingTop": 1122.8125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 647.96875,
+        "followingTop": 1122.8125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "state": "before selection",
+      "before": {
+        "height": 608.765625,
+        "followingTop": 1061.109375,
+        "gap": 12
+      },
+      "hover": {
+        "height": 608.765625,
+        "followingTop": 1061.109375,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "state": "after selection",
+      "before": {
+        "height": 608.765625,
+        "followingTop": 1061.109375,
+        "gap": 12
+      },
+      "hover": {
+        "height": 608.765625,
+        "followingTop": 1061.109375,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 768,
+      "state": "before selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 768,
+      "state": "after selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1016.546875,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "state": "before selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      }
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "state": "after selection",
+      "before": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      },
+      "hover": {
+        "height": 613.78125,
+        "followingTop": 1033.3125,
+        "gap": 12
+      }
+    }
+  ],
+  "controlledCaptures": [
+    "10-after-scenario.png"
+  ]
+}
