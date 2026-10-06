@@ -15,7 +15,7 @@ export async function generateMetadata({
     locale === "pl"
       ? "Mgła Balice i pogoda na lotnisku Kraków"
       : "Kraków Airport fog and travel weather",
-    text[locale].intro,
+    text[locale].description,
     { pl: "/pl", en: "/en" },
   );
 }
@@ -42,9 +42,7 @@ export default async function WeatherPage({
   return (
     <>
       <div className="hero">
-        <p className="eyebrow">EPKK / KRK · KRAKÓW BALICE</p>
         <h1>{text[locale].title}</h1>
-        <p className="intro">{text[locale].intro}</p>
       </div>
       <Dashboard
         key={`${locale}:${at ?? ""}`}

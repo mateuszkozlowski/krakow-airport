@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getWeather } from "@/lib/weather/service";
-import { levelLabel } from "@/lib/weather/copy";
+import { levelLabel, text } from "@/lib/weather/copy";
 import { formatTime } from "@/lib/weather/time";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         KRK.flights · KRAKÓW BALICE
       </div>
       <div style={{ display: "flex", fontSize: 55, fontWeight: 700 }}>
-        {pl ? "Pogoda przed Twoim lotem" : "Weather before your flight"}
+        {text[locale].title}
       </div>
       <div
         style={{

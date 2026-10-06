@@ -283,9 +283,7 @@ export default async function Article({ params }: { params: Promise<Params> }) {
       )}
       <p>
         <Link className="button" href={`/${locale}`}>
-          {pl
-            ? "Sprawdź pogodę na swoją podróż"
-            : "Check weather for your trip"}
+          {pl ? "Wróć do prognozy" : "Back to the forecast"}
         </Link>
       </p>
     </article>

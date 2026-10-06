@@ -3,7 +3,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "KRK.flights · Kraków Airport Weather",
     short_name: "KRK.flights",
-    description: "Weather before your trip to or from Kraków Airport.",
+    description: "Hourly weather and observations for Kraków Airport.",
     start_url: "/pl",
     scope: "/",
     display: "standalone",

@@ -61,8 +61,9 @@ export const text = {
       model: "Prognoza dla okolicy lotniska",
       ensemble: "Warianty prognozy komputerowej",
     },
-    title: "Sprawdź pogodę przed lotem.",
-    intro: "Mgła, wiatr i widoczność na godzinę Twojego lotu.",
+    title: "Pogoda w Balicach",
+    description:
+      "Pogoda na lotnisku Kraków-Balice (KRK): aktualne pomiary, prognoza godzinowa i możliwe utrudnienia dla przylotów oraz odlotów.",
     now: "Teraz na lotnisku",
     arrival: "Przylot",
     departure: "Odlot",
@@ -197,8 +198,9 @@ export const text = {
       model: "Forecast for the airport area",
       ensemble: "Computer forecast variants",
     },
-    title: "Check the weather before you fly.",
-    intro: "Fog, wind and visibility at the time of your flight.",
+    title: "Kraków Airport weather",
+    description:
+      "Weather at Kraków Airport (KRK): current observations, hourly forecasts and possible disruption to arrivals and departures.",
     now: "At the airport now",
     arrival: "Arrival",
     departure: "Departure",
