@@ -1,73 +1,40 @@
-'use client';
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-type Language = 'en' | 'pl';
-
-interface LanguageContextType {
-    language: Language;
-    setLanguage: (lang: Language) => void;
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-function getBrowserLanguage(): Language {
-    if (typeof window === 'undefined') return 'en';
-    
-    // Get browser language
-    const browserLang = navigator.language.toLowerCase();
-    
-    // Check if it's Polish
-    if (browserLang.startsWith('pl')) {
-        return 'pl';
-    }
-    
-    // Default to English for all other languages
-    return 'en';
-}
-
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    // Get initial language from: localStorage -> browser preference -> fallback to 'en'
-    const [language, setLanguageState] = useState<Language>(() => {
-        if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('language') as Language;
-            if (stored) return stored;
-            return getBrowserLanguage();
-        }
-        return 'en';
-    });
-
-    // Update localStorage when language changes
-    const setLanguage = (lang: Language) => {
-        setLanguageState(lang);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('language', lang);
-        }
-    };
-
-    // Initialize language from localStorage or browser preference on mount
-    useEffect(() => {
-        const storedLanguage = localStorage.getItem('language') as Language;
-        if (storedLanguage) {
-            setLanguageState(storedLanguage);
-        } else {
-            const browserLang = getBrowserLanguage();
-            setLanguageState(browserLang);
-            localStorage.setItem('language', browserLang);
-        }
-    }, []);
-
-    return (
-        <LanguageContext.Provider value={{ language, setLanguage }}>
-            {children}
-        </LanguageContext.Provider>
+"use client";
+import { createContext, useContext, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import type { Locale } from "@/lib/weather/model";
+import { slugs } from "@/lib/weather/copy";
+const Context = createContext<{
+  language: Locale;
+  setLanguage: (language: Locale) => void;
+} | null>(null);
+export function LanguageProvider({
+  children,
+  initial = "pl",
+}: {
+  children: React.ReactNode;
+  initial?: Locale;
+}) {
+  const router = useRouter();
+  useEffect(() => {
+    document.documentElement.lang = initial;
+  }, [initial]);
+  function setLanguage(language: Locale) {
+    const slug = window.location.pathname.split("/")[2];
+    const key = Object.entries(slugs[initial]).find(
+      ([, value]) => value === slug,
+    )?.[0] as keyof typeof slugs.pl | undefined;
+    router.push(
+      `/${language}${key ? "/" + slugs[language][key] : ""}${window.location.search}`,
     );
+  }
+  return (
+    <Context.Provider value={{ language: initial, setLanguage }}>
+      {children}
+    </Context.Provider>
+  );
 }
-
 export function useLanguage() {
-    const context = useContext(LanguageContext);
-    if (context === undefined) {
-        throw new Error('useLanguage must be used within a LanguageProvider');
-    }
-    return context;
-} 
+  const value = useContext(Context);
+  if (!value) throw new Error("LanguageProvider required");
+  return value;
+}

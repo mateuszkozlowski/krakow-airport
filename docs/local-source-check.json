@@ -1,0 +1,30 @@
+{
+  "synop": {
+    "source": "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/synop/2018/2018_566_s.zip",
+    "sha256": "9857bd7386590e1e73c1f217bb617ffb16fba16c46a41a5e16fe749d2bda7005",
+    "stations": [
+      "KRAKÓW-BALICE"
+    ],
+    "records": 8760,
+    "hours": "00–23 UTC (hourly)"
+  },
+  "climat": {
+    "source": "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/klimat/2018/2018_01_k.zip",
+    "sha256": "1eb100194f670bf3ec8b0622f5f870b9424530260b6d57161e4a2681a07ce6a1",
+    "files": [
+      {
+        "file": "k_t_01_2018.csv",
+        "station_names": [
+          "KRAKÓW-OBSERWATORIUM"
+        ],
+        "krakow_records": 93,
+        "hours": [
+          "06",
+          "12",
+          "18"
+        ],
+        "columns": 22
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+# Frozen 2025 experiment protocol
+
+Written before inspecting 2025 targets or scores (6 October 2026).
+
+- Target: METAR prevailing visibility <550 m, 2 or 6 hours after an observation. This is neither RVR nor the probability of flight cancellation. Targets match observations within ±15 minutes; record the actual match time.
+- Fit models on 2023; fit probability calibrators on 2024; evaluate once on the complete 2025 calendar year. Purge training/calibration labels crossing a year boundary, with a further two-hour buffer. Do not refit the classifier after calibration. Previously explored 2024 is calibration data, not an independent test.
+- Compare the existing 17 features against a prespecified extended set: visibility/spread/temperature/wind lags at 1/3/6 hours, historical rain-report share at 6/24 hours (not rainfall amount or soil moisture), recent low-visibility share, wind direction, night cloud cover and target-time season/hour. Missing lags and incomplete windows must have explicit flags. All inputs at or before issue time; no future observations or reanalysis as forecast features.
+- Fixed models: scaled logistic regression (C=1, max_iter=1000); histogram gradient boosting (150 iterations, 15 leaves, minimum leaf size 60, L2=10, early stopping off). Seed 42. No class rebalancing or hyperparameter search.
+- Publish raw, sigmoid and isotonic calibration for both feature sets and both algorithms, not just the winning result. Calibrators fit on 2024 predictions from the unchanged 2023 classifiers. Do not pick a public model based on this test.
+- Baselines: current visibility persistence, training prevalence, training month/6-hour target-time frequency shrunk by 50 readings towards prevalence.
+- Report Brier, log loss, average precision, calibration bins, quarterly results and separate onset/continuation subsets (currently visibility >=550/<550 m). Report threshold precision/recall/false alarms at 10/30/50%; these are diagnostics, not passenger alert thresholds. Use paired calendar-week bootstrap intervals (1000 samples). Half-hour readings are dependent; do not call them independent fog events.
+- Verify unique issue times, finite features, actual target tolerance, causality and input hashes. Freeze protocol hash in output. Raw archives do not provide guaranteed receipt timestamps; this experiment assumes availability at the observation timestamp, which remains an operational limitation.
+- Deployment remains disabled. Historical issued EPKK TAF benchmark and prospective season validation are still required. Missing TAF coverage is reported explicitly. Reserve 2026 for the next prospective comparison; no repeated tuning against 2025 results.

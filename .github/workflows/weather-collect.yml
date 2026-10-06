@@ -1,0 +1,23 @@
+name: Collect weather and opted-in reminders
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: weather-collect
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: ${{ vars.WEATHER_COLLECT_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call protected collector
+        env:
+          COLLECT_URL: ${{ vars.WEATHER_COLLECT_URL }}
+          COLLECT_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$COLLECT_URL" && test -n "$COLLECT_SECRET"
+          curl --fail --silent --show-error --max-time 90 --retry 1 \
+            -H "Authorization: Bearer $COLLECT_SECRET" "$COLLECT_URL"

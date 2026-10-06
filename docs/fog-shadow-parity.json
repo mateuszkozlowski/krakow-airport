@@ -1,0 +1,8 @@
+{
+  "model": "epkk-vis550-2h-20261006-v1",
+  "matched": 13089,
+  "maximumDifference": 5.551115123125783e-16,
+  "tolerance": 1e-12,
+  "featureSha256": "384929efc1addc61e260d562065669add8146bfb9b457ea7406ac5b4e45035d2",
+  "sourceReportSha256": "2cde57a0c111b702f86dc9f5049037d8c2fe8f34c1e8478f671edea6bc035712"
+}

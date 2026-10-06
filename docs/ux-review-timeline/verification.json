@@ -1,0 +1,30 @@
+{
+  "origin": "http://127.0.0.1:3009",
+  "builtAtVerification": "2026-10-06T10:59:46.546Z",
+  "fixtureStart": "2026-10-06T11:00:00.000Z",
+  "controlledCaptures": [
+    "12-help-final",
+    "13-rapid-mobile-final",
+    "14-selected-short-final",
+    "15-gap-final",
+    "16-dst-final"
+  ],
+  "pageErrors": [],
+  "results": [
+    "pl 320: label bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 390: label bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 768: label bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 1280: label bounds, scrolling, hour positions, help Enter/Escape",
+    "pl: short intervals, 44px controls, keyboard, gap, marker, URL, one tab stop",
+    "en 320: label bounds, scrolling, hour positions, help Enter/Escape",
+    "en 390: label bounds, scrolling, hour positions, help Enter/Escape",
+    "en 768: label bounds, scrolling, hour positions, help Enter/Escape",
+    "en 1280: label bounds, scrolling, hour positions, help Enter/Escape",
+    "en: short intervals, 44px controls, keyboard, gap, marker, URL, one tab stop",
+    "DST: two 02:00 hours with different zones, names below hours",
+    "Outside coverage: explicit warning, no assessment or marker",
+    "Unknown assessment and empty forecast: explicit unavailable state, never green",
+    "JavaScript disabled: SSR timeline and native help remain available",
+    "Selected future time, URL and marker remain visible after desktop-to-mobile resize on fetched forecast"
+  ]
+}

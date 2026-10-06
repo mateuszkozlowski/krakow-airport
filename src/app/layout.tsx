@@ -1,82 +1,45 @@
-// src/app/layout.tsx
-import '@/app/globals.css';
-import { Inter } from 'next/font/google';
-import { GoogleAnalytics } from '@next/third-parties/google';
-import { Metadata } from 'next';
-import Script from 'next/script';
-import { LanguageProvider } from '@/contexts/LanguageContext';
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from "@vercel/analytics/react"
-
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap',
-  preload: true
-});
-
+import "./globals.css";
+import { headers } from "next/headers";
+import localFont from "next/font/local";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
+import type { Metadata, Viewport } from "next";
+import { site } from "@/lib/seo";
+const geist = localFont({ src: "./fonts/GeistVF.woff", display: "swap" });
 export const metadata: Metadata = {
-  title: {
-    template: 'KRK.flights | %s',
-    default: 'KRK.flights - Live Krakow Airport Weather & Flight Status',
-  },
-  description: 'Information on the status of flights from Krakow Airport, including delays and cancellations related to weather conditions.',
-  keywords: 'Krakow, airport, app, flights, delays, cancellations, weather',
-  authors: [{ name: 'Mateusz Kozlowski' }],
-  icons: {
-    icon: '/icon.svg',
-  },
-  openGraph: {
-    images: '/ogimage.png',
-  },
+  metadataBase: new URL(site),
+  title: { default: "KRK.flights", template: "%s | KRK.flights" },
+  icons: { icon: "/icon.svg", apple: "/app-icon-192.png" },
+  manifest: "/manifest.webmanifest",
 };
-
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1.0,
-  maximumScale: 1.0,
-  userScalable: false, // Prevent zoom on iOS for better app-like experience
-  themeColor: '#0f172a', // Dark theme color for mobile browsers
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0c1525",
 };
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const gaId = process.env.NEXT_PUBLIC_GA4_KEY;
-
+  const locale = (await headers()).get("x-krk-locale") === "en" ? "en" : "pl";
+  const ga = process.env.NEXT_PUBLIC_GA4_KEY;
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale}>
       <head>
-        {/* Preconnect to external resources for faster loading */}
-        <link rel="preconnect" href="https://cdn-cookieyes.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        
-        {/* DNS prefetch for additional resources */}
-        <link rel="dns-prefetch" href="https://cdn-cookieyes.com" />
-        <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
-        
-        <meta name="google-adsense-account" content="ca-pub-2158235492134914" />
         <Script
           id="cookieyes"
           src="https://cdn-cookieyes.com/client_data/5b7fbeaf30a93710701352a2/script.js"
           strategy="lazyOnload"
         />
-        <Script 
-          async 
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2158235492134914" 
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
       </head>
-      <body className={inter.className}>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
-        {gaId && <GoogleAnalytics gaId={gaId} />}
-        <SpeedInsights />
+      <body className={geist.className}>
+        {children}
+        {ga && <GoogleAnalytics gaId={ga} />}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

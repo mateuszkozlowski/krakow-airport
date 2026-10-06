@@ -1,0 +1,1744 @@
+{
+  "research_only": true,
+  "deployment_eligible": false,
+  "target": "METAR visibility below 550 m; not RVR or a flight outcome",
+  "method": "Expanding chronological training, fixed parameters, target purging and three 2024 quarters; previously explored data, not an independent holdout",
+  "bootstrap": "1000 paired calendar-week block resamples; score differences below zero favour the model",
+  "taf_comparison": "Unavailable: issued historical TAFs required",
+  "results": [
+    {
+      "lead_hours": 2,
+      "input": "data/training.jsonl",
+      "input_sha256": "4112e8fd1505982ac9956c82e361529d2468f5924b08d6e501c496cca0535c96",
+      "folds": [
+        {
+          "quarter": "2024-Q2",
+          "train_samples": 21872,
+          "test_samples": 4364,
+          "test_start": "2024-04-01T00:00:00.000Z",
+          "test_end": "2024-06-30T21:30:00.000Z",
+          "positive_cases": 21,
+          "event_rate": 0.0048120989917506875,
+          "scores": {
+            "persistence": {
+              "brier": 0.006416131989000917,
+              "average_precision": 0.11431917710561157,
+              "mean_probability": 0.0048120989917506875
+            },
+            "climatology": {
+              "brier": 0.004812763526070916,
+              "average_precision": 0.0048120989917506875,
+              "mean_probability": 0.009692757863935626
+            },
+            "season_hour": {
+              "brier": 0.004842836779376874,
+              "average_precision": 0.022942018324596334,
+              "mean_probability": 0.008143377798183497
+            },
+            "logistic": {
+              "brier": 0.0038296545835388687,
+              "average_precision": 0.44263397310322616,
+              "mean_probability": 0.003966448926211182
+            },
+            "gradient_boosting": {
+              "brier": 0.0038072966013887465,
+              "average_precision": 0.40447037123086615,
+              "mean_probability": 0.002791048856084833
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4246,
+                "mean_probability": 0.0008664841702622716,
+                "observed_rate": 0.00023551577955723034
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 68,
+                "mean_probability": 0.02812878169114974,
+                "observed_rate": 0.10294117647058823
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 21,
+                "mean_probability": 0.07677899110381314,
+                "observed_rate": 0.19047619047619047
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 7,
+                "mean_probability": 0.13888774728125752,
+                "observed_rate": 0.2857142857142857
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 9,
+                "mean_probability": 0.2969329792971732,
+                "observed_rate": 0.1111111111111111
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 12,
+                "mean_probability": 0.48614448344733224,
+                "observed_rate": 0.4166666666666667
+              },
+              {
+                "range": [
+                  0.6,
+                  0.8
+                ],
+                "samples": 1,
+                "mean_probability": 0.6270305128623863,
+                "observed_rate": 1.0
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4239,
+                "mean_probability": 0.0003579651228814869,
+                "observed_rate": 0.00023590469450342062
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 76,
+                "mean_probability": 0.019471759217247798,
+                "observed_rate": 0.07894736842105263
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 17,
+                "mean_probability": 0.07321045778769583,
+                "observed_rate": 0.23529411764705882
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 16,
+                "mean_probability": 0.1363680589379989,
+                "observed_rate": 0.1875
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 11,
+                "mean_probability": 0.29646959566420406,
+                "observed_rate": 0.36363636363636365
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 5,
+                "mean_probability": 0.49904741476874054,
+                "observed_rate": 0.6
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 21,
+              "target_positive_cases": 7,
+              "scores": {
+                "persistence": {
+                  "brier": 0.6666666666666666,
+                  "average_precision": 0.3333333333333333,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 0.32696544431238506,
+                  "average_precision": 0.3333333333333333,
+                  "mean_probability": 0.009692757863935622
+                },
+                "season_hour": {
+                  "brier": 0.3239249119759821,
+                  "average_precision": 0.4920634920634921,
+                  "mean_probability": 0.015467757927657652
+                },
+                "logistic": {
+                  "brier": 0.1962589298741818,
+                  "average_precision": 0.7964285714285713,
+                  "mean_probability": 0.4241585483473455
+                },
+                "gradient_boosting": {
+                  "brier": 0.21262515254443548,
+                  "average_precision": 0.5756545042259327,
+                  "mean_probability": 0.2174399003302049
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4343,
+              "target_positive_cases": 14,
+              "scores": {
+                "persistence": {
+                  "brier": 0.0032235781717706653,
+                  "average_precision": 0.0032235781717706653,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.003255037001430668,
+                  "average_precision": 0.0032235781717706653,
+                  "mean_probability": 0.009692757863935624
+                },
+                "season_hour": {
+                  "brier": 0.0032999577604662803,
+                  "average_precision": 0.017489223717545237,
+                  "mean_probability": 0.008107961730322811
+                },
+                "logistic": {
+                  "brier": 0.0028991883663840217,
+                  "average_precision": 0.2516903433255799,
+                  "mean_probability": 0.001934665806744495
+                },
+                "gradient_boosting": {
+                  "brier": 0.002797585577947811,
+                  "average_precision": 0.3080625613094139,
+                  "mean_probability": 0.001753142827773408
+                }
+              }
+            }
+          }
+        },
+        {
+          "quarter": "2024-Q3",
+          "train_samples": 26240,
+          "test_samples": 4412,
+          "test_start": "2024-07-01T00:00:00.000Z",
+          "test_end": "2024-09-30T21:30:00.000Z",
+          "positive_cases": 37,
+          "event_rate": 0.008386219401631914,
+          "scores": {
+            "persistence": {
+              "brier": 0.010879419764279238,
+              "average_precision": 0.12888748197856037,
+              "mean_probability": 0.008386219401631914
+            },
+            "climatology": {
+              "brier": 0.00831613412372109,
+              "average_precision": 0.008386219401631914,
+              "mean_probability": 0.008879573170731707
+            },
+            "season_hour": {
+              "brier": 0.0083036946504524,
+              "average_precision": 0.014315836825302988,
+              "mean_probability": 0.006042832304773449
+            },
+            "logistic": {
+              "brier": 0.006092333935400952,
+              "average_precision": 0.48199298937567103,
+              "mean_probability": 0.0062096669620033225
+            },
+            "gradient_boosting": {
+              "brier": 0.006443309519786027,
+              "average_precision": 0.43394775114798056,
+              "mean_probability": 0.0038269273409340322
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4226,
+                "mean_probability": 0.0006289177110159062,
+                "observed_rate": 0.000946521533364884
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 91,
+                "mean_probability": 0.024444702371346817,
+                "observed_rate": 0.06593406593406594
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 24,
+                "mean_probability": 0.06995486468875865,
+                "observed_rate": 0.25
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 23,
+                "mean_probability": 0.14732805063931223,
+                "observed_rate": 0.13043478260869565
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 35,
+                "mean_probability": 0.2882321504101124,
+                "observed_rate": 0.22857142857142856
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 9,
+                "mean_probability": 0.5191800445985917,
+                "observed_rate": 0.6666666666666666
+              },
+              {
+                "range": [
+                  0.6,
+                  0.8
+                ],
+                "samples": 4,
+                "mean_probability": 0.6716422227093077,
+                "observed_rate": 1.0
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4289,
+                "mean_probability": 0.0002941293380576581,
+                "observed_rate": 0.0016320820704126837
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 68,
+                "mean_probability": 0.021540152207301877,
+                "observed_rate": 0.1323529411764706
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 16,
+                "mean_probability": 0.07064636259213751,
+                "observed_rate": 0.4375
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 12,
+                "mean_probability": 0.1457227260736745,
+                "observed_rate": 0.08333333333333333
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 11,
+                "mean_probability": 0.2547366098028477,
+                "observed_rate": 0.18181818181818182
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 12,
+                "mean_probability": 0.48241226482880667,
+                "observed_rate": 0.6666666666666666
+              },
+              {
+                "range": [
+                  0.6,
+                  0.8
+                ],
+                "samples": 4,
+                "mean_probability": 0.6720219867599575,
+                "observed_rate": 0.75
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 37,
+              "target_positive_cases": 13,
+              "scores": {
+                "persistence": {
+                  "brier": 0.6486486486486487,
+                  "average_precision": 0.35135135135135137,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 0.34519049810512603,
+                  "average_precision": 0.35135135135135137,
+                  "mean_probability": 0.008879573170731703
+                },
+                "season_hour": {
+                  "brier": 0.34050724169641294,
+                  "average_precision": 0.6081081081081081,
+                  "mean_probability": 0.00976844664735586
+                },
+                "logistic": {
+                  "brier": 0.15601537537956017,
+                  "average_precision": 0.8309925368748896,
+                  "mean_probability": 0.3494190838945448
+                },
+                "gradient_boosting": {
+                  "brier": 0.1830891491847405,
+                  "average_precision": 0.7793373293373291,
+                  "mean_probability": 0.18610936887204885
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4375,
+              "target_positive_cases": 24,
+              "scores": {
+                "persistence": {
+                  "brier": 0.005485714285714286,
+                  "average_precision": 0.005485714285714286,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.005467139502621207,
+                  "average_precision": 0.005485714285714286,
+                  "mean_probability": 0.008879573170731707
+                },
+                "season_hour": {
+                  "brier": 0.005494201795435133,
+                  "average_precision": 0.007655632706373657,
+                  "mean_probability": 0.0060113242520476095
+                },
+                "logistic": {
+                  "brier": 0.0048244133563303485,
+                  "average_precision": 0.23261313838030576,
+                  "mean_probability": 0.0033070958930881147
+                },
+                "gradient_boosting": {
+                  "brier": 0.004949390418619555,
+                  "average_precision": 0.2622132867293616,
+                  "mean_probability": 0.002285338692556604
+                }
+              }
+            }
+          }
+        },
+        {
+          "quarter": "2024-Q4",
+          "train_samples": 30656,
+          "test_samples": 4404,
+          "test_start": "2024-10-01T00:00:00.000Z",
+          "test_end": "2024-12-31T21:30:00.000Z",
+          "positive_cases": 281,
+          "event_rate": 0.06380563124432334,
+          "scores": {
+            "persistence": {
+              "brier": 0.03224341507720254,
+              "average_precision": 0.5746252725897025,
+              "mean_probability": 0.06380563124432334
+            },
+            "climatology": {
+              "brier": 0.06275927686579734,
+              "average_precision": 0.06380563124432334,
+              "mean_probability": 0.00880741127348643
+            },
+            "season_hour": {
+              "brier": 0.06252300090112568,
+              "average_precision": 0.08599445871943033,
+              "mean_probability": 0.008396452899744253
+            },
+            "logistic": {
+              "brier": 0.04105654191545601,
+              "average_precision": 0.69868430557147,
+              "mean_probability": 0.024227033873862353
+            },
+            "gradient_boosting": {
+              "brier": 0.0416595160813946,
+              "average_precision": 0.6527623663110598,
+              "mean_probability": 0.02577130535812025
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3661,
+                "mean_probability": 0.0009977596839321834,
+                "observed_rate": 0.005462988254575253
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 345,
+                "mean_probability": 0.027378162326576753,
+                "observed_rate": 0.14202898550724638
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 128,
+                "mean_probability": 0.07073641106338391,
+                "observed_rate": 0.21875
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 89,
+                "mean_probability": 0.14840832327437067,
+                "observed_rate": 0.5393258426966292
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 104,
+                "mean_probability": 0.2942554124107967,
+                "observed_rate": 0.6442307692307693
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 56,
+                "mean_probability": 0.47959316523118706,
+                "observed_rate": 0.875
+              },
+              {
+                "range": [
+                  0.6,
+                  0.8
+                ],
+                "samples": 21,
+                "mean_probability": 0.660724354463982,
+                "observed_rate": 0.9523809523809523
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3694,
+                "mean_probability": 0.0009232759757486659,
+                "observed_rate": 0.006497022198159177
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 344,
+                "mean_probability": 0.02321651130009537,
+                "observed_rate": 0.19186046511627908
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 103,
+                "mean_probability": 0.07379569648230215,
+                "observed_rate": 0.32038834951456313
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 95,
+                "mean_probability": 0.13857146785247149,
+                "observed_rate": 0.37894736842105264
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 71,
+                "mean_probability": 0.29156863717660253,
+                "observed_rate": 0.5915492957746479
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 46,
+                "mean_probability": 0.49602950078702035,
+                "observed_rate": 0.717391304347826
+              },
+              {
+                "range": [
+                  0.6,
+                  0.8
+                ],
+                "samples": 40,
+                "mean_probability": 0.7134067761246173,
+                "observed_rate": 0.9
+              },
+              {
+                "range": [
+                  0.8,
+                  1
+                ],
+                "samples": 11,
+                "mean_probability": 0.8435927228295359,
+                "observed_rate": 1.0
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 281,
+              "target_positive_cases": 210,
+              "scores": {
+                "persistence": {
+                  "brier": 0.2526690391459075,
+                  "average_precision": 0.7473309608540926,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 0.7342444290881295,
+                  "average_precision": 0.7473309608540926,
+                  "mean_probability": 0.00880741127348643
+                },
+                "season_hour": {
+                  "brier": 0.7310767311199131,
+                  "average_precision": 0.8053444987380679,
+                  "mean_probability": 0.010270367861405385
+                },
+                "logistic": {
+                  "brier": 0.4062612784943098,
+                  "average_precision": 0.8666603990606144,
+                  "mean_probability": 0.2701692013251717
+                },
+                "gradient_boosting": {
+                  "brier": 0.4132322879320348,
+                  "average_precision": 0.8749713895420635,
+                  "mean_probability": 0.27819592540144095
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4123,
+              "target_positive_cases": 71,
+              "scores": {
+                "persistence": {
+                  "brier": 0.017220470531166626,
+                  "average_precision": 0.017220470531166626,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.01699470549192509,
+                  "average_precision": 0.017220470531166626,
+                  "mean_probability": 0.008807411273486433
+                },
+                "season_hour": {
+                  "brier": 0.016958218414713063,
+                  "average_precision": 0.02708978856989573,
+                  "mean_probability": 0.00826873761858326
+                },
+                "logistic": {
+                  "brier": 0.01616628458374175,
+                  "average_precision": 0.12714236073550084,
+                  "mean_probability": 0.007465028282346968
+                },
+                "gradient_boosting": {
+                  "brier": 0.016335250039670148,
+                  "average_precision": 0.13719322403055684,
+                  "mean_probability": 0.008567493029191535
+                }
+              }
+            }
+          }
+        }
+      ],
+      "pooled": {
+        "samples": 13180,
+        "positive_cases": 339,
+        "event_rate": 0.025720789074355082,
+        "scores": {
+          "logistic": {
+            "brier": 0.01702617606382556,
+            "average_precision": 0.6245843480999498,
+            "mean_probability": 0.011487290662430504
+          },
+          "gradient_boosting": {
+            "brier": 0.017337741486511248,
+            "average_precision": 0.6068838638951894,
+            "mean_probability": 0.010816492369750894
+          },
+          "persistence": {
+            "brier": 0.0165402124430956,
+            "average_precision": 0.4685863234490345,
+            "mean_probability": 0.025720789074355082
+          },
+          "climatology": {
+            "brier": 0.025347916471821125,
+            "average_precision": 0.022339605742038315,
+            "mean_probability": 0.009124712549007406
+          },
+          "season_hour": {
+            "brier": 0.025274759975079983,
+            "average_precision": 0.045079966232032434,
+            "mean_probability": 0.0075247841737789796
+          }
+        },
+        "paired_brier_differences": {
+          "logistic": {
+            "persistence": {
+              "difference": 0.00048596362072996223,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0032869904260754,
+                0.0051840008027444155
+              ]
+            },
+            "climatology": {
+              "difference": -0.008321740407995564,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.014284337065350192,
+                -0.0032623815268067657
+              ]
+            },
+            "season_hour": {
+              "difference": -0.008248583911254425,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.014119505507931278,
+                -0.0032054572921916594
+              ]
+            }
+          },
+          "gradient_boosting": {
+            "persistence": {
+              "difference": 0.0007975290434156488,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0032437677010849074,
+                0.005625974360091742
+              ]
+            },
+            "climatology": {
+              "difference": -0.008010174985309875,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.014047997443499731,
+                -0.002883341781654062
+              ]
+            },
+            "season_hour": {
+              "difference": -0.007937018488568738,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.013777707959498115,
+                -0.0028850373065454214
+              ]
+            }
+          }
+        },
+        "calibration": {
+          "logistic": [
+            {
+              "range": [
+                0,
+                0.01
+              ],
+              "samples": 12133,
+              "mean_probability": 0.000823349232387913,
+              "observed_rate": 0.0020604961674771283
+            },
+            {
+              "range": [
+                0.01,
+                0.05
+              ],
+              "samples": 504,
+              "mean_probability": 0.02694978387591215,
+              "observed_rate": 0.12301587301587301
+            },
+            {
+              "range": [
+                0.05,
+                0.1
+              ],
+              "samples": 173,
+              "mean_probability": 0.07136148081978858,
+              "observed_rate": 0.21965317919075145
+            },
+            {
+              "range": [
+                0.1,
+                0.2
+              ],
+              "samples": 119,
+              "mean_probability": 0.1476394972024536,
+              "observed_rate": 0.44537815126050423
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "samples": 148,
+              "mean_probability": 0.292993817356428,
+              "observed_rate": 0.5135135135135135
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "samples": 77,
+              "mean_probability": 0.48524118773638686,
+              "observed_rate": 0.7792207792207793
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "samples": 26,
+              "mean_probability": 0.6611081095170477,
+              "observed_rate": 0.9615384615384616
+            }
+          ],
+          "gradient_boosting": [
+            {
+              "range": [
+                0,
+                0.01
+              ],
+              "samples": 12222,
+              "mean_probability": 0.0005064241810865235,
+              "observed_rate": 0.0026182294223531335
+            },
+            {
+              "range": [
+                0.01,
+                0.05
+              ],
+              "samples": 488,
+              "mean_probability": 0.022399721184098706,
+              "observed_rate": 0.16598360655737704
+            },
+            {
+              "range": [
+                0.05,
+                0.1
+              ],
+              "samples": 136,
+              "mean_probability": 0.07335203177604523,
+              "observed_rate": 0.3235294117647059
+            },
+            {
+              "range": [
+                0.1,
+                0.2
+              ],
+              "samples": 123,
+              "mean_probability": 0.13898252928355176,
+              "observed_rate": 0.3252032520325203
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "samples": 93,
+              "mean_probability": 0.28779184408254144,
+              "observed_rate": 0.5161290322580645
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "samples": 63,
+              "mean_probability": 0.4936752585395606,
+              "observed_rate": 0.6984126984126984
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "samples": 44,
+              "mean_probability": 0.7096445225460118,
+              "observed_rate": 0.8863636363636364
+            },
+            {
+              "range": [
+                0.8,
+                1
+              ],
+              "samples": 11,
+              "mean_probability": 0.8435927228295359,
+              "observed_rate": 1.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "lead_hours": 6,
+      "input": "data/training6h.jsonl",
+      "input_sha256": "4f2117a6757b9da9ebae19b6544a4e82bbbee13e4103c3be466d86e958faf98a",
+      "folds": [
+        {
+          "quarter": "2024-Q2",
+          "train_samples": 21864,
+          "test_samples": 4356,
+          "test_start": "2024-04-01T00:00:00.000Z",
+          "test_end": "2024-06-30T17:30:00.000Z",
+          "positive_cases": 21,
+          "event_rate": 0.0048209366391184574,
+          "scores": {
+            "persistence": {
+              "brier": 0.009641873278236915,
+              "average_precision": 0.0048209366391184574,
+              "mean_probability": 0.0048209366391184574
+            },
+            "climatology": {
+              "brier": 0.004821464420110774,
+              "average_precision": 0.0048209366391184574,
+              "mean_probability": 0.00969630442736919
+            },
+            "season_hour": {
+              "brier": 0.00484943008717033,
+              "average_precision": 0.02307868403546885,
+              "mean_probability": 0.008100597621267396
+            },
+            "logistic": {
+              "brier": 0.004677593855735931,
+              "average_precision": 0.0896385740347369,
+              "mean_probability": 0.005862834893289235
+            },
+            "gradient_boosting": {
+              "brier": 0.004265216701220455,
+              "average_precision": 0.19770651745629056,
+              "mean_probability": 0.003860728284497452
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3750,
+                "mean_probability": 0.0011567518370760458,
+                "observed_rate": 0.0002666666666666667
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 501,
+                "mean_probability": 0.021387973591345866,
+                "observed_rate": 0.015968063872255488
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 71,
+                "mean_probability": 0.06806896328753509,
+                "observed_rate": 0.14084507042253522
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 29,
+                "mean_probability": 0.14043935100692984,
+                "observed_rate": 0.06896551724137931
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 5,
+                "mean_probability": 0.3159354128504993,
+                "observed_rate": 0.0
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4160,
+                "mean_probability": 0.000597340581971699,
+                "observed_rate": 0.0002403846153846154
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 121,
+                "mean_probability": 0.023443993096957383,
+                "observed_rate": 0.049586776859504134
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 31,
+                "mean_probability": 0.07320435613227344,
+                "observed_rate": 0.12903225806451613
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 24,
+                "mean_probability": 0.14461008975288261,
+                "observed_rate": 0.20833333333333334
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 18,
+                "mean_probability": 0.27183265464908357,
+                "observed_rate": 0.2777777777777778
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 2,
+                "mean_probability": 0.43135372184181087,
+                "observed_rate": 0.0
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 21,
+              "target_positive_cases": 0,
+              "scores": {
+                "persistence": {
+                  "brier": 1.0,
+                  "average_precision": null,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 9.401831954821938e-05,
+                  "average_precision": null,
+                  "mean_probability": 0.00969630442736919
+                },
+                "season_hour": {
+                  "brier": 6.385648719858873e-05,
+                  "average_precision": null,
+                  "mean_probability": 0.006989952425472297
+                },
+                "logistic": {
+                  "brier": 0.005654072593945806,
+                  "average_precision": null,
+                  "mean_probability": 0.03447936142886093
+                },
+                "gradient_boosting": {
+                  "brier": 0.00017353945160763232,
+                  "average_precision": null,
+                  "mean_probability": 0.007574770041260132
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4335,
+              "target_positive_cases": 21,
+              "scores": {
+                "persistence": {
+                  "brier": 0.004844290657439446,
+                  "average_precision": 0.004844290657439446,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.00484436554308928,
+                  "average_precision": 0.004844290657439446,
+                  "mean_probability": 0.009696304427369191
+                },
+                "season_hour": {
+                  "brier": 0.004872612796651163,
+                  "average_precision": 0.023097570227277014,
+                  "mean_probability": 0.008105977909413118
+                },
+                "logistic": {
+                  "brier": 0.004672863508907231,
+                  "average_precision": 0.09237927213985131,
+                  "mean_probability": 0.005724208121144597
+                },
+                "gradient_boosting": {
+                  "brier": 0.004285037975094012,
+                  "average_precision": 0.19832934397047652,
+                  "mean_probability": 0.0038427363867138253
+                }
+              }
+            }
+          }
+        },
+        {
+          "quarter": "2024-Q3",
+          "train_samples": 26232,
+          "test_samples": 4404,
+          "test_start": "2024-07-01T00:00:00.000Z",
+          "test_end": "2024-09-30T17:30:00.000Z",
+          "positive_cases": 37,
+          "event_rate": 0.008401453224341507,
+          "scores": {
+            "persistence": {
+              "brier": 0.016802906448683014,
+              "average_precision": 0.008401453224341507,
+              "mean_probability": 0.008401453224341507
+            },
+            "climatology": {
+              "brier": 0.008331100003586814,
+              "average_precision": 0.008401453224341507,
+              "mean_probability": 0.008882281183287587
+            },
+            "season_hour": {
+              "brier": 0.008318493422175641,
+              "average_precision": 0.014345271217532348,
+              "mean_probability": 0.006037156067447082
+            },
+            "logistic": {
+              "brier": 0.007462837287278179,
+              "average_precision": 0.3950798078918827,
+              "mean_probability": 0.004297886720710073
+            },
+            "gradient_boosting": {
+              "brier": 0.007853444955889216,
+              "average_precision": 0.16347578981507477,
+              "mean_probability": 0.004096126660468634
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3952,
+                "mean_probability": 0.001125259445957812,
+                "observed_rate": 0.0005060728744939271
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 375,
+                "mean_probability": 0.022758016277432347,
+                "observed_rate": 0.029333333333333333
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 66,
+                "mean_probability": 0.06938585040590559,
+                "observed_rate": 0.2727272727272727
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 11,
+                "mean_probability": 0.12428595970499899,
+                "observed_rate": 0.5454545454545454
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 4200,
+                "mean_probability": 0.0005356893628842875,
+                "observed_rate": 0.0030952380952380953
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 128,
+                "mean_probability": 0.022794155591293074,
+                "observed_rate": 0.09375
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 31,
+                "mean_probability": 0.07184257518622245,
+                "observed_rate": 0.0967741935483871
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 19,
+                "mean_probability": 0.1452786692122474,
+                "observed_rate": 0.10526315789473684
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 23,
+                "mean_probability": 0.2729853121898357,
+                "observed_rate": 0.30434782608695654
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 3,
+                "mean_probability": 0.5352392822441748,
+                "observed_rate": 0.0
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 37,
+              "target_positive_cases": 0,
+              "scores": {
+                "persistence": {
+                  "brier": 1.0,
+                  "average_precision": null,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 7.889491901898471e-05,
+                  "average_precision": null,
+                  "mean_probability": 0.008882281183287589
+                },
+                "season_hour": {
+                  "brier": 5.429886192215008e-05,
+                  "average_precision": null,
+                  "mean_probability": 0.004231527508818406
+                },
+                "logistic": {
+                  "brier": 0.000685232222355703,
+                  "average_precision": null,
+                  "mean_probability": 0.014949686761233722
+                },
+                "gradient_boosting": {
+                  "brier": 0.002513028868348485,
+                  "average_precision": null,
+                  "mean_probability": 0.016612185854607848
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4367,
+              "target_positive_cases": 37,
+              "scores": {
+                "persistence": {
+                  "brier": 0.008472635676665903,
+                  "average_precision": 0.008472635676665903,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.008401017930797488,
+                  "average_precision": 0.008472635676665903,
+                  "mean_probability": 0.008882281183287585
+                },
+                "season_hour": {
+                  "brier": 0.008388512931845756,
+                  "average_precision": 0.01441505128831667,
+                  "mean_probability": 0.006052454500391725
+                },
+                "logistic": {
+                  "brier": 0.00752026146575359,
+                  "average_precision": 0.4056075718268542,
+                  "mean_probability": 0.004207637899666021
+                },
+                "gradient_boosting": {
+                  "brier": 0.007898692355760755,
+                  "average_precision": 0.16827555714681505,
+                  "mean_probability": 0.003990082650809108
+                }
+              }
+            }
+          }
+        },
+        {
+          "quarter": "2024-Q4",
+          "train_samples": 30648,
+          "test_samples": 4396,
+          "test_start": "2024-10-01T00:00:00.000Z",
+          "test_end": "2024-12-31T17:30:00.000Z",
+          "positive_cases": 281,
+          "event_rate": 0.06392174704276615,
+          "scores": {
+            "persistence": {
+              "brier": 0.07370336669699727,
+              "average_precision": 0.21619338368157448,
+              "mean_probability": 0.06392174704276615
+            },
+            "climatology": {
+              "brier": 0.0628730938962861,
+              "average_precision": 0.06392174704276615,
+              "mean_probability": 0.008809710258418169
+            },
+            "season_hour": {
+              "brier": 0.06263514352814653,
+              "average_precision": 0.0864478857645517,
+              "mean_probability": 0.00836082701231312
+            },
+            "logistic": {
+              "brier": 0.05925224677927837,
+              "average_precision": 0.25746942934843864,
+              "mean_probability": 0.010630520530771872
+            },
+            "gradient_boosting": {
+              "brier": 0.06057462043560553,
+              "average_precision": 0.2555843974708874,
+              "mean_probability": 0.00785861116540166
+            }
+          },
+          "calibration": {
+            "logistic": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3507,
+                "mean_probability": 0.0014533813689456743,
+                "observed_rate": 0.02879954376960365
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 631,
+                "mean_probability": 0.023272187945290745,
+                "observed_rate": 0.14896988906497624
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 155,
+                "mean_probability": 0.0713512419263343,
+                "observed_rate": 0.3161290322580645
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 86,
+                "mean_probability": 0.13194300234173198,
+                "observed_rate": 0.3488372093023256
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 17,
+                "mean_probability": 0.2672628528783202,
+                "observed_rate": 0.4117647058823529
+              }
+            ],
+            "gradient_boosting": [
+              {
+                "range": [
+                  0,
+                  0.01
+                ],
+                "samples": 3789,
+                "mean_probability": 0.0013157373477498664,
+                "observed_rate": 0.03510160992346265
+              },
+              {
+                "range": [
+                  0.01,
+                  0.05
+                ],
+                "samples": 426,
+                "mean_probability": 0.022692809587399027,
+                "observed_rate": 0.20187793427230047
+              },
+              {
+                "range": [
+                  0.05,
+                  0.1
+                ],
+                "samples": 113,
+                "mean_probability": 0.0717748167499805,
+                "observed_rate": 0.3008849557522124
+              },
+              {
+                "range": [
+                  0.1,
+                  0.2
+                ],
+                "samples": 51,
+                "mean_probability": 0.12966367894481937,
+                "observed_rate": 0.5098039215686274
+              },
+              {
+                "range": [
+                  0.2,
+                  0.4
+                ],
+                "samples": 14,
+                "mean_probability": 0.25501840896465267,
+                "observed_rate": 0.14285714285714285
+              },
+              {
+                "range": [
+                  0.4,
+                  0.6
+                ],
+                "samples": 3,
+                "mean_probability": 0.533443114603584,
+                "observed_rate": 0.0
+              }
+            ]
+          },
+          "current_conditions": {
+            "currently_below_550m": {
+              "samples": 281,
+              "target_positive_cases": 119,
+              "scores": {
+                "persistence": {
+                  "brier": 0.5765124555160143,
+                  "average_precision": 0.4234875444839858,
+                  "mean_probability": 1.0
+                },
+                "climatology": {
+                  "brier": 0.4161035503489173,
+                  "average_precision": 0.4234875444839858,
+                  "mean_probability": 0.008809710258418167
+                },
+                "season_hour": {
+                  "brier": 0.41561935359607927,
+                  "average_precision": 0.5638939984999618,
+                  "mean_probability": 0.007122622194207554
+                },
+                "logistic": {
+                  "brier": 0.39290752440118254,
+                  "average_precision": 0.5407486848839449,
+                  "mean_probability": 0.030509625186742276
+                },
+                "gradient_boosting": {
+                  "brier": 0.3977198167089874,
+                  "average_precision": 0.5644828696372348,
+                  "mean_probability": 0.026715781461535505
+                }
+              }
+            },
+            "currently_at_least_550m": {
+              "samples": 4115,
+              "target_positive_cases": 162,
+              "scores": {
+                "persistence": {
+                  "brier": 0.0393681652490887,
+                  "average_precision": 0.0393681652490887,
+                  "mean_probability": 0.0
+                },
+                "climatology": {
+                  "brier": 0.038752131985425986,
+                  "average_precision": 0.0393681652490887,
+                  "mean_probability": 0.008809710258418169
+                },
+                "season_hour": {
+                  "brier": 0.03853099698401795,
+                  "average_precision": 0.05934634461375207,
+                  "mean_probability": 0.008445380002322273
+                },
+                "logistic": {
+                  "brier": 0.03646801032441687,
+                  "average_precision": 0.209116453102782,
+                  "mean_probability": 0.00927304096617219
+                },
+                "gradient_boosting": {
+                  "brier": 0.03755206875812796,
+                  "average_precision": 0.18097651097423287,
+                  "mean_probability": 0.006570916182846713
+                }
+              }
+            }
+          }
+        }
+      ],
+      "pooled": {
+        "samples": 13156,
+        "positive_cases": 339,
+        "event_rate": 0.025767710550319244,
+        "scores": {
+          "logistic": {
+            "brier": 0.023845759432233698,
+            "average_precision": 0.20035299803122805,
+            "mean_probability": 0.006932059149167545
+          },
+          "gradient_boosting": {
+            "brier": 0.024281839994768493,
+            "average_precision": 0.1965353564082777,
+            "mean_probability": 0.0052753974538674725
+          },
+          "persistence": {
+            "brier": 0.033444816053511704,
+            "average_precision": 0.139946187840715,
+            "mean_probability": 0.025767710550319244
+          },
+          "climatology": {
+            "brier": 0.025393933125408375,
+            "average_precision": 0.02238036431566657,
+            "mean_probability": 0.009127558126544921
+          },
+          "season_hour": {
+            "brier": 0.025319462864146217,
+            "average_precision": 0.04530569276124061,
+            "mean_probability": 0.007496810132669976
+          }
+        },
+        "paired_brier_differences": {
+          "logistic": {
+            "persistence": {
+              "difference": -0.009599056621278012,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.015291065110646094,
+                -0.004492726721305897
+              ]
+            },
+            "climatology": {
+              "difference": -0.0015481736931746773,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0030232029544601394,
+                -0.0004952164527098974
+              ]
+            },
+            "season_hour": {
+              "difference": -0.0014737034319125225,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0027343994453805386,
+                -0.0005122876757527721
+              ]
+            }
+          },
+          "gradient_boosting": {
+            "persistence": {
+              "difference": -0.009162976058743206,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.014722823009895991,
+                -0.0043333287568013915
+              ]
+            },
+            "climatology": {
+              "difference": -0.0011120931306398737,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0022068745005038456,
+                -0.00016209088427604428
+              ]
+            },
+            "season_hour": {
+              "difference": -0.0010376228693777187,
+              "week_blocks": 40,
+              "bootstrap_95_percent_interval": [
+                -0.0019469408854814914,
+                -0.0002861972653451398
+              ]
+            }
+          }
+        },
+        "calibration": {
+          "logistic": [
+            {
+              "range": [
+                0,
+                0.01
+              ],
+              "samples": 11209,
+              "mean_probability": 0.0012384559889689467,
+              "observed_rate": 0.00927825854224284
+            },
+            {
+              "range": [
+                0.01,
+                0.05
+              ],
+              "samples": 1507,
+              "mean_probability": 0.022517837735089495,
+              "observed_rate": 0.07498341074983411
+            },
+            {
+              "range": [
+                0.05,
+                0.1
+              ],
+              "samples": 292,
+              "mean_probability": 0.0701089212972143,
+              "observed_rate": 0.2636986301369863
+            },
+            {
+              "range": [
+                0.1,
+                0.2
+              ],
+              "samples": 126,
+              "mean_probability": 0.13323003918527695,
+              "observed_rate": 0.30158730158730157
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "samples": 22,
+              "mean_probability": 0.27832479832654267,
+              "observed_rate": 0.3181818181818182
+            }
+          ],
+          "gradient_boosting": [
+            {
+              "range": [
+                0,
+                0.01
+              ],
+              "samples": 12149,
+              "mean_probability": 0.000800079097517534,
+              "observed_rate": 0.012099761297226109
+            },
+            {
+              "range": [
+                0.01,
+                0.05
+              ],
+              "samples": 675,
+              "mean_probability": 0.0228466843920731,
+              "observed_rate": 0.15407407407407409
+            },
+            {
+              "range": [
+                0.05,
+                0.1
+              ],
+              "samples": 175,
+              "mean_probability": 0.07204005236354953,
+              "observed_rate": 0.2342857142857143
+            },
+            {
+              "range": [
+                0.1,
+                0.2
+              ],
+              "samples": 94,
+              "mean_probability": 0.13663600526901776,
+              "observed_rate": 0.35106382978723405
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "samples": 55,
+              "mean_probability": 0.26803468526463387,
+              "observed_rate": 0.2545454545454545
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "samples": 8,
+              "mean_probability": 0.5085943292783622,
+              "observed_rate": 0.0
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "origin": "http://127.0.0.1:3014",
+  "builtAtVerification": "2026-10-06T12:31:17.789Z",
+  "fixtureStart": "2026-10-06T13:00:00.000Z",
+  "controlledCaptures": [
+    "09-profile-example",
+    "17-unknown-scenario",
+    "12-help-final",
+    "13-rapid-mobile-final",
+    "14-selected-short-final",
+    "15-gap-final",
+    "16-dst-final"
+  ],
+  "pageErrors": [],
+  "results": [
+    "pl: no visible grade labels; severity uses height, possible worsening stays dashed, accessible grade names retained",
+    "pl 320: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 390: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 768: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "pl 1280: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "pl: short intervals, 44px controls, keyboard, gap, marker, URL, one tab stop",
+    "en: no visible grade labels; severity uses height, possible worsening stays dashed, accessible grade names retained",
+    "en 320: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "en 390: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "en 768: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "en 1280: profile bounds, scrolling, hour positions, help Enter/Escape",
+    "en: short intervals, 44px controls, keyboard, gap, marker, URL, one tab stop",
+    "DST: two 02:00 hours with different zones, names below hours",
+    "Outside coverage: explicit warning, no assessment or marker",
+    "Unknown scenario: grey patterned strip remains visible separately from the primary assessment",
+    "Unknown assessment and empty forecast: explicit unavailable state, never green",
+    "JavaScript disabled: SSR timeline and native help remain available"
+  ]
+}
