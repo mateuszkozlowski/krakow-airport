@@ -6,6 +6,11 @@ import { getQuality } from "@/lib/weather/history";
 import type { Locale } from "@/lib/weather/model";
 import { WeatherMethodology } from "@/components/weather/WeatherMethodology";
 import { FogModelGuide } from "@/components/weather/FogModelGuide";
+import { TransportPage } from "@/components/transport/TransportPage";
+import { transportKind, transportPath } from "@/lib/transport/paths";
+import { pageCopy } from "@/lib/transport/copy";
+import type { QueryValues } from "@/lib/transport/query";
+export const maxDuration = 60;
 type Params = { locale: string; slug: string };
 function resolve({ locale, slug }: Params): {
   locale: Locale;
@@ -37,7 +42,21 @@ export async function generateMetadata({
 }: {
   params: Promise<Params>;
 }) {
-  const { locale, key } = resolve(await params);
+  const values = await params;
+  if (values.locale === "pl" || values.locale === "en") {
+    const kind = transportKind(values.locale, values.slug);
+    if (kind) {
+      const copy = pageCopy[values.locale][kind];
+      return seo(
+        values.locale,
+        copy.seoTitle,
+        copy.description,
+        { pl: transportPath("pl", kind), en: transportPath("en", kind) },
+        "transport",
+      );
+    }
+  }
+  const { locale, key } = resolve(values);
   return seo(
     locale,
     titles[locale][key],
@@ -47,8 +66,26 @@ export async function generateMetadata({
     { pl: `/pl/${slugs.pl[key]}`, en: `/en/${slugs.en[key]}` },
   );
 }
-export default async function Article({ params }: { params: Promise<Params> }) {
-  const { locale, key } = resolve(await params);
+export default async function Article({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<QueryValues>;
+}) {
+  const values = await params;
+  if (values.locale === "pl" || values.locale === "en") {
+    const kind = transportKind(values.locale, values.slug);
+    if (kind)
+      return (
+        <TransportPage
+          locale={values.locale}
+          kind={kind}
+          values={await searchParams}
+        />
+      );
+  }
+  const { locale, key } = resolve(values);
   const pl = locale === "pl";
   const quality = key === "accuracy" ? await getQuality() : null;
   return (

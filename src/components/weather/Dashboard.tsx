@@ -9,6 +9,8 @@ import type {
 } from "@/lib/weather/model";
 import { text, reasons, levelLabel } from "@/lib/weather/copy";
 import { formatTime, localInput, warsawToUtc } from "@/lib/weather/time";
+import { queryForFlight, queryString } from "@/lib/transport/query";
+import { transportPath } from "@/lib/transport/paths";
 import { Reminder } from "./Reminder";
 import { WeatherDetails as Details } from "./WeatherDetails";
 import { Icon } from "./Icon";
@@ -347,6 +349,13 @@ export function Dashboard({
               <p>{t.noSlot}</p>
             )}
             <div className="trip-tools">
+              <a
+                className="trip-share"
+                href={`${transportPath(locale)}?${queryString(queryForFlight(selected, operation))}`}
+              >
+                <Icon name="arrival" />
+                {locale === "pl" ? "Sprawdź dojazd" : "Check transport"}
+              </a>
               <button
                 className="trip-share"
                 aria-label={t.share}

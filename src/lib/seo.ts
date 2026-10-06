@@ -6,6 +6,7 @@ export function seo(
   title: string,
   description: string,
   paths: { pl: string; en: string },
+  imageTopic?: "transport",
 ): Metadata {
   return {
     title,
@@ -25,14 +26,20 @@ export function seo(
       description,
       url: `${site}${paths[locale]}`,
       images: [
-        { url: `${site}/api/og?lang=${locale}`, width: 1200, height: 630 },
+        {
+          url: `${site}/api/og?lang=${locale}${imageTopic ? "&topic=" + imageTopic : ""}`,
+          width: 1200,
+          height: 630,
+        },
       ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${site}/api/og?lang=${locale}`],
+      images: [
+        `${site}/api/og?lang=${locale}${imageTopic ? "&topic=" + imageTopic : ""}`,
+      ],
     },
   };
 }

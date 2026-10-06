@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/weather/model";
-import { slugs } from "@/lib/weather/copy";
+import { translatedPath } from "@/lib/routes";
 const Context = createContext<{
   language: Locale;
   setLanguage: (language: Locale) => void;
@@ -19,12 +19,8 @@ export function LanguageProvider({
     document.documentElement.lang = initial;
   }, [initial]);
   function setLanguage(language: Locale) {
-    const slug = window.location.pathname.split("/")[2];
-    const key = Object.entries(slugs[initial]).find(
-      ([, value]) => value === slug,
-    )?.[0] as keyof typeof slugs.pl | undefined;
     router.push(
-      `/${language}${key ? "/" + slugs[language][key] : ""}${window.location.search}`,
+      `${translatedPath(window.location.pathname, initial, language)}${window.location.search}`,
     );
   }
   return (

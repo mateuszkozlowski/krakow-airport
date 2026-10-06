@@ -1,0 +1,14 @@
+{
+  "origin": "http://127.0.0.1:3040",
+  "fixture": true,
+  "at": "2026-10-06T17:41:32.070Z",
+  "weatherAllowance": true,
+  "canDisable": true,
+  "keyboardFocusRetained": true,
+  "selectedDetailsVisible": true,
+  "departureDeadlineUnchanged": true,
+  "weatherHourHandoff": true,
+  "noJavaScriptChoice": true,
+  "dstChoice": true,
+  "errors": []
+}

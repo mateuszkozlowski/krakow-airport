@@ -14,6 +14,14 @@ Node 20.9+ (zalecany Node 22/24), `npm ci`, `npm run dev`. Do produkcji: `npm ru
 - Redis jest opcjonalny dla wyświetlania pogody: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, wyłącznie prywatne nazwy. Bez Redis działa pamięć podręczna procesu; historia i push wymagają trwałego magazynu. Błędy zapisu cache nie kasują świeżych danych.
 - Minima ostrzegawcze są konfigurowalne: `AIRPORT_ARRIVAL_RVR_ADVISORY_M` (domyślnie 550), `AIRPORT_DEPARTURE_RVR_ADVISORY_M` (300), `AIRPORT_CEILING_ADVISORY_FT` (200), `AIRPORT_RUNWAY_TRUE_HEADING` (78). To wskazówki pogodowe, nie zatwierdzone minima lotu. Nie przełączać CAT II przed potwierdzeniem bieżących procedur i certyfikacji.
 
+## Dojazd do i z lotniska
+
+Rozkłady KMŁ, ZTP i FlixBusa nie wymagają kluczy. Build pobiera bieżące GTFS; po wdrożeniu nowe wersje zapisują się w istniejącym Redis, a osobny dzienny cron `/api/transport/refresh` o 05:15 UTC wymaga `CRON_SECRET`. Brak konfiguracji Redis nie blokuje datowanego zestawu z builda, lecz utrudnia trwałe aktualizacje między instancjami. Nie oferujemy rozkładów niesprawdzonych od ponad siedmiu dni.
+
+Opcjonalny prywatny `PLK_API_KEY` uzupełnia pociągi o opóźnienia po aktywacji u PLK. Nie używać nazwy `NEXT_PUBLIC_*`. Błąd aktywacji zachowuje godzinę z rozkładu i nie staje się opóźnieniem zero. Globalna blokada ogranicza odświeżanie do jednej próby na trzy minuty. Nie trzeba ponownie wdrażać kodu po przyjęciu już ustawionego klucza przez PLK.
+
+Reguły połączeń, licencje, ograniczenia danych i zapas zależny od pogody opisano w [dokumentacji dojazdu](docs/airport-transport.md).
+
 ## Historia i powiadomienia
 
 1. Ustaw prywatny `CRON_SECRET` jako losowy długi sekret. Bez niego collector zwraca 503, a powiadomienia są wyłączone. `Bearer undefined` nigdy nie jest autoryzacją.

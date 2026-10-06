@@ -1,0 +1,55 @@
+{
+  "origin": "http://127.0.0.1:3040",
+  "at": "2026-10-06T17:41:52.590Z",
+  "errors": [],
+  "checks": [
+    {
+      "locale": "pl",
+      "width": 320,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "shortHeading": true,
+      "noSubtitle": true,
+      "metadata": true,
+      "hoverDelta": 0
+    }
+  ]
+}

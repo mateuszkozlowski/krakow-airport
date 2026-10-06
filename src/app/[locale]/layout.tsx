@@ -3,6 +3,8 @@ import Link from "next/link";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { text, slugs } from "@/lib/weather/copy";
 import { LanguageLinks } from "@/components/weather/LanguageLinks";
+import { SiteNavigation } from "@/components/transport/SiteNavigation";
+import { transportPath } from "@/lib/transport/paths";
 export default async function LocaleLayout({
   children,
   params,
@@ -25,9 +27,13 @@ export default async function LocaleLayout({
           </Link>
           <LanguageLinks />
         </header>
+        <SiteNavigation locale={locale} />
         <main id="main">{children}</main>
         <footer>
           <nav>
+            <Link href={transportPath(locale)}>
+              {locale === "pl" ? "Dojazd do i z lotniska" : "Airport transport"}
+            </Link>
             <Link href={`/${locale}/${slugs[locale].fog}`}>{t.fogGuide}</Link>
             <Link href={`/${locale}/${slugs[locale].methodology}`}>
               {t.methodology}
@@ -39,7 +45,9 @@ export default async function LocaleLayout({
           </nav>
           <p>{t.footer}</p>
           <p>
-            {locale === "pl" ? "Pomiar i prognoza:" : "Measurement and forecast:"}{" "}
+            {locale === "pl"
+              ? "Pomiar i prognoza:"
+              : "Measurement and forecast:"}{" "}
             <a href="https://aviationweather.gov/data/api/">
               NOAA AviationWeather.gov
             </a>{" "}

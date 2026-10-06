@@ -1,0 +1,64 @@
+{
+  "origin": "http://127.0.0.1:3040",
+  "at": "2026-10-06T17:42:08.734Z",
+  "errors": [],
+  "checks": [
+    {
+      "locale": "pl",
+      "width": 320,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "overflow": false,
+      "detailsVisible": true
+    },
+    {
+      "slug": "lot-rano",
+      "defaultDirection": "to-airport",
+      "place": "krakow-glowny",
+      "connection": true
+    },
+    {
+      "slug": "balice-zakopane",
+      "defaultDirection": "from-airport",
+      "place": "zakopane",
+      "connection": true
+    },
+    {
+      "slug": "dojazd",
+      "defaultDirection": "from-airport",
+      "place": "krakow-glowny",
+      "connection": true
+    }
+  ],
+  "noJavaScript": true,
+  "calendar": true,
+  "languagePreservesPlan": true
+}

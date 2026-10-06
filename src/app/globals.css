@@ -370,6 +370,7 @@ input[type="radio"] {
 .trip-share {
   border: 0;
   background: transparent;
+  text-decoration: none;
 }
 .trip-tools .icon {
   width: 16px;
@@ -1214,6 +1215,714 @@ dt .icon,
 @container timeline-missing (width < 80px) {
   .timeline-gap span {
     visibility: hidden;
+  }
+}
+
+/* Airport journeys use one continuous glass surface and a readable route. */
+.site-sections {
+  display: flex;
+  gap: 26px;
+  border-bottom: 1px solid #d6e9f514;
+}
+.site-sections a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  color: #b2c4d9;
+  font-size: 14px;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.site-sections a[aria-current] {
+  color: #e6fff7;
+  border-bottom-color: #7de7d4;
+}
+.transport-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.transport-page .hero {
+  max-width: none;
+  padding-top: 26px;
+}
+.transport-page h1 {
+  font-size: clamp(30px, 4vw, 42px);
+}
+.transport-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+}
+.transport-shortcuts a {
+  font-size: 13px;
+  color: #b9ccd9;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.transport-planner {
+  padding: 26px 28px 12px;
+  background: linear-gradient(135deg, #e0f8ff14, #c4dfed06);
+  border: 1px solid #e4f8ff2b;
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 #f1fcff26,
+    0 22px 65px #06121f33;
+  backdrop-filter: blur(16px) saturate(1.1);
+}
+.transport-form {
+  display: block;
+}
+.transport-icon {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.transport-direction {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #0a1c2c55;
+  border: 1px solid #d7f2ff26;
+  border-radius: 11px;
+  margin-bottom: 24px;
+}
+.transport-direction label {
+  position: relative;
+  cursor: pointer;
+}
+.transport-direction input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.transport-direction span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 22px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #b9cddd;
+}
+.transport-direction input:checked + span {
+  color: #e6fff8;
+  background: #7de7d41c;
+  border-color: #9bdbc655;
+}
+.transport-direction input:focus-visible + span {
+  outline: 3px solid #7de7d4;
+  outline-offset: 3px;
+}
+.transport-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.transport-form label:not(.transport-direction label):not(.sr-only) {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 7px;
+  color: #bfd0de;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.transport-form select,
+.transport-form input[type="date"],
+.transport-form input[type="time"] {
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #adc9df44;
+  border-radius: 8px;
+  background: #0e2238a6;
+  color: #eaf4fc;
+  font-size: 14px;
+}
+.transport-form input[type="date"],
+.transport-form input[type="time"] {
+  color-scheme: dark;
+}
+.transport-form select option,
+.transport-form select optgroup {
+  background: #102137;
+  color: #eaf4fc;
+}
+.transport-margins {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+  margin-top: 18px;
+}
+.transport-margins > label {
+  flex: 1;
+  min-width: 160px !important;
+}
+.transport-adjustments {
+  font-size: 13px;
+  color: #bed0df;
+}
+.transport-adjustments > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: #738a9e;
+}
+.transport-adjustments[open] {
+  width: 150px;
+}
+.transport-submit {
+  min-height: 48px;
+  padding: 10px 16px;
+}
+.transport-fold {
+  max-width: 350px;
+  margin-top: 16px;
+}
+.transport-form-note,
+.transport-note {
+  font-size: 12px;
+  color: #b7c9d8;
+  line-height: 1.55;
+}
+.transport-form-note {
+  margin: 14px 0 0;
+}
+.transport-result {
+  border-top: 1px solid #daf1fa24;
+  margin-top: 24px;
+  padding-top: 22px;
+}
+.transport-result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 5px 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.transport-result-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.transport-result-heading > span {
+  color: #bdd1df;
+  font-size: 12px;
+}
+.journey-primary-label {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 12px;
+  color: #b7cbdc;
+  margin-bottom: 18px;
+}
+.journey-primary {
+  scroll-margin-top: 24px;
+}
+.transport-more {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: #b8dedb;
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.journey-primary-label > span:first-child {
+  color: #a6ecda;
+}
+.journey-summary,
+.journey-alternatives > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+}
+.journey-time {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.journey-time:nth-child(3) {
+  text-align: right;
+}
+.journey-time strong {
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -1px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+.journey-time small,
+.journey-line small {
+  color: #bfd0de;
+  font-size: 12px;
+}
+.journey-line {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: #d5e8ef;
+}
+.journey-line > span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.journey-line > span:first-child > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.journey-line-rule {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, #74d7caaa, #c2dce277);
+}
+.journey-line-rule::before,
+.journey-line-rule::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  top: -2px;
+  background: #bdece4;
+  border-radius: 50%;
+}
+.journey-line-rule::before {
+  left: 0;
+}
+.journey-line-rule::after {
+  right: 0;
+}
+.journey-details {
+  margin-top: 24px;
+}
+.journey-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.journey-steps > li {
+  margin: 0;
+}
+.journey-leg-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.journey-leg-heading > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.journey-headsign {
+  font-size: 12px;
+  color: #bed0dc;
+  margin: -5px 0 12px 28px;
+}
+.connection-weather {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #bdd6df;
+  font-size: 13px;
+  margin: 0 0 20px;
+}
+.connection-weather .icon {
+  margin-top: 2px;
+}
+.connection-weather > div {
+  flex: 1;
+  min-width: 0;
+}
+.connection-weather a {
+  color: inherit;
+  text-decoration-color: #8ba9b96b;
+}
+.connection-weather a > span {
+  white-space: nowrap;
+}
+.connection-weather.caution {
+  border-left: 2px solid #d4bf7b;
+  padding-left: 12px;
+  color: #ecdfb9;
+}
+.connection-weather small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.connection-weather .weather-toggle {
+  align-self: center;
+  color: #b8dedb;
+  background: transparent;
+  border: 0;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.transport-weather-unknown {
+  color: #b7c9d8;
+  font-size: 12px;
+  margin: 0 0 20px;
+}
+.scheduled-service,
+.live-service {
+  font-size: 12px;
+  color: #b7c7da;
+}
+.live-service {
+  color: #a6ecda;
+}
+.journey-stop {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 0 15px;
+  position: relative;
+  margin-left: 26px;
+}
+.journey-stop::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #afe2d8;
+}
+.journey-stop:not(.arrival-stop)::after {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 20px;
+  bottom: -6px;
+  border-left: 1px solid #bfd9e24d;
+}
+.journey-stop time {
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.journey-stop a {
+  color: #dceef6;
+  font-size: 15px;
+  text-decoration-color: #7a9aa266;
+}
+.journey-stop a > span[aria-hidden] {
+  color: #99c3c6;
+  font-size: 13px;
+}
+.journey-stop small {
+  display: block;
+  color: #b7c9d8;
+  font-size: 12px;
+}
+.journey-transfer {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  margin: 0 0 18px;
+  border-top: 1px dashed #abcbd638;
+  border-bottom: 1px dashed #abcbd638;
+  color: #b7ccdc;
+  font-size: 12px;
+}
+.journey-transfer .transport-icon {
+  margin-top: 3px;
+}
+.journey-transfer strong,
+.journey-transfer span {
+  display: block;
+}
+.journey-transfer strong {
+  font-size: 13px;
+  font-weight: 550;
+  color: #d8eaf3;
+}
+.journey-ticket-links,
+.transport-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+  align-items: center;
+  font-size: 13px;
+}
+.journey-ticket-links a,
+.transport-tools > a,
+.transport-tools > button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.journey-ticket-links {
+  color: #bdcedd;
+}
+.journey-alternatives {
+  margin-top: 20px;
+}
+.journey-alternatives h3 {
+  font-size: 13px;
+  color: #bdcfdf;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+.journey-alternatives > button {
+  padding: 15px 4px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #d2e8ff1a;
+  border-radius: 0;
+  color: #eaf2f9;
+  text-align: left;
+  cursor: pointer;
+}
+.journey-alternatives > button:hover {
+  background: #d9eaff07;
+}
+.journey-alternatives .journey-time strong {
+  font-size: 23px;
+}
+.journey-alternatives .journey-line {
+  gap: 5px;
+}
+.journey-alternatives .transport-icon {
+  width: 17px;
+  height: 17px;
+}
+.transport-tools {
+  border-top: 1px solid #d2e8ff1a;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.transport-tools > button,
+.transport-saved button {
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  color: #b8dedb;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: #70999e;
+}
+.transport-status {
+  font-size: 12px;
+  color: #a6ecda;
+}
+.transport-status:empty {
+  margin: 0;
+}
+.transport-saved {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.transport-saved button {
+  min-height: 44px;
+}
+.transport-saved button:last-child {
+  width: 44px;
+  font-size: 24px;
+  text-decoration: none;
+}
+.transport-loading,
+.transport-empty {
+  min-height: 150px;
+  color: #d1e1ec;
+  font-size: 15px;
+  padding: 22px 0;
+  margin: 0;
+}
+.transport-empty button {
+  background: transparent;
+  border: 0;
+  color: #7de7d4;
+  cursor: pointer;
+  text-decoration: underline;
+  min-height: 44px;
+}
+.transport-long-wait {
+  color: #eed49b;
+}
+.transport-sources {
+  border-top: 1px solid #d2e8ff1a;
+  padding-top: 4px;
+  font-size: 12px;
+  color: #b7c9da;
+}
+.transport-sources > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  cursor: pointer;
+}
+.transport-sources > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 18px;
+}
+.transport-sources[open] > summary::after {
+  content: "−";
+}
+.transport-sources ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+.transport-sources li {
+  margin: 14px 0;
+}
+.transport-sources li span {
+  display: block;
+  margin-top: 3px;
+}
+.transport-help {
+  margin: 24px 0 8px;
+}
+.transport-help details {
+  border-bottom: 1px solid #d2e8ff1a;
+}
+.transport-help summary {
+  font-size: 14px;
+  color: #c6d7e4;
+  padding: 14px 0;
+}
+.transport-help p {
+  font-size: 14px;
+  color: #bdcfe0;
+  max-width: 720px;
+  margin: 0 0 20px;
+}
+@media (max-width: 680px) {
+  .transport-page .hero {
+    padding-top: 18px;
+  }
+  .transport-planner {
+    padding: 18px 16px 8px;
+  }
+  .transport-direction {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .transport-direction label {
+    flex: 1;
+  }
+  .transport-direction span {
+    padding: 8px 10px;
+  }
+  .transport-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px 12px;
+  }
+  .transport-place {
+    grid-column: 1 / -1;
+  }
+  .transport-margins {
+    gap: 12px;
+  }
+  .transport-margins > label {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0 !important;
+  }
+  .transport-adjustments {
+    flex: 1;
+  }
+  .transport-form .transport-submit {
+    width: auto;
+    min-width: 105px;
+  }
+  .transport-result {
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+  .transport-result-heading > span {
+    flex-basis: 100%;
+  }
+  .journey-summary,
+  .journey-alternatives > button {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+    column-gap: 8px;
+  }
+  .journey-time strong {
+    font-size: 29px;
+  }
+  .journey-time small,
+  .journey-line small {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .journey-line {
+    font-size: 11px;
+  }
+  .journey-line > span:first-child {
+    gap: 5px;
+  }
+  .journey-line .transport-icon {
+    width: 17px;
+    height: 17px;
+  }
+  .journey-line > span:first-child > span {
+    gap: 3px;
+  }
+  .journey-leg-heading {
+    gap: 0 8px;
+  }
+  .journey-stop {
+    grid-template-columns: 49px minmax(0, 1fr);
+    gap: 10px;
+    margin-left: 20px;
+  }
+  .journey-stop::before {
+    left: -17px;
+  }
+  .journey-stop:not(.arrival-stop)::after {
+    left: -15px;
+  }
+  .journey-stop a {
+    font-size: 14px;
+  }
+  .journey-ticket-links,
+  .transport-tools {
+    gap: 0 18px;
+  }
+  .transport-help summary {
+    padding-left: 2px;
   }
 }
 .timeline-gap:focus-visible {

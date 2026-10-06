@@ -6,3 +6,4 @@ import "./notifications.test";
 import "./presentation.test";
 import "./research.test";
 import "./fog-shadow.test";
+import "./transport.test";

@@ -2,6 +2,8 @@
 
 Niekomercyjny serwis o pogodzie na lotnisku Kraków-Balice (EPKK). Ocena warunków jest osobna dla przylotów i odlotów. Użytkownik wybiera godzinę podróży; aplikacja nie korzysta z płatnego API rozkładu i nie deklaruje statusu konkretnego lotu.
 
+Planer dojazdu `/pl/dojazd` i `/en/transport` łączy bezpłatne rozkłady KMŁ, ZTP i FlixBusa z godziną lotu oraz prognozą pogody. Obsługuje kursy po północy, dojazd na odprawę, przesiadki i dalszą podróż. PLK uzupełnia istniejące pociągi o opóźnienia, po aktywacji prywatnego klucza; nie tworzy drugiej listy tych samych kursów.
+
 Wersja 2 korzysta z surowych METAR/TAF NOAA, pełnego parsera, bezpłatnego Open-Meteo dla obecnego zastosowania niekomercyjnego oraz opcjonalnego CheckWX. Dane i sekrety pozostają na serwerze. Polskie i angielskie strony renderują treść po stronie serwera, również przy awarii źródła.
 
 ```bash
@@ -24,6 +26,7 @@ npm start
 - [Oś z ikonami i graficzną oceną warunków](docs/timeline-icons.md)
 - [Mikroklimat Balic: cechy lokalne, wyniki i nowe źródła](docs/local-weather-context.md)
 - [Które dodatkowe dane mają sens](docs/additional-weather-data.md)
+- [Planer dojazdu: dane, aktualizacja, pogoda i ograniczenia](docs/airport-transport.md)
 
 Główne moduły: `src/lib/weather/parse.ts` (normalizacja i scenariusze), `engine.ts` (wspólna ocena), `service.ts` (źródła serwerowe), `history.ts` / `quality.ts` (pomiar bez odtwarzania prognoz po fakcie). Pobieranie pogody nie publikuje powiadomień; robi to tylko chroniony collector, po odpowiedniej konfiguracji.
 
