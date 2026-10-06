@@ -225,6 +225,22 @@ test("GTFS noon-minus-12 clock is correct across both Warsaw DST changes", () =>
     "2026-10-24T23:00:00.000Z",
   );
 });
+test("late-evening shortcuts keep tonight and tomorrow morning across midnight and New Year", () => {
+  for (const [at, today, tomorrow, upcoming] of [
+    ["2026-10-06T21:30Z", "2026-10-06", "2026-10-07", "2026-10-07"],
+    ["2026-12-31T22:30Z", "2026-12-31", "2027-01-01", "2027-01-01"],
+    ["2026-12-31T23:30Z", "2027-01-01", "2027-01-02", "2027-01-01"],
+  ]) {
+    const current = new Date(at);
+    const night = defaultQuery(current, "night");
+    const early = defaultQuery(current, "early");
+    assert.equal(night.date, today);
+    assert.equal(early.date, tomorrow);
+    assert.equal(night.time, "23:45");
+    assert.equal(early.time, "06:00");
+    assert.equal(defaultQuery(current).date, upcoming);
+  }
+});
 test("flight time requires an explicit choice for a repeated hour and rejects a missing hour", () => {
   const q = { ...base, date: "2026-10-25", time: "02:30" };
   assert.equal(resolveFlight(q, now).issue, "dst-time");

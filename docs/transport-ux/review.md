@@ -8,4 +8,4 @@ Osobny test używa syntetycznej prognozy mgły i rzeczywistych rozkładów. Potw
 
 Ponownie sprawdzono istniejącą oś pogody w obu językach i trzech szerokościach. Hover nie zmienia wysokości osi, a wybór godziny pokazuje szczegóły bezpośrednio poniżej. Nie było błędów JavaScriptu. [Kontrola pogody](weather-regression-verification.json).
 
-82 testy algorytmu i integracji, lint oraz build przeszły. Kontrola przeglądarkowa nie potwierdza danych operacyjnych PLK przed aktywacją klucza. Bez świeżego dopasowania kurs pozostaje oznaczony jako rozkład.
+83 testy algorytmu i integracji, lint oraz build przeszły. Dodano też regresję dat skrótów nocnych i porannych przy północy i Nowym Roku. Kontrola przeglądarkowa nie potwierdza danych operacyjnych PLK przed aktywacją klucza. Bez świeżego dopasowania kurs pozostaje oznaczony jako rozkład.

@@ -8,12 +8,15 @@ export function defaultQuery(
   kind: "transport" | "night" | "early" | "zakopane" = "transport",
 ): TripQuery {
   const local = localInput(new Date(now.getTime() + 3600000).toISOString());
+  const today = localInput(now.toISOString()).slice(0, 10);
   const date =
     kind === "early"
-      ? new Date(Date.parse(local.slice(0, 10) + "T12:00Z") + 86400000)
+      ? new Date(Date.parse(today + "T12:00Z") + 86400000)
           .toISOString()
           .slice(0, 10)
-      : local.slice(0, 10);
+      : kind === "night"
+        ? today
+        : local.slice(0, 10);
   return {
     direction: kind === "early" ? "to-airport" : "from-airport",
     place: kind === "zakopane" ? "zakopane" : "krakow-glowny",
