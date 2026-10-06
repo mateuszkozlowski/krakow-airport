@@ -309,9 +309,84 @@ input[type="radio"] {
   accent-color: #7de7d4;
 }
 .trip-result {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #334760;
+  margin: 4px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #ffffff19;
+}
+.trip-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.trip-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.trip-result .weather-values {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  border: 0;
+  margin: 12px 0 8px;
+  padding: 0;
+}
+.trip-result dt {
+  min-height: 32px;
+  line-height: 1.4;
+}
+.trip-result dt .icon {
+  flex-shrink: 0;
+}
+.trip-result dd {
+  font-size: 21px;
+}
+.trip-result dd.weather-description {
+  font-size: 16px;
+  line-height: 1.45;
+}
+.trip-result .metric-note {
+  margin-top: 4px;
+}
+.trip-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 20px;
+  margin-top: 12px;
+}
+.trip-share,
+.trip-tools .reminder > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #b7d2df;
+  cursor: pointer;
+}
+.trip-share {
+  border: 0;
+  background: transparent;
+}
+.trip-tools .icon {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+.trip-tools .reminder {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.trip-tools .reminder[open] {
+  flex-basis: 100%;
+}
+.trip-tools > .status-message:not(:empty) {
+  flex-basis: 100%;
+  margin: 0 0 8px;
 }
 .scenarios {
   padding: 18px;
@@ -327,6 +402,16 @@ input[type="radio"] {
 }
 .scenarios p {
   margin: 8px 0;
+}
+.scenarios-compact {
+  padding: 12px 0 0;
+  background: transparent;
+  border-top: 1px dashed #98b4c659;
+  border-radius: 0;
+  margin: 16px 0 0;
+}
+.scenarios-compact > div > p:first-child {
+  margin-top: 0;
 }
 .forecast-row {
   border-top: 1px solid #2a3c55;
@@ -649,6 +734,9 @@ dt .icon,
   }
   .planner > h2 {
     font-size: 27px;
+  }
+  .trip-result dd {
+    font-size: clamp(16px, 5vw, 21px);
   }
   .reasons {
     font-size: 13px;

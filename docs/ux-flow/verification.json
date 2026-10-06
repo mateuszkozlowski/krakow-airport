@@ -1,0 +1,368 @@
+{
+  "origin": "http://127.0.0.1:3017",
+  "at": "2026-10-06T13:26:30.054Z",
+  "pageErrors": [],
+  "results": [
+    "Live local forecast: one selection displays all weather measurements before the form, inside the timeline surface.",
+    "pl: pointer/keyboard selection, 5-minute change, scenario/base separation, probability, one direction switch, gap, exact input focus and copied-link feedback.",
+    "pl: benign transition removed only from the primary view; new hazards at the same grade, unknown scenarios, model caveat and separate RVR preserved.",
+    "en: pointer/keyboard selection, 5-minute change, scenario/base separation, probability, one direction switch, gap, exact input focus and copied-link feedback.",
+    "en: benign transition removed only from the primary view; new hazards at the same grade, unknown scenarios, model caveat and separate RVR preserved."
+  ],
+  "layouts": [
+    {
+      "locale": "pl",
+      "width": 390,
+      "resultTop": 651.34375,
+      "height": 255.5625,
+      "plotBottom": 631.34375,
+      "plannerTop": 943.90625,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 705.9375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 705.9375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 705.9375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 320,
+      "resultTop": 792.640625,
+      "height": 303.546875,
+      "plotBottom": 665.84375,
+      "plannerTop": 1133.1875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 872.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 872.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 872.03125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 390,
+      "resultTop": 758.140625,
+      "height": 255.5625,
+      "plotBottom": 631.34375,
+      "plannerTop": 1050.703125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 812.734375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 812.734375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 812.734375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 768,
+      "resultTop": 712.5625,
+      "height": 250.984375,
+      "plotBottom": 585.765625,
+      "plannerTop": 1004.546875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 53,
+          "right": 264.328125,
+          "top": 767.15625
+        },
+        {
+          "left": 278.328125,
+          "right": 489.65625,
+          "top": 767.15625
+        },
+        {
+          "left": 503.65625,
+          "right": 714.984375,
+          "top": 767.15625
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 1280,
+      "resultTop": 729.328125,
+      "height": 250.984375,
+      "plotBottom": 602.53125,
+      "plannerTop": 1021.3125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 133,
+          "right": 461.65625,
+          "top": 783.921875
+        },
+        {
+          "left": 475.65625,
+          "right": 804.328125,
+          "top": 783.921875
+        },
+        {
+          "left": 818.328125,
+          "right": 1146.984375,
+          "top": 783.921875
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "pl",
+      "width": 320,
+      "resultTop": 625.640625,
+      "height": 453.53125,
+      "plotBottom": 498.84375,
+      "plannerTop": 1116.171875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 705.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 705.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 705.03125
+        },
+        {
+          "left": 29,
+          "right": 107,
+          "top": 829.1875
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "resultTop": 224.640625,
+      "height": 293.171875,
+      "plotBottom": 97.84375,
+      "plannerTop": 554.8125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 304.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 304.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 304.03125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "resultTop": 225.140625,
+      "height": 253.96875,
+      "plotBottom": 98.34375,
+      "plannerTop": 516.109375,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 130.328125,
+          "top": 279.734375
+        },
+        {
+          "left": 144.328125,
+          "right": 245.65625,
+          "top": 279.734375
+        },
+        {
+          "left": 259.65625,
+          "right": 361,
+          "top": 279.734375
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 768,
+      "resultTop": 224.5625,
+      "height": 250.984375,
+      "plotBottom": 97.765625,
+      "plannerTop": 516.546875,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 53,
+          "right": 264.328125,
+          "top": 279.15625
+        },
+        {
+          "left": 278.328125,
+          "right": 489.65625,
+          "top": 279.15625
+        },
+        {
+          "left": 503.65625,
+          "right": 714.984375,
+          "top": 279.15625
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1280,
+      "resultTop": 224.328125,
+      "height": 250.984375,
+      "plotBottom": 97.53125,
+      "plannerTop": 516.3125,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 133,
+          "right": 461.65625,
+          "top": 278.921875
+        },
+        {
+          "left": 475.65625,
+          "right": 804.328125,
+          "top": 278.921875
+        },
+        {
+          "left": 818.328125,
+          "right": 1146.984375,
+          "top": 278.921875
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 320,
+      "resultTop": 625.640625,
+      "height": 459.953125,
+      "plotBottom": 498.84375,
+      "plannerTop": 1122.59375,
+      "inGlass": true,
+      "overflow": false,
+      "values": [
+        {
+          "left": 29,
+          "right": 107,
+          "top": 705.03125
+        },
+        {
+          "left": 121,
+          "right": 199,
+          "top": 705.03125
+        },
+        {
+          "left": 213,
+          "right": 291,
+          "top": 705.03125
+        },
+        {
+          "left": 29,
+          "right": 107,
+          "top": 818.8125
+        }
+      ],
+      "controls": [
+        44,
+        44
+      ]
+    }
+  ],
+  "controlledCaptures": [
+    "04-proposal-scenario.png"
+  ]
+}

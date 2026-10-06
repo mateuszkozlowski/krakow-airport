@@ -53,29 +53,46 @@ function Scenarios({
   period,
   operation,
   locale,
+  compact = false,
 }: {
   period: Period;
   operation: Operation;
   locale: Locale;
+  compact?: boolean;
 }) {
   const t = text[locale];
-  return period.scenarios.length ? (
-    <div className="scenarios">
-      <strong>{t.temporary}</strong>
-      {period.scenarios.map((s, i) => (
+  const scenarios = compact
+    ? period.scenarios.filter(
+        (s) =>
+          s[operation].level === null ||
+          s[operation].level !== period[operation].level ||
+          s[operation].reasons.some(
+            (reason) => !period[operation].reasons.includes(reason),
+          ),
+      )
+    : period.scenarios;
+  return scenarios.length ? (
+    <div className={`scenarios${compact ? " scenarios-compact" : ""}`}>
+      {!compact && <strong>{t.temporary}</strong>}
+      {scenarios.map((s, i) => (
         <div key={i}>
           <p>
             <Icon name={s.kind === "BECMG" ? "change" : "temporary"} />
             <strong>{scenarioDescription(s, locale)}</strong>
           </p>
-          <p className="muted small">
-            {s.probability !== null
-              ? t.scenarioChanceNote
-              : s.kind === "BECMG"
-                ? t.transition
-                : t.tempo}
-          </p>
-          <Risk assessment={s[operation]} locale={locale} />
+          {!compact && (
+            <>
+              <p className="muted small">
+                {s.probability !== null
+                  ? t.scenarioChanceNote
+                  : s.kind === "BECMG"
+                    ? t.transition
+                    : t.tempo}
+              </p>
+              <Risk assessment={s[operation]} locale={locale} />
+            </>
+          )}
+          {compact && <Details conditions={s.conditions} locale={locale} />}
           <ReasonList assessment={s[operation]} locale={locale} />
         </div>
       ))}
@@ -189,6 +206,7 @@ export function Dashboard({
   }
   function chooseOperation(op: Operation) {
     setOperation(op);
+    setShareMessage("");
     if (selected) {
       const url = new URL(window.location.href);
       url.searchParams.set("operation", op);
@@ -275,7 +293,87 @@ export function Dashboard({
         selected={selected}
         onOperation={chooseOperation}
         onSelect={chooseTimelineTime}
-      />
+      >
+        {selected && (
+          <section
+            id="trip-result"
+            className="trip-result"
+            aria-labelledby="trip-result-title"
+            aria-live="polite"
+            tabIndex={-1}
+          >
+            <div className="trip-heading">
+              <h3 id="trip-result-title">
+                <Icon name={operation} />
+                {t[operation]} · {formatTime(selected, locale, true)}
+              </h3>
+              {slot && (
+                <span className="muted small">
+                  {slot.source === "TAF" ? t.taf : t.model}
+                </span>
+              )}
+            </div>
+            {slot ? (
+              <>
+                <Details conditions={slot.conditions} locale={locale} />
+                <ReasonList assessment={slot[operation]} locale={locale} />
+                <Scenarios
+                  period={slot}
+                  operation={operation}
+                  locale={locale}
+                  compact
+                />
+                {ensemble && (
+                  <details className="explanation">
+                    <summary>{t.ensembleTitle}</summary>
+                    <p className="small">
+                      {locale === "pl"
+                        ? `${ensemble.favourable} z ${ensemble.members} wariantów prognozy wskazuje wilgotne powietrze i słaby wiatr blisko tej godziny.`
+                        : `${ensemble.favourable} of ${ensemble.members} forecast variants indicate humid air and light wind near this time.`}{" "}
+                      {t.ensembleNote}
+                    </p>
+                  </details>
+                )}
+              </>
+            ) : (
+              <p>{t.noSlot}</p>
+            )}
+            <div className="trip-tools">
+              <button
+                className="trip-share"
+                aria-label={t.share}
+                onClick={async () => {
+                  try {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set("at", selected);
+                    u.searchParams.set("operation", operation);
+                    await navigator.clipboard.writeText(u.toString());
+                    setShareMessage(t.copied);
+                  } catch {
+                    setShareMessage(t.copyFailed);
+                  }
+                }}
+              >
+                <Icon name="link" />
+                {locale === "pl" ? "Skopiuj link" : "Copy link"}
+              </button>
+              <p role="status" className="small status-message">
+                {shareMessage}
+              </p>
+              {Date.parse(selected) > Date.parse(snapshot.generatedAt) ? (
+                <Reminder
+                  at={selected}
+                  operation={operation}
+                  locale={locale}
+                  compact
+                />
+              ) : (
+                <p>{t.pastTime}</p>
+              )}
+            </div>
+          </section>
+        )}
+      </Timeline>
       {better && (
         <p className="notice">
           {t.improvement} <strong>{formatTime(better, locale, true)}</strong>{" "}
@@ -302,95 +400,12 @@ export function Dashboard({
                 required
               />
             </label>
-            <fieldset>
-              <legend>{t.travelDirection}</legend>
-              <div className="operation-picker">
-                {(["departure", "arrival"] as const).map((op) => (
-                  <label key={op}>
-                    <input
-                      type="radio"
-                      name="operation"
-                      checked={operation === op}
-                      onChange={() => chooseOperation(op)}
-                    />
-                    <Icon name={op} />
-                    {t[op]}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
             <button className="button">{t.check}</button>
           </form>
           {error && (
             <p role="status" className="notice">
               {error}
             </p>
-          )}
-          {selected && (
-            <div
-              id="trip-result"
-              className="trip-result"
-              aria-live="polite"
-              tabIndex={-1}
-            >
-              <h3>
-                <Icon name={operation} />
-                {t[operation]} · {formatTime(selected, locale, true)}
-              </h3>
-              {slot ? (
-                <>
-                  <Risk assessment={slot[operation]} locale={locale} />
-                  <ReasonList assessment={slot[operation]} locale={locale} />
-                  <p className="muted">
-                    {slot.source === "TAF" ? t.taf : t.model}
-                  </p>
-                  <Scenarios
-                    period={slot}
-                    operation={operation}
-                    locale={locale}
-                  />
-                  <Details conditions={slot.conditions} locale={locale} />
-                  {ensemble && (
-                    <details className="explanation">
-                      <summary>{t.ensembleTitle}</summary>
-                      <p className="small">
-                        {locale === "pl"
-                          ? `${ensemble.favourable} z ${ensemble.members} wariantów prognozy wskazuje wilgotne powietrze i słaby wiatr blisko tej godziny.`
-                          : `${ensemble.favourable} of ${ensemble.members} forecast variants indicate humid air and light wind near this time.`}{" "}
-                        {t.ensembleNote}
-                      </p>
-                    </details>
-                  )}
-                </>
-              ) : (
-                <p>{t.noSlot}</p>
-              )}
-              <button
-                className="button secondary"
-                onClick={async () => {
-                  try {
-                    const u = new URL(window.location.href);
-                    u.searchParams.set("at", selected);
-                    u.searchParams.set("operation", operation);
-                    await navigator.clipboard.writeText(u.toString());
-                    setShareMessage(t.copied);
-                  } catch {
-                    setShareMessage(t.copyFailed);
-                  }
-                }}
-              >
-                <Icon name="link" />
-                {t.share}
-              </button>
-              <p role="status" className="small status-message">
-                {shareMessage}
-              </p>
-              {Date.parse(selected) > Date.parse(snapshot.generatedAt) ? (
-                <Reminder at={selected} operation={operation} locale={locale} />
-              ) : (
-                <p>{t.pastTime}</p>
-              )}
-            </div>
           )}
         </section>
         <section className="panel" aria-labelledby="current-title">

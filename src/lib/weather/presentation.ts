@@ -39,11 +39,13 @@ export function scenarioDescription(
 ) {
   if (s.probability !== null)
     return locale === "pl"
-      ? `${s.probability}% szans na te warunki${s.kind.includes("TEMPO") ? " chwilami" : ""}`
+      ? `${s.probability}% szans na ${s.kind.includes("TEMPO") ? "okresowe zmiany pogody" : "te warunki"}`
       : `${s.probability}% chance of these conditions${s.kind.includes("TEMPO") ? " at times" : ""}`;
   if (s.kind === "BECMG")
     return locale === "pl" ? "Stopniowa zmiana" : "Gradual change";
-  return locale === "pl" ? "Warunki chwilami" : "Conditions at times";
+  return locale === "pl"
+    ? "Okresowe zmiany pogody"
+    : "Temporary changes in weather";
 }
 export function runwayVisibility(r: Rvr, locale: Locale) {
   const bound = (q: Rvr["minQualifier"]) =>

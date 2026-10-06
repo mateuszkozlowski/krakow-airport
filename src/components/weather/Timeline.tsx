@@ -1,5 +1,11 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { levelLabel, text } from "@/lib/weather/copy";
 import type { Locale, Operation, Period } from "@/lib/weather/model";
 import { scenarioDescription, weatherSymbol } from "@/lib/weather/presentation";
@@ -15,6 +21,7 @@ export function Timeline({
   selected,
   onOperation,
   onSelect,
+  children,
 }: {
   periods: Period[];
   locale: Locale;
@@ -22,6 +29,7 @@ export function Timeline({
   selected: string | null;
   onOperation: (operation: Operation) => void;
   onSelect: (at: string) => void;
+  children?: ReactNode;
 }) {
   const t = text[locale];
   const segments = timelineSegments(periods);
@@ -143,6 +151,7 @@ export function Timeline({
     validPreview ??
     selected ??
     (segments.length ? new Date(edges.at ?? start).toISOString() : null);
+  const showPreview = validPreview !== null && readoutAt !== selected;
   const readoutSegment = readoutAt
     ? segments.find(
         (s) =>
@@ -221,7 +230,10 @@ export function Timeline({
         </div>
       </div>
       {!periods.length ? (
-        <p>{t.unavailable}</p>
+        <>
+          <p>{t.unavailable}</p>
+          {children}
+        </>
       ) : (
         <div className="timeline-surface">
           <div className="timeline-navigation">
@@ -436,88 +448,81 @@ export function Timeline({
                 .join("; ")}
             </p>
           )}
-          {readoutAt &&
-            readoutSegment &&
-            (validPreview || selected || hasShortChanges) && (
-              <div className="timeline-readout">
-                {hasShortChanges && (
-                  <div
-                    className="readout-controls"
-                    role="group"
-                    aria-label={
-                      locale === "pl"
-                        ? "Przejdź między zmianami warunków"
-                        : "Move between changes in conditions"
-                    }
-                  >
-                    <span className="muted small">
-                      {locale === "pl" ? "Zmiany" : "Changes"}
-                    </span>
-                    {([-1, 1] as const).map((direction) => (
-                      <button
-                        key={direction}
-                        type="button"
-                        className="button secondary"
-                        disabled={
-                          readoutIndex + direction < 0 ||
-                          readoutIndex + direction >= segments.length
+          {readoutAt && readoutSegment && (showPreview || hasShortChanges) && (
+            <div className="timeline-readout">
+              {hasShortChanges && (
+                <div
+                  className="readout-controls"
+                  role="group"
+                  aria-label={
+                    locale === "pl"
+                      ? "Przejdź między zmianami warunków"
+                      : "Move between changes in conditions"
+                  }
+                >
+                  <span className="muted small">
+                    {locale === "pl" ? "Zmiany" : "Changes"}
+                  </span>
+                  {([-1, 1] as const).map((direction) => (
+                    <button
+                      key={direction}
+                      type="button"
+                      className="button secondary"
+                      disabled={
+                        readoutIndex + direction < 0 ||
+                        readoutIndex + direction >= segments.length
+                      }
+                      aria-label={
+                        locale === "pl"
+                          ? direction < 0
+                            ? "Poprzedni przedział"
+                            : "Następny przedział"
+                          : direction < 0
+                            ? "Previous interval"
+                            : "Next interval"
+                      }
+                      onClick={() => {
+                        const s = segments[readoutIndex + direction];
+                        setPreview(null);
+                        choose(s.start, s.end, Date.now());
+                      }}
+                    >
+                      <Icon name={direction < 0 ? "left" : "right"} />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showPreview && (
+                <>
+                  <span className="readout-time">
+                    <Icon name={operation} />
+                    {t[operation]} · {formatTime(readoutAt, locale, true)}
+                    {readoutAt !== selected &&
+                      ` – ${formatTime(readoutSegment.end, locale)}`}
+                  </span>
+                  {readoutPeriod ? (
+                    <>
+                      <span className="readout-weather">
+                        {
+                          t.weatherNames[
+                            weatherSymbol(readoutPeriod.conditions).key
+                          ]
                         }
-                        aria-label={
-                          locale === "pl"
-                            ? direction < 0
-                              ? "Poprzedni przedział"
-                              : "Następny przedział"
-                            : direction < 0
-                              ? "Previous interval"
-                              : "Next interval"
-                        }
-                        onClick={() => {
-                          const s = segments[readoutIndex + direction];
-                          setPreview(null);
-                          choose(s.start, s.end, Date.now());
-                        }}
-                      >
-                        <Icon name={direction < 0 ? "left" : "right"} />
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {(validPreview || selected) && (
-                  <>
-                    <span className="readout-time">
-                      <Icon name={operation} />
-                      {t[operation]} · {formatTime(readoutAt, locale, true)}
-                      {readoutAt !== selected &&
-                        ` – ${formatTime(readoutSegment.end, locale)}`}
-                    </span>
-                    {readoutPeriod ? (
-                      <>
-                        <span className="readout-weather">
-                          {
-                            t.weatherNames[
-                              weatherSymbol(readoutPeriod.conditions).key
-                            ]
-                          }
-                        </span>
-                        {readoutPeriod.source === "model" && (
-                          <span className="muted small">{t.model}</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="muted">
-                        {locale === "pl" ? "Brak prognozy" : "No forecast"}
                       </span>
-                    )}
-                    {readoutAt === selected && (
-                      <a href="#trip-result">
-                        {locale === "pl" ? "Szczegóły" : "Details"} ↓
-                      </a>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          {selected && !selectedSegment && <p className="notice">{t.noSlot}</p>}
+                      {readoutPeriod.source === "model" && (
+                        <span className="muted small">{t.model}</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="muted">
+                      {locale === "pl" ? "Brak prognozy" : "No forecast"}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {children}
         </div>
       )}
     </section>

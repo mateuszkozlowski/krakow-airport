@@ -36,7 +36,11 @@ export function WeatherDetails({
           <Icon name="cloud" />
           {t.ceiling}
         </dt>
-        <dd>
+        <dd
+          className={
+            c.ceiling === null && c.cavok ? "weather-description" : undefined
+          }
+        >
           {c.ceiling === null
             ? c.cavok
               ? t.noLowCloud

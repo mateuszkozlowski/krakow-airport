@@ -30,7 +30,7 @@ export const text = {
       goodVisibility: "Dobra widoczność",
       unspecified: "Brak opisu zjawisk",
     },
-    notReported: "Nie podano w pomiarze",
+    notReported: "Nie podano",
     noLowCloud: "Bez niskich chmur",
     aboveGround: "Nad lotniskiem",
     gusts: "porywy do",
@@ -236,8 +236,7 @@ export const text = {
     ground: "On the ground",
     deicing:
       "Deicing or winter ground handling may be needed. Waiting times depend on airport operations.",
-    fogPossible:
-      "Humid air and light wind favour fog. Its onset is uncertain.",
+    fogPossible: "Humid air and light wind favour fog. Its onset is uncertain.",
     fogIncreasing:
       "Recent measurements increasingly favour fog. Its onset is uncertain.",
     improvement: "The forecast indicates improvement from",

@@ -69,7 +69,7 @@ test("runway visibility retains lower/upper bounds and translates trends", () =>
 test("temporary and transition forecasts do not invent a numeric probability", () => {
   assert.equal(
     scenarioDescription({ kind: "TEMPO", probability: null }, "pl"),
-    "Warunki chwilami",
+    "Okresowe zmiany pogody",
   );
   assert.equal(
     scenarioDescription({ kind: "BECMG", probability: null }, "en"),

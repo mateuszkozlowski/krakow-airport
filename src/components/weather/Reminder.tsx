@@ -37,10 +37,12 @@ export function Reminder({
   at,
   operation,
   locale,
+  compact = false,
 }: {
   at: string;
   operation: Operation;
   locale: Locale;
+  compact?: boolean;
 }) {
   const t = text[locale];
   const [config, setConfig] = useState<{
@@ -145,7 +147,7 @@ export function Reminder({
     <details className="reminder">
       <summary>
         <Icon name="calendar" />
-        {t.remind}
+        {compact ? (locale === "pl" ? "Przypomnij mi" : "Remind me") : t.remind}
       </summary>
       <button
         className="button secondary"
